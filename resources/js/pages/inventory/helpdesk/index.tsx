@@ -2,7 +2,7 @@ import AppLayout from '@/layouts/app-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Head, useForm } from '@inertiajs/react';
+import { Head, useForm, usePage } from '@inertiajs/react';
 import { 
     HelpCircle, Phone, Mail, FileText, PlusCircle, CheckCircle2, 
     Clock, AlertTriangle, User, Calendar, MessageSquare, Shield,
@@ -11,6 +11,7 @@ import {
 import { useState } from 'react';
 import { toast } from 'sonner';
 import InputError from '@/components/input-error';
+import { store as helpdeskStore, update as helpdeskUpdate } from '@/routes/helpdesk';
 
 // FAQ list
 const faqs = [
@@ -52,6 +53,8 @@ interface Ticket {
     description: string;
     status: 'open' | 'in_progress' | 'resolved';
     admin_notes: string | null;
+    attachment_path: string | null;
+    attachment_url: string | null;
     created_at: string;
     user?: {
         name: string;
@@ -69,11 +72,19 @@ interface Props {
     isAdmin: boolean;
 }
 
+const isImage = (path: string | null) => {
+    if (!path) return false;
+    const ext = path.split('.').pop()?.toLowerCase();
+    return ['jpeg', 'jpg', 'png', 'gif'].includes(ext || '');
+};
+
 export default function HelpdeskIndex({ tickets, isAdmin }: Props) {
+    const { auth } = usePage<any>().props;
     const breadcrumbs = [{ title: 'System Helpdesk', href: '/inventory/helpdesk' }];
     const [activeTab, setActiveTab] = useState<'support' | 'tickets' | 'admin'>('support');
     const [openFaq, setOpenFaq] = useState<number | null>(null);
     const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
+    const [zoomedImage, setZoomedImage] = useState<string | null>(null);
 
     // Form for ticket creation
     const { 
@@ -83,11 +94,18 @@ export default function HelpdeskIndex({ tickets, isAdmin }: Props) {
         processing: submittingTicket, 
         errors: ticketErrors, 
         reset: resetTicketForm 
-    } = useForm({
+    } = useForm<{
+        title: string;
+        category: 'technical' | 'discrepancy' | 'request' | 'other';
+        priority: 'low' | 'medium' | 'high';
+        description: string;
+        attachment: File | null;
+    }>({
         title: '',
         category: 'technical',
         priority: 'medium',
         description: '',
+        attachment: null,
     });
 
     // Form for admin ticket updates
@@ -104,7 +122,7 @@ export default function HelpdeskIndex({ tickets, isAdmin }: Props) {
 
     const handleCreateTicket = (e: React.FormEvent) => {
         e.preventDefault();
-        postTicket(route('helpdesk.store'), {
+        postTicket(helpdeskStore.url(), {
             onSuccess: () => {
                 resetTicketForm();
                 toast.success('Your support ticket has been submitted successfully.');
@@ -119,7 +137,7 @@ export default function HelpdeskIndex({ tickets, isAdmin }: Props) {
         e.preventDefault();
         if (!selectedTicket) return;
 
-        patchTicket(route('helpdesk.update', selectedTicket.id), {
+        patchTicket(helpdeskUpdate.url(selectedTicket.id), {
             onSuccess: () => {
                 setSelectedTicket(null);
                 toast.success('Ticket updated successfully.');
@@ -334,6 +352,18 @@ export default function HelpdeskIndex({ tickets, isAdmin }: Props) {
                                                 <InputError message={ticketErrors.description} />
                                             </div>
 
+                                            <div className="space-y-1.5">
+                                                <Label htmlFor="attachment" className="text-xs">File Attachment (Optional, max 5MB)</Label>
+                                                <input 
+                                                    id="attachment"
+                                                    type="file"
+                                                    accept="image/*,.pdf"
+                                                    className="w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm focus-visible:outline-hidden file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 dark:file:bg-neutral-800 dark:file:text-indigo-400"
+                                                    onChange={e => setTicketData('attachment', e.target.files ? e.target.files[0] : null)}
+                                                />
+                                                <InputError message={ticketErrors.attachment} />
+                                            </div>
+
                                             <Button type="submit" className="w-full" disabled={submittingTicket}>
                                                 {submittingTicket ? <Loader2 className="size-4 animate-spin mr-2" /> : <PlusCircle className="size-4 mr-2" />}
                                                 Submit Ticket
@@ -351,13 +381,13 @@ export default function HelpdeskIndex({ tickets, isAdmin }: Props) {
                                 </h3>
 
                                 <div className="space-y-4">
-                                    {tickets.filter(t => !isAdmin || t.user_id === $page.props.auth.user.id).length === 0 ? (
+                                    {tickets.filter(t => !isAdmin || t.user_id === auth.user.id).length === 0 ? (
                                         <div className="text-center py-12 border border-dashed rounded-lg text-muted-foreground text-xs">
                                             No support tickets submitted yet.
                                         </div>
                                     ) : (
                                         tickets
-                                            .filter(t => !isAdmin || t.user_id === $page.props.auth.user.id)
+                                            .filter(t => !isAdmin || t.user_id === auth.user.id)
                                             .map(ticket => (
                                                 <Card key={ticket.id} className="border bg-card">
                                                     <CardHeader className="p-4 pb-2 flex flex-row items-start justify-between gap-4">
@@ -381,6 +411,33 @@ export default function HelpdeskIndex({ tickets, isAdmin }: Props) {
                                                     <CardContent className="p-4 pt-2 space-y-3 text-xs leading-relaxed text-foreground">
                                                         <p className="whitespace-pre-wrap">{ticket.description}</p>
                                                         
+                                                        {ticket.attachment_url && (
+                                                            <div className="mt-3">
+                                                                <p className="font-semibold text-neutral-500 dark:text-neutral-400 mb-1">Attachment:</p>
+                                                                {isImage(ticket.attachment_path) ? (
+                                                                    <div className="relative group max-w-xs overflow-hidden rounded-lg border border-border bg-neutral-100 dark:bg-neutral-900">
+                                                                        <img 
+                                                                            src={ticket.attachment_url} 
+                                                                            alt="Attachment Preview" 
+                                                                            className="object-cover max-h-48 w-full cursor-zoom-in transition-transform duration-200 group-hover:scale-105"
+                                                                            onClick={() => setZoomedImage(ticket.attachment_url)}
+                                                                        />
+                                                                    </div>
+                                                                ) : (
+                                                                    <a 
+                                                                        href={ticket.attachment_url} 
+                                                                        target="_blank" 
+                                                                        rel="noopener noreferrer"
+                                                                        className="inline-flex items-center gap-2 rounded-md bg-neutral-100 dark:bg-neutral-800 px-3 py-2 text-xs font-semibold text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors"
+                                                                    >
+                                                                        <FileText className="size-4 text-indigo-600 dark:text-indigo-400" />
+                                                                        <span>View / Download PDF Document</span>
+                                                                        <ArrowRight className="size-3 text-muted-foreground" />
+                                                                    </a>
+                                                                )}
+                                                            </div>
+                                                        )}
+
                                                         {ticket.admin_notes && (
                                                             <div className="rounded-lg bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-100/50 dark:border-indigo-900/30 p-3 mt-2">
                                                                 <p className="font-semibold text-indigo-700 dark:text-indigo-400 mb-1 flex items-center gap-1.5">
@@ -485,6 +542,35 @@ export default function HelpdeskIndex({ tickets, isAdmin }: Props) {
                                                     <p className="font-bold text-foreground">Submitted by: <span className="font-normal text-muted-foreground">{selectedTicket.user?.name} ({selectedTicket.user?.email})</span></p>
                                                 </div>
 
+                                                {selectedTicket.attachment_url && (
+                                                    <div className="mt-3 text-xs">
+                                                        <p className="font-bold text-foreground mb-1">Attachment:</p>
+                                                        {isImage(selectedTicket.attachment_path) ? (
+                                                            <div className="relative group max-w-full overflow-hidden rounded-lg border border-border bg-neutral-100 dark:bg-neutral-900">
+                                                                <img 
+                                                                    src={selectedTicket.attachment_url} 
+                                                                    alt="Attachment Preview" 
+                                                                    className="object-cover max-h-32 w-full cursor-zoom-in transition-transform duration-200 group-hover:scale-105"
+                                                                    onClick={() => setZoomedImage(selectedTicket.attachment_url)}
+                                                                />
+                                                            </div>
+                                                        ) : (
+                                                            <a 
+                                                                href={selectedTicket.attachment_url} 
+                                                                target="_blank" 
+                                                                rel="noopener noreferrer"
+                                                                className="inline-flex items-center justify-between w-full rounded-md bg-neutral-100 dark:bg-neutral-800 px-3 py-2 text-xs font-semibold text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors"
+                                                            >
+                                                                <span className="flex items-center gap-2">
+                                                                    <FileText className="size-4 text-indigo-600 dark:text-indigo-400" />
+                                                                    <span>View / Download PDF</span>
+                                                                </span>
+                                                                <ArrowRight className="size-3 text-muted-foreground" />
+                                                            </a>
+                                                        )}
+                                                    </div>
+                                                )}
+
                                                 <div className="border-t border-border/40 my-3"></div>
 
                                                 <div className="space-y-1.5">
@@ -532,6 +618,27 @@ export default function HelpdeskIndex({ tickets, isAdmin }: Props) {
                     )}
                 </div>
             </div>
+
+            {zoomedImage && (
+                <div 
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4 transition-opacity duration-300 animate-in fade-in"
+                    onClick={() => setZoomedImage(null)}
+                >
+                    <div className="relative max-h-full max-w-5xl overflow-hidden rounded-lg bg-black p-1 shadow-2xl">
+                        <img 
+                            src={zoomedImage} 
+                            alt="Attachment Fullscreen" 
+                            className="max-h-[85vh] max-w-full object-contain rounded" 
+                        />
+                        <button 
+                            className="absolute top-4 right-4 rounded-full bg-black/60 p-2 text-white hover:bg-black transition-colors focus:outline-hidden"
+                            onClick={() => setZoomedImage(null)}
+                        >
+                            ✕
+                        </button>
+                    </div>
+                </div>
+            )}
         </AppLayout>
     );
 }

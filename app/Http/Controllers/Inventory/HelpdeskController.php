@@ -17,7 +17,7 @@ class HelpdeskController extends Controller
     public function index(Request $request): Response
     {
         $user = $request->user();
-        
+
         // Determine if user has admin privileges
         $isAdmin = $user->hasRole('System Administrator') || $user->hasPermissionTo('users.manage');
 
@@ -42,12 +42,24 @@ class HelpdeskController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        if ($request->has('attachment') && ! $request->hasFile('attachment')) {
+            $request->request->remove('attachment');
+            $request->files->remove('attachment');
+        }
+
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'category' => ['required', 'string', 'in:technical,discrepancy,request,other'],
             'priority' => ['required', 'string', 'in:low,medium,high'],
             'description' => ['required', 'string', 'max:5000'],
+            'attachment' => ['nullable', 'file', 'mimes:jpeg,png,jpg,gif,pdf', 'max:5120'],
         ]);
+
+        if ($request->hasFile('attachment')) {
+            $validated['attachment_path'] = $request->file('attachment')->store('attachments', 'public');
+        }
+
+        unset($validated['attachment']);
 
         $request->user()->tickets()->create($validated);
 
@@ -62,7 +74,7 @@ class HelpdeskController extends Controller
         $user = $request->user();
         $isAdmin = $user->hasRole('System Administrator') || $user->hasPermissionTo('users.manage');
 
-        if (!$isAdmin) {
+        if (! $isAdmin) {
             abort(403, 'Unauthorized action.');
         }
 

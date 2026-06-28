@@ -1,10 +1,11 @@
 <?php
 
-use App\Models\Permission;
 use App\Models\Role;
-use App\Models\User;
 use App\Models\Ticket;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 
 uses(RefreshDatabase::class);
 
@@ -63,7 +64,7 @@ test('regular users can only view their own tickets', function () {
         'category' => 'technical',
         'priority' => 'low',
         'description' => 'Desc 1',
-        'status' => 'open'
+        'status' => 'open',
     ]);
 
     $ticket2 = Ticket::create([
@@ -72,7 +73,7 @@ test('regular users can only view their own tickets', function () {
         'category' => 'discrepancy',
         'priority' => 'medium',
         'description' => 'Desc 2',
-        'status' => 'open'
+        'status' => 'open',
     ]);
 
     $this->actingAs($user1);
@@ -143,5 +144,100 @@ test('administrators can update ticket status and admin notes', function () {
         'id' => $ticket->id,
         'status' => 'resolved',
         'admin_notes' => 'Fixed the issue.',
+    ]);
+});
+
+test('authenticated users can submit a ticket with an attachment', function () {
+    Storage::fake('public');
+
+    $user = User::create([
+        'name' => 'Normal Staff',
+        'email' => 'staff@example.com',
+        'password' => bcrypt('password'),
+    ]);
+
+    $this->actingAs($user);
+
+    $file = UploadedFile::fake()->create('screenshot.png', 100, 'image/png');
+
+    $response = $this->post(route('helpdesk.store'), [
+        'title' => 'Cannot log in with passkey',
+        'category' => 'technical',
+        'priority' => 'high',
+        'description' => 'I registered my passkey but the verification fails on Chrome.',
+        'attachment' => $file,
+    ]);
+
+    $response->assertRedirect();
+
+    $ticket = Ticket::where('user_id', $user->id)->first();
+    $this->assertNotNull($ticket->attachment_path);
+    Storage::disk('public')->assertExists($ticket->attachment_path);
+
+    $this->assertDatabaseHas('tickets', [
+        'user_id' => $user->id,
+        'title' => 'Cannot log in with passkey',
+        'attachment_path' => $ticket->attachment_path,
+    ]);
+});
+
+test('ticket submission fails validation with invalid attachment', function () {
+    $user = User::create([
+        'name' => 'Normal Staff',
+        'email' => 'staff@example.com',
+        'password' => bcrypt('password'),
+    ]);
+
+    $this->actingAs($user);
+
+    // Invalid file type (TXT is not in validation mimes)
+    $file = UploadedFile::fake()->create('document.txt', 100);
+
+    $response = $this->post(route('helpdesk.store'), [
+        'title' => 'Cannot log in with passkey',
+        'category' => 'technical',
+        'priority' => 'high',
+        'description' => 'I registered my passkey but the verification fails on Chrome.',
+        'attachment' => $file,
+    ]);
+
+    $response->assertSessionHasErrors('attachment');
+
+    // Oversized file (6000KB is greater than 5120KB limit)
+    $largeFile = UploadedFile::fake()->create('large.pdf', 6000);
+
+    $response = $this->post(route('helpdesk.store'), [
+        'title' => 'Cannot log in with passkey',
+        'category' => 'technical',
+        'priority' => 'high',
+        'description' => 'I registered my passkey but the verification fails on Chrome.',
+        'attachment' => $largeFile,
+    ]);
+
+    $response->assertSessionHasErrors('attachment');
+});
+
+test('ticket submission ignores string null attachment and passes validation', function () {
+    $user = User::create([
+        'name' => 'Normal Staff',
+        'email' => 'staff@example.com',
+        'password' => bcrypt('password'),
+    ]);
+
+    $this->actingAs($user);
+
+    $response = $this->post(route('helpdesk.store'), [
+        'title' => 'Cannot log in with passkey',
+        'category' => 'technical',
+        'priority' => 'high',
+        'description' => 'I registered my passkey but the verification fails on Chrome.',
+        'attachment' => 'null',
+    ]);
+
+    $response->assertRedirect();
+    $this->assertDatabaseHas('tickets', [
+        'user_id' => $user->id,
+        'title' => 'Cannot log in with passkey',
+        'attachment_path' => null,
     ]);
 });
