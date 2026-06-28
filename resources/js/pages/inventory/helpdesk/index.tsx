@@ -2,7 +2,7 @@ import AppLayout from '@/layouts/app-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Head, useForm, usePage, setLayoutProps } from '@inertiajs/react';
+import { Head, useForm, usePage, setLayoutProps, InfiniteScroll } from '@inertiajs/react';
 import { 
     HelpCircle, Phone, Mail, FileText, PlusCircle, CheckCircle2, 
     Clock, AlertTriangle, User, Calendar, MessageSquare, Shield,
@@ -68,7 +68,12 @@ interface Ticket {
 }
 
 interface Props {
-    tickets: Ticket[];
+    tickets: {
+        data: Ticket[];
+        meta?: {
+            total: number;
+        };
+    };
     isAdmin: boolean;
 }
 
@@ -202,14 +207,14 @@ export default function HelpdeskIndex({ tickets, isAdmin }: Props) {
                         onClick={() => { setActiveTab('tickets'); setSelectedTicket(null); }}
                         className={`px-4 py-2 text-sm font-semibold border-b-2 -mb-[2px] transition-all duration-150 ${activeTab === 'tickets' ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
                     >
-                        My Tickets ({isAdmin ? 'Self' : tickets.length})
+                        My Tickets ({isAdmin ? 'Self' : (tickets.meta?.total ?? tickets.data.length)})
                     </button>
                     {isAdmin && (
                         <button 
                             onClick={() => { setActiveTab('admin'); setSelectedTicket(null); }}
                             className={`px-4 py-2 text-sm font-semibold border-b-2 -mb-[2px] transition-all duration-150 ${activeTab === 'admin' ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
                         >
-                            Manage Tickets Registry ({tickets.length})
+                            Manage Tickets Registry ({tickets.meta?.total ?? tickets.data.length})
                         </button>
                     )}
                 </div>
@@ -277,9 +282,9 @@ export default function HelpdeskIndex({ tickets, isAdmin }: Props) {
                     )}
 
                     {activeTab === 'tickets' && (
-                        <div className="grid gap-6 lg:grid-cols-3">
+                        <div className="grid gap-6 lg:grid-cols-3 items-start">
                             {/* Submit Ticket Form */}
-                            <div className="space-y-4">
+                            <div className="space-y-4 sticky top-6">
                                 <h3 className="text-base font-bold tracking-tight text-neutral-900 dark:text-neutral-100 flex items-center gap-2">
                                     <PlusCircle className="size-5 text-indigo-600 dark:text-indigo-400" />
                                     File a Support Request
@@ -382,75 +387,77 @@ export default function HelpdeskIndex({ tickets, isAdmin }: Props) {
                                 </h3>
 
                                 <div className="space-y-4">
-                                    {tickets.filter(t => !isAdmin || t.user_id === auth.user.id).length === 0 ? (
+                                    {tickets.data.filter(t => !isAdmin || t.user_id === auth.user.id).length === 0 ? (
                                         <div className="text-center py-12 border border-dashed rounded-lg text-muted-foreground text-xs">
                                             No support tickets submitted yet.
                                         </div>
                                     ) : (
-                                        tickets
-                                            .filter(t => !isAdmin || t.user_id === auth.user.id)
-                                            .map(ticket => (
-                                                <Card key={ticket.id} className="border bg-card">
-                                                    <CardHeader className="p-4 pb-2 flex flex-row items-start justify-between gap-4">
-                                                        <div className="space-y-1">
-                                                            <div className="flex items-center gap-2 flex-wrap">
-                                                                <CardTitle className="text-sm font-bold">{ticket.title}</CardTitle>
-                                                                {getPriorityBadge(ticket.priority)}
+                                        <InfiniteScroll data="tickets" className="space-y-4">
+                                            {tickets.data
+                                                .filter(t => !isAdmin || t.user_id === auth.user.id)
+                                                .map(ticket => (
+                                                    <Card key={ticket.id} className="border bg-card">
+                                                        <CardHeader className="p-4 pb-2 flex flex-row items-start justify-between gap-4">
+                                                            <div className="space-y-1">
+                                                                <div className="flex items-center gap-2 flex-wrap">
+                                                                    <CardTitle className="text-sm font-bold">{ticket.title}</CardTitle>
+                                                                    {getPriorityBadge(ticket.priority)}
+                                                                </div>
+                                                                <CardDescription className="text-xs flex items-center gap-1.5">
+                                                                    <span>ID: #{ticket.id}</span>
+                                                                    <span>•</span>
+                                                                    <span className="capitalize">{ticket.category}</span>
+                                                                    <span>•</span>
+                                                                    <span>{new Date(ticket.created_at).toLocaleDateString()}</span>
+                                                                </CardDescription>
                                                             </div>
-                                                            <CardDescription className="text-xs flex items-center gap-1.5">
-                                                                <span>ID: #{ticket.id}</span>
-                                                                <span>•</span>
-                                                                <span className="capitalize">{ticket.category}</span>
-                                                                <span>•</span>
-                                                                <span>{new Date(ticket.created_at).toLocaleDateString()}</span>
-                                                            </CardDescription>
-                                                        </div>
-                                                        <div>
-                                                            {getStatusBadge(ticket.status)}
-                                                        </div>
-                                                    </CardHeader>
-                                                    <CardContent className="p-4 pt-2 space-y-3 text-xs leading-relaxed text-foreground">
-                                                        <p className="whitespace-pre-wrap">{ticket.description}</p>
-                                                        
-                                                        {ticket.attachment_url && (
-                                                            <div className="mt-3">
-                                                                <p className="font-semibold text-neutral-500 dark:text-neutral-400 mb-1">Attachment:</p>
-                                                                {isImage(ticket.attachment_path) ? (
-                                                                    <div className="relative group max-w-xs overflow-hidden rounded-lg border border-border bg-neutral-100 dark:bg-neutral-900">
-                                                                        <img 
-                                                                            src={ticket.attachment_url} 
-                                                                            alt="Attachment Preview" 
-                                                                            className="object-cover max-h-48 w-full cursor-zoom-in transition-transform duration-200 group-hover:scale-105"
-                                                                            onClick={() => setZoomedImage(ticket.attachment_url)}
-                                                                        />
-                                                                    </div>
-                                                                ) : (
-                                                                    <a 
-                                                                        href={ticket.attachment_url} 
-                                                                        target="_blank" 
-                                                                        rel="noopener noreferrer"
-                                                                        className="inline-flex items-center gap-2 rounded-md bg-neutral-100 dark:bg-neutral-800 px-3 py-2 text-xs font-semibold text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors"
-                                                                    >
-                                                                        <FileText className="size-4 text-indigo-600 dark:text-indigo-400" />
-                                                                        <span>View / Download PDF Document</span>
-                                                                        <ArrowRight className="size-3 text-muted-foreground" />
-                                                                    </a>
-                                                                )}
+                                                            <div>
+                                                                {getStatusBadge(ticket.status)}
                                                             </div>
-                                                        )}
+                                                        </CardHeader>
+                                                        <CardContent className="p-4 pt-2 space-y-3 text-xs leading-relaxed text-foreground">
+                                                            <p className="whitespace-pre-wrap">{ticket.description}</p>
+                                                            
+                                                            {ticket.attachment_url && (
+                                                                <div className="mt-3">
+                                                                    <p className="font-semibold text-neutral-500 dark:text-neutral-400 mb-1">Attachment:</p>
+                                                                    {isImage(ticket.attachment_path) ? (
+                                                                        <div className="relative group max-w-xs overflow-hidden rounded-lg border border-border bg-neutral-100 dark:bg-neutral-900">
+                                                                            <img 
+                                                                                src={ticket.attachment_url} 
+                                                                                alt="Attachment Preview" 
+                                                                                className="object-cover max-h-48 w-full cursor-zoom-in transition-transform duration-200 group-hover:scale-105"
+                                                                                onClick={() => setZoomedImage(ticket.attachment_url)}
+                                                                            />
+                                                                        </div>
+                                                                    ) : (
+                                                                        <a 
+                                                                            href={ticket.attachment_url} 
+                                                                            target="_blank" 
+                                                                            rel="noopener noreferrer"
+                                                                            className="inline-flex items-center gap-2 rounded-md bg-neutral-100 dark:bg-neutral-800 px-3 py-2 text-xs font-semibold text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors"
+                                                                        >
+                                                                            <FileText className="size-4 text-indigo-600 dark:text-indigo-400" />
+                                                                            <span>View / Download PDF Document</span>
+                                                                            <ArrowRight className="size-3 text-muted-foreground" />
+                                                                        </a>
+                                                                    )}
+                                                                </div>
+                                                            )}
 
-                                                        {ticket.admin_notes && (
-                                                            <div className="rounded-lg bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-100/50 dark:border-indigo-900/30 p-3 mt-2">
-                                                                <p className="font-semibold text-indigo-700 dark:text-indigo-400 mb-1 flex items-center gap-1.5">
-                                                                    <MessageSquare className="size-3.5" />
-                                                                    Resolution Notes from IT / Admin:
-                                                                </p>
-                                                                <p className="text-muted-foreground leading-normal">{ticket.admin_notes}</p>
-                                                            </div>
-                                                        )}
-                                                    </CardContent>
-                                                </Card>
-                                            ))
+                                                            {ticket.admin_notes && (
+                                                                <div className="rounded-lg bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-100/50 dark:border-indigo-900/30 p-3 mt-2">
+                                                                    <p className="font-semibold text-indigo-700 dark:text-indigo-400 mb-1 flex items-center gap-1.5">
+                                                                        <MessageSquare className="size-3.5" />
+                                                                        Resolution Notes from IT / Admin:
+                                                                    </p>
+                                                                    <p className="text-muted-foreground leading-normal">{ticket.admin_notes}</p>
+                                                                </div>
+                                                            )}
+                                                        </CardContent>
+                                                    </Card>
+                                                ))}
+                                        </InfiniteScroll>
                                     )}
                                 </div>
                             </div>
@@ -467,48 +474,50 @@ export default function HelpdeskIndex({ tickets, isAdmin }: Props) {
                                 </h3>
 
                                 <div className="space-y-4">
-                                    {tickets.length === 0 ? (
+                                    {tickets.data.length === 0 ? (
                                         <div className="text-center py-12 border border-dashed rounded-lg text-muted-foreground text-xs">
                                             No support tickets submitted in GIMS.
                                         </div>
                                     ) : (
-                                        tickets.map(ticket => (
-                                            <Card 
-                                                key={ticket.id} 
-                                                className={`border cursor-pointer transition-all duration-150 ${selectedTicket?.id === ticket.id ? 'ring-2 ring-indigo-600 dark:ring-indigo-400 bg-indigo-50/5 dark:bg-indigo-950/5' : 'bg-card hover:bg-muted/10'}`}
-                                                onClick={() => selectTicketForEdit(ticket)}
-                                            >
-                                                <CardHeader className="p-4 pb-2 flex flex-row items-start justify-between gap-4">
-                                                    <div className="space-y-1">
-                                                        <div className="flex items-center gap-2 flex-wrap">
-                                                            <CardTitle className="text-sm font-bold">{ticket.title}</CardTitle>
-                                                            {getPriorityBadge(ticket.priority)}
+                                        <InfiniteScroll data="tickets" className="space-y-4">
+                                            {tickets.data.map(ticket => (
+                                                <Card 
+                                                    key={ticket.id} 
+                                                    className={`border cursor-pointer transition-all duration-150 ${selectedTicket?.id === ticket.id ? 'ring-2 ring-indigo-600 dark:ring-indigo-400 bg-indigo-50/5 dark:bg-indigo-950/5' : 'bg-card hover:bg-muted/10'}`}
+                                                    onClick={() => selectTicketForEdit(ticket)}
+                                                >
+                                                    <CardHeader className="p-4 pb-2 flex flex-row items-start justify-between gap-4">
+                                                        <div className="space-y-1">
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <CardTitle className="text-sm font-bold">{ticket.title}</CardTitle>
+                                                                {getPriorityBadge(ticket.priority)}
+                                                            </div>
+                                                            <CardDescription className="text-xs flex items-center gap-1.5 flex-wrap">
+                                                                <span className="font-semibold text-foreground">{ticket.user?.name}</span>
+                                                                {ticket.user?.employee?.department?.name && (
+                                                                    <span>({ticket.user.employee.department.name})</span>
+                                                                )}
+                                                                <span>•</span>
+                                                                <span>Category: <span className="capitalize font-medium">{ticket.category}</span></span>
+                                                                <span>•</span>
+                                                                <span>{new Date(ticket.created_at).toLocaleDateString()}</span>
+                                                            </CardDescription>
                                                         </div>
-                                                        <CardDescription className="text-xs flex items-center gap-1.5 flex-wrap">
-                                                            <span className="font-semibold text-foreground">{ticket.user?.name}</span>
-                                                            {ticket.user?.employee?.department?.name && (
-                                                                <span>({ticket.user.employee.department.name})</span>
-                                                            )}
-                                                            <span>•</span>
-                                                            <span>Category: <span className="capitalize font-medium">{ticket.category}</span></span>
-                                                            <span>•</span>
-                                                            <span>{new Date(ticket.created_at).toLocaleDateString()}</span>
-                                                        </CardDescription>
-                                                    </div>
-                                                    <div>
-                                                        {getStatusBadge(ticket.status)}
-                                                    </div>
-                                                </CardHeader>
-                                                <CardContent className="p-4 pt-2 text-xs leading-relaxed text-muted-foreground">
-                                                    <p className="line-clamp-2">{ticket.description}</p>
-                                                    {ticket.admin_notes && (
-                                                        <div className="text-[11px] text-green-600 dark:text-green-400 font-medium mt-1 flex items-center gap-1">
-                                                            <Check className="size-3.5" /> Notes attached
+                                                        <div>
+                                                            {getStatusBadge(ticket.status)}
                                                         </div>
-                                                    )}
-                                                </CardContent>
-                                            </Card>
-                                        ))
+                                                    </CardHeader>
+                                                    <CardContent className="p-4 pt-2 text-xs leading-relaxed text-muted-foreground">
+                                                        <p className="line-clamp-2">{ticket.description}</p>
+                                                        {ticket.admin_notes && (
+                                                            <div className="text-[11px] text-green-600 dark:text-green-400 font-medium mt-1 flex items-center gap-1">
+                                                                <Check className="size-3.5" /> Notes attached
+                                                            </div>
+                                                        )}
+                                                    </CardContent>
+                                                </Card>
+                                            ))}
+                                        </InfiniteScroll>
                                     )}
                                 </div>
                             </div>

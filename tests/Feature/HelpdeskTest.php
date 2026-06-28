@@ -82,8 +82,8 @@ test('regular users can only view their own tickets', function () {
 
     // Assert that ticket1 is in the response, but not ticket2
     $response->assertInertia(fn ($page) => $page
-        ->has('tickets', 1)
-        ->where('tickets.0.id', $ticket1->id)
+        ->has('tickets.data', 1)
+        ->where('tickets.data.0.id', $ticket1->id)
     );
 });
 
@@ -103,7 +103,7 @@ test('administrators can view all tickets', function () {
 
     // Admin should see both tickets
     $response->assertInertia(fn ($page) => $page
-        ->has('tickets', 2)
+        ->has('tickets.data', 2)
     );
 });
 

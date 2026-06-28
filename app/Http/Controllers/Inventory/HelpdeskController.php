@@ -22,13 +22,13 @@ class HelpdeskController extends Controller
         $isAdmin = $user->hasRole('System Administrator') || $user->hasPermissionTo('users.manage');
 
         if ($isAdmin) {
-            $tickets = Ticket::with('user.employee')
+            $tickets = Inertia::scroll(fn () => Ticket::with('user.employee')
                 ->orderBy('created_at', 'desc')
-                ->get();
+                ->paginate(10));
         } else {
-            $tickets = Ticket::where('user_id', $user->id)
+            $tickets = Inertia::scroll(fn () => Ticket::where('user_id', $user->id)
                 ->orderBy('created_at', 'desc')
-                ->get();
+                ->paginate(10));
         }
 
         return Inertia::render('inventory/helpdesk/index', [
