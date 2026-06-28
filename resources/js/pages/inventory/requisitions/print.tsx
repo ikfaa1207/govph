@@ -1,7 +1,7 @@
-import { Button } from '@/components/ui/button';
 import { Head } from '@inertiajs/react';
-import { useEffect } from 'react';
 import { ArrowLeft, Printer } from 'lucide-react';
+import { useEffect } from 'react';
+import { Button } from '@/components/ui/button';
 
 interface ItemUnit {
     abbreviation: string;
@@ -79,11 +79,15 @@ export default function RequisitionPrint({ requisition }: PrintProps) {
         const timer = setTimeout(() => {
             window.print();
         }, 500);
+
         return () => clearTimeout(timer);
     }, []);
 
     const formatDate = (dateString: string | null | undefined) => {
-        if (!dateString) return '';
+        if (!dateString) {
+return '';
+}
+
         try {
             return new Date(dateString).toLocaleDateString('en-PH', {
                 year: 'numeric',
@@ -212,8 +216,9 @@ export default function RequisitionPrint({ requisition }: PrintProps) {
                         </tr>
                     </thead>
                     <tbody className="font-sans divide-y divide-black">
-                        {requisition.items.map((item, index) => {
+                        {requisition.items.map((item) => {
                             const available = item.item.current_stock > 0;
+
                             return (
                                 <tr key={item.id} className="h-8">
                                     <td className="border-r border-black font-mono px-1 py-1 align-middle">{item.item.item_code}</td>

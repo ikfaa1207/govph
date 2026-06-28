@@ -1,14 +1,13 @@
-import AppLayout from '@/layouts/app-layout';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Head, useForm, usePage, router, setLayoutProps } from '@inertiajs/react';
 import { ShieldCheck, Edit3, UserPlus, AlertCircle, CheckCircle, XCircle, Key } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 interface User {
     id: number;
@@ -69,10 +68,16 @@ export default function UsersIndex({ users, roles, offices, departments }: Users
         position: '',
     });
 
+    const [now] = useState(() => Date.now());
+
     const isUserLocked = (u: User) => {
-        if (!u.locked_until) return false;
+        if (!u.locked_until) {
+            return false;
+        }
+
         const lockedTime = new Date(u.locked_until).getTime();
-        return lockedTime > Date.now();
+
+        return lockedTime > now;
     };
 
     const openEditDialog = (user: User) => {
@@ -92,7 +97,10 @@ export default function UsersIndex({ users, roles, offices, departments }: Users
 
     const handleEditSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!selectedUser) return;
+
+        if (!selectedUser) {
+return;
+}
         
         editForm.post(`/inventory/admin/users/${selectedUser.id}`, {
             onSuccess: () => {
@@ -122,10 +130,13 @@ export default function UsersIndex({ users, roles, offices, departments }: Users
     };
 
     const handleToggleStatus = () => {
-        if (!selectedUser) return;
+        if (!selectedUser) {
+return;
+}
 
         if (selectedUser.id === 1) {
             toast.error('The protected Super Admin account cannot be deactivated.');
+
             return;
         }
 
@@ -149,7 +160,9 @@ export default function UsersIndex({ users, roles, offices, departments }: Users
     };
 
     const handleUnlockUser = () => {
-        if (!selectedUser) return;
+        if (!selectedUser) {
+return;
+}
 
         router.post(`/inventory/admin/users/${selectedUser.id}/unlock`, {}, {
             onSuccess: () => {
@@ -164,10 +177,13 @@ export default function UsersIndex({ users, roles, offices, departments }: Users
     };
 
     const handleResetPassword = () => {
-        if (!selectedUser || !tempPassword) return;
+        if (!selectedUser || !tempPassword) {
+return;
+}
 
         if (tempPassword.length < 12) {
             toast.error('Temporary password must be at least 12 characters.');
+
             return;
         }
 
@@ -190,11 +206,13 @@ export default function UsersIndex({ users, roles, offices, departments }: Users
         const form = isEdit ? editForm : createForm;
         const current = [...form.data.roles];
         const idx = current.indexOf(roleId);
+
         if (idx > -1) {
             current.splice(idx, 1);
         } else {
             current.push(roleId);
         }
+
         form.setData('roles', current);
     };
 
@@ -352,6 +370,7 @@ export default function UsersIndex({ users, roles, offices, departments }: Users
                                 <div className="grid grid-cols-2 gap-2 mt-1.5">
                                     {roles.map((role) => {
                                         const isChecked = createForm.data.roles.includes(role.id);
+
                                         return (
                                             <div 
                                                 key={role.id} 
@@ -430,6 +449,7 @@ export default function UsersIndex({ users, roles, offices, departments }: Users
                                         <div className="grid grid-cols-2 gap-2 mt-1.5">
                                             {roles.map((role) => {
                                                 const isChecked = editForm.data.roles.includes(role.id);
+
                                                 return (
                                                     <div 
                                                         key={role.id} 

@@ -34,7 +34,7 @@ class ReportController extends Controller
     /**
      * Fetch report data dynamically.
      */
-    public function generate(Request $request, string $type)
+    public function generate(Request $request, string $type): \Illuminate\Http\JsonResponse
     {
         if ($type === 'audit_trail') {
             Gate::authorize('audit.view');
@@ -61,7 +61,7 @@ class ReportController extends Controller
                             'unit_cost' => $item->unit_cost,
                             'on_hand' => $stock,
                             'total_cost' => round($stock * (float) $item->unit_cost, 2),
-                            'location' => $item->location?->code ?? 'None',
+                            'location' => $item->location->code ?? 'None',
                         ];
                     });
                 return response()->json($items);
@@ -79,7 +79,7 @@ class ReportController extends Controller
                             'unit_cost' => $prop->unit_cost,
                             'condition' => ucfirst($prop->condition),
                             'status' => ucfirst($prop->status),
-                            'accountable_officer' => $prop->activeAssignment?->assignee?->name ?? 'None',
+                            'accountable_officer' => $prop->activeAssignment?->assignee->name ?? 'None',
                             'date_acquired' => $prop->date_acquired,
                         ];
                     });
@@ -113,8 +113,8 @@ class ReportController extends Controller
                     ->map(function ($log) {
                         return [
                             'id' => $log->id,
-                            'operator' => $log->user?->name ?? 'System',
-                            'role' => $log->user?->role ?? 'N/A',
+                            'operator' => $log->user->name ?? 'System',
+                            'role' => $log->user->role ?? 'N/A',
                             'action' => $log->action,
                             'target' => class_basename($log->model_type) . " #{$log->model_id}",
                             'ip' => $log->ip_address,

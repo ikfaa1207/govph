@@ -1,10 +1,9 @@
-import AppLayout from '@/layouts/app-layout';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Head, usePage, setLayoutProps } from '@inertiajs/react';
-import { FileText, Printer, Eye, Clipboard, HelpCircle, Loader2 } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { FileText, Printer, Eye, Loader2 } from 'lucide-react';
+import { useState } from 'react';
 import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 
 interface ReportType {
@@ -24,33 +23,20 @@ export default function ReportsIndex({ reportTypes }: ReportsIndexProps) {
     const [reportData, setReportData] = useState<any[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
     
-    // For Stock Ledger specific lookup
-    const [itemsList, setItemsList] = useState<any[]>([]);
     const [selectedItemId, setSelectedItemId] = useState<string>('');
-
-    // Fetch items list when Stock Ledger is selected
-    useEffect(() => {
-        if (selectedType === 'stock_ledger') {
-            fetch('/inventory/items?format=json')
-                .then(res => res.json())
-                .then(data => {
-                    // Quick fallback or mapping
-                    // Since /inventory/items returns Inertia by default, we can make a direct fetch to the JSON endpoint
-                    // Let's fallback to querying the items list or using a mock data if the listing is Inertia-only.
-                })
-                .catch(() => {});
-        }
-    }, [selectedType]);
 
     const handleGenerate = () => {
         setLoading(true);
         let url = `/inventory/reports/${selectedType}`;
+
         if (selectedType === 'stock_ledger') {
             if (!selectedItemId) {
                 toast.error('Please select an item first.');
                 setLoading(false);
+
                 return;
             }
+
             url += `?item_id=${selectedItemId}`;
         }
 

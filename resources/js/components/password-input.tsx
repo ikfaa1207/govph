@@ -15,6 +15,7 @@ export default function PasswordInput({
     const [showPassword, setShowPassword] = useState(false);
     const [isFocused, setIsFocused] = useState(false);
     const [value, setValue] = useState((props.value as string) || (props.defaultValue as string) || '');
+    const [prevValueProp, setPrevValueProp] = useState(props.value);
 
     const [matchValue, setMatchValue] = useState<string | null>(null);
 
@@ -23,11 +24,13 @@ export default function PasswordInput({
         (props.name && (props.name.includes('confirm') || props.name.includes('confirmation')))
     );
 
-    useEffect(() => {
+    if (props.value !== prevValueProp) {
+        setPrevValueProp(props.value);
+
         if (props.value !== undefined) {
             setValue(props.value as string);
         }
-    }, [props.value]);
+    }
 
     useEffect(() => {
         if (!isConfirmationField) {
@@ -41,6 +44,7 @@ export default function PasswordInput({
                 'input[name="new_password"]:not([id*="confirm"]):not([name*="confirm"]):not([placeholder*="Confirm"]), ' +
                 'input[id="new_password"]:not([id*="confirm"]):not([name*="confirm"]):not([placeholder*="Confirm"])'
             ) as HTMLInputElement;
+
             if (mainInput) {
                 setMatchValue(mainInput.value);
             }
@@ -52,6 +56,7 @@ export default function PasswordInput({
 
         findPasswordInput();
         document.addEventListener('input', handleInput);
+
         return () => {
             document.removeEventListener('input', handleInput);
         };

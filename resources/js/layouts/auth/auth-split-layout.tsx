@@ -1,8 +1,8 @@
 import { Link } from '@inertiajs/react';
+import { ShieldCheck, ClipboardCheck, Users, Key } from 'lucide-react';
 import AppLogoIcon from '@/components/app-logo-icon';
 import { home } from '@/routes';
 import type { AuthLayoutProps } from '@/types';
-import { ShieldCheck, ClipboardCheck, Users, Key } from 'lucide-react';
 
 export default function AuthSplitLayout({
     children,

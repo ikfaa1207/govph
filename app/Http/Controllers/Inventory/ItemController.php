@@ -122,10 +122,17 @@ class ItemController extends Controller
             ->map(function ($tx) {
                 // Resolve reference human representation
                 $refLabel = 'Manual Entry';
-                if ($tx->reference_type === ReceivingReport::class) {
-                    $refLabel = 'Receiving Report #'.($tx->reference?->iar_number ?? $tx->reference_id);
-                } elseif ($tx->reference_type === Issuance::class) {
-                    $refLabel = 'Issuance Slip #'.($tx->reference?->issue_number ?? $tx->reference_id);
+                $ref = $tx->reference;
+                if ($tx->reference_type === ReceivingReport::class && $ref instanceof ReceivingReport) {
+                    $refLabel = 'Receiving Report #'.$ref->iar_number;
+                } elseif ($tx->reference_type === Issuance::class && $ref instanceof Issuance) {
+                    $refLabel = 'Issuance Slip #'.$ref->issue_number;
+                } elseif ($tx->reference_id) {
+                    if ($tx->reference_type === ReceivingReport::class) {
+                        $refLabel = 'Receiving Report #'.$tx->reference_id;
+                    } elseif ($tx->reference_type === Issuance::class) {
+                        $refLabel = 'Issuance Slip #'.$tx->reference_id;
+                    }
                 }
 
                 return [

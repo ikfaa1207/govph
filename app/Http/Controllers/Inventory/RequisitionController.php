@@ -55,7 +55,7 @@ class RequisitionController extends Controller
                 'name' => $item->name,
                 'current_stock' => $item->current_stock,
                 'unit_cost' => $item->unit_cost,
-                'unit' => $item->unit?->abbreviation ?? 'pcs',
+                'unit' => $item->unit->abbreviation ?? 'pcs',
             ];
         });
 
@@ -134,13 +134,13 @@ class RequisitionController extends Controller
 
         DB::transaction(function () use ($request, $requisition, $employee) {
             $requisition->status = 'pending_supply';
-            $requisition->department_head_id = $employee?->id;
+            $requisition->department_head_id = ($employee?->id !== null && $employee->id >= 0) ? $employee->id : null;
             $requisition->approved_at = now();
             $requisition->save();
 
             foreach ($request->input('items') as $reqItem) {
                 $dbItem = RequisitionItem::find($reqItem['id']);
-                if ($dbItem) {
+                if ($dbItem instanceof RequisitionItem) {
                     $dbItem->quantity_approved = $reqItem['quantity_approved'];
                     $dbItem->save();
                 }
@@ -187,7 +187,7 @@ class RequisitionController extends Controller
 
             foreach ($request->input('items') as $reqItem) {
                 $dbItem = RequisitionItem::find($reqItem['id']);
-                if ($dbItem && $reqItem['quantity_issued'] > 0) {
+                if ($dbItem instanceof RequisitionItem && $reqItem['quantity_issued'] > 0) {
                     $item = $dbItem->item;
 
                     // Verify availability
@@ -218,7 +218,7 @@ class RequisitionController extends Controller
                 }
 
                 // If we didn't fully issue the approved amount, it's not completed
-                if ($dbItem && $dbItem->quantity_issued < $dbItem->quantity_approved) {
+                if ($dbItem instanceof RequisitionItem && $dbItem->quantity_issued < $dbItem->quantity_approved) {
                     $allCompleted = false;
                 }
             }

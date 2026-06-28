@@ -1,14 +1,13 @@
-import AppLayout from '@/layouts/app-layout';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Head, useForm, setLayoutProps } from '@inertiajs/react';
-import { KeyRound, Plus, Edit2, Copy, Trash2, Users } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Head, useForm, router, setLayoutProps } from '@inertiajs/react';
+import { Plus, Edit2, Copy, Trash2, Users } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 interface Permission {
     id: number;
@@ -88,7 +87,11 @@ export default function RolesIndex({ roles, permissions }: RolesIndexProps) {
 
     const handleEditSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!selectedRole) return;
+
+        if (!selectedRole) {
+return;
+}
+
         editForm.post(`/inventory/admin/roles/${selectedRole.id}`, {
             onSuccess: () => {
                 setIsEditOpen(false);
@@ -111,7 +114,11 @@ export default function RolesIndex({ roles, permissions }: RolesIndexProps) {
 
     const handleCloneSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!selectedRole) return;
+
+        if (!selectedRole) {
+return;
+}
+
         cloneForm.post(`/inventory/admin/roles/${selectedRole.id}/clone`, {
             onSuccess: () => {
                 setIsCloneOpen(false);
@@ -126,13 +133,13 @@ export default function RolesIndex({ roles, permissions }: RolesIndexProps) {
     const handleDeleteRole = (role: Role) => {
         if (role.users.length > 0) {
             toast.error('Cannot delete role. Some users are currently assigned to it.');
+
             return;
         }
 
         if (confirm(`Are you sure you want to delete the role "${role.name}"?`)) {
             // Send delete request
-            const { delete: destroy } = useForm();
-            destroy(`/inventory/admin/roles/${role.id}`, {
+            router.delete(`/inventory/admin/roles/${role.id}`, {
                 onSuccess: () => {
                     toast.success('Role deleted successfully.');
                 },
@@ -146,11 +153,13 @@ export default function RolesIndex({ roles, permissions }: RolesIndexProps) {
     const togglePermissionSelection = (form: typeof addForm | typeof editForm, id: number) => {
         const current = [...form.data.permissions];
         const idx = current.indexOf(id);
+
         if (idx > -1) {
             current.splice(idx, 1);
         } else {
             current.push(id);
         }
+
         form.setData('permissions', current);
     };
 
@@ -197,6 +206,7 @@ export default function RolesIndex({ roles, permissions }: RolesIndexProps) {
                                                 <div className="grid grid-cols-2 gap-2">
                                                     {permList.map((perm) => {
                                                         const isChecked = addForm.data.permissions.includes(perm.id);
+
                                                         return (
                                                             <div 
                                                                 key={perm.id}
@@ -300,6 +310,7 @@ export default function RolesIndex({ roles, permissions }: RolesIndexProps) {
                                                 <div className="grid grid-cols-2 gap-2">
                                                     {permList.map((perm) => {
                                                         const isChecked = editForm.data.permissions.includes(perm.id);
+
                                                         return (
                                                             <div 
                                                                 key={perm.id}

@@ -1,5 +1,6 @@
 import { Link, usePage } from '@inertiajs/react';
 import { BookOpen, FolderGit2 } from 'lucide-react';
+import { LayoutGrid, Package, ClipboardList, Database, FileText, Users, ShieldAlert } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -15,10 +16,9 @@ import {
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
 import items from '@/routes/inventory/items';
-import requisitions from '@/routes/inventory/requisitions';
 import properties from '@/routes/inventory/properties';
 import reports from '@/routes/inventory/reports';
-import { LayoutGrid, Package, ClipboardList, Database, FileText, Users, ShieldAlert } from 'lucide-react';
+import requisitions from '@/routes/inventory/requisitions';
 import type { NavItem } from '@/types';
 
 interface GimsNavItem extends NavItem {
@@ -78,6 +78,7 @@ export function AppSidebar() {
         if (!item.permission) {
             return true;
         }
+
         return permissions.includes(item.permission);
     });
 

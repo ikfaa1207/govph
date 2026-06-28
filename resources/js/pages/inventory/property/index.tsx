@@ -1,14 +1,13 @@
-import AppLayout from '@/layouts/app-layout';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Head, useForm, setLayoutProps } from '@inertiajs/react';
 import { PlusCircle, UserCheck, RefreshCw, Trash2, ShieldCheck, Clipboard } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 interface Property {
     id: number;
@@ -116,7 +115,11 @@ export default function PropertyIndex({ properties, employees, categories, offic
 
     const handleAssignSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!selectedProp) return;
+
+        if (!selectedProp) {
+return;
+}
+
         assignForm.post(`/inventory/properties/${selectedProp.id}/assign`, {
             onSuccess: () => {
                 setIsAssignOpen(false);
@@ -136,7 +139,11 @@ export default function PropertyIndex({ properties, employees, categories, offic
 
     const handleTransferSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!selectedProp) return;
+
+        if (!selectedProp) {
+return;
+}
+
         transferForm.post(`/inventory/properties/${selectedProp.id}/transfer`, {
             onSuccess: () => {
                 setIsTransferOpen(false);
@@ -156,7 +163,11 @@ export default function PropertyIndex({ properties, employees, categories, offic
 
     const handleDisposeSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!selectedProp) return;
+
+        if (!selectedProp) {
+return;
+}
+
         disposeForm.post(`/inventory/properties/${selectedProp.id}/dispose`, {
             onSuccess: () => {
                 setIsDisposeOpen(false);

@@ -1,11 +1,7 @@
-import AppLayout from '@/layouts/app-layout';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Head, Link, setLayoutProps } from '@inertiajs/react';
 import { 
     AlertTriangle, 
-    CheckCircle2, 
     ClipboardList, 
-    FileText, 
     TrendingDown, 
     ArrowDownLeft, 
     ArrowUpRight, 
@@ -13,6 +9,7 @@ import {
     Database 
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface DashboardProps {
     stats: {

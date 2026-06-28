@@ -1,9 +1,8 @@
-import AppLayout from '@/layouts/app-layout';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Head, Link, setLayoutProps } from '@inertiajs/react';
-import { ArrowLeft, Clock, ShoppingCart, UserCheck, ShieldAlert } from 'lucide-react';
+import { ArrowLeft, Clock, ShieldAlert } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface Transaction {
     id: number;

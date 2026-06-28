@@ -1,16 +1,15 @@
-import AppLayout from '@/layouts/app-layout';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
 import { Head, useForm, usePage, setLayoutProps, InfiniteScroll } from '@inertiajs/react';
 import { 
     HelpCircle, Phone, Mail, FileText, PlusCircle, CheckCircle2, 
-    Clock, AlertTriangle, User, Calendar, MessageSquare, Shield,
+    Clock, AlertTriangle, MessageSquare, Shield,
     UserCheck, ChevronDown, Check, ArrowRight, Loader2
 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import InputError from '@/components/input-error';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
 import { store as helpdeskStore, update as helpdeskUpdate } from '@/routes/helpdesk';
 
 // FAQ list
@@ -78,8 +77,12 @@ interface Props {
 }
 
 const isImage = (path: string | null) => {
-    if (!path) return false;
+    if (!path) {
+return false;
+}
+
     const ext = path.split('.').pop()?.toLowerCase();
+
     return ['jpeg', 'jpg', 'png', 'gif'].includes(ext || '');
 };
 
@@ -141,7 +144,10 @@ export default function HelpdeskIndex({ tickets, isAdmin }: Props) {
 
     const handleUpdateTicket = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!selectedTicket) return;
+
+        if (!selectedTicket) {
+return;
+}
 
         patchTicket(helpdeskUpdate.url(selectedTicket.id), {
             preserveScroll: true,
@@ -200,20 +206,26 @@ export default function HelpdeskIndex({ tickets, isAdmin }: Props) {
                 {/* Custom Tabs Navigation */}
                 <div className="flex border-b border-border gap-2">
                     <button 
-                        onClick={() => { setActiveTab('support'); setSelectedTicket(null); }}
+                        onClick={() => {
+ setActiveTab('support'); setSelectedTicket(null); 
+}}
                         className={`px-4 py-2 text-sm font-semibold border-b-2 -mb-[2px] transition-all duration-150 ${activeTab === 'support' ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
                     >
                         Guides & Contacts
                     </button>
                     <button 
-                        onClick={() => { setActiveTab('tickets'); setSelectedTicket(null); }}
+                        onClick={() => {
+ setActiveTab('tickets'); setSelectedTicket(null); 
+}}
                         className={`px-4 py-2 text-sm font-semibold border-b-2 -mb-[2px] transition-all duration-150 ${activeTab === 'tickets' ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
                     >
                         My Tickets ({isAdmin ? 'Self' : (tickets.meta?.total ?? tickets.data.length)})
                     </button>
                     {isAdmin && (
                         <button 
-                            onClick={() => { setActiveTab('admin'); setSelectedTicket(null); }}
+                            onClick={() => {
+ setActiveTab('admin'); setSelectedTicket(null); 
+}}
                             className={`px-4 py-2 text-sm font-semibold border-b-2 -mb-[2px] transition-all duration-150 ${activeTab === 'admin' ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
                         >
                             Manage Tickets Registry ({tickets.meta?.total ?? tickets.data.length})

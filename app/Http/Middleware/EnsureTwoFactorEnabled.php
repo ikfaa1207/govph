@@ -25,10 +25,17 @@ class EnsureTwoFactorEnabled
             $hasTwoFactor = $user->two_factor_secret !== null;
             if (config('fortify.features') && in_array('two-factor-authentication', config('fortify.features'))) {
                 // If 2FA confirmation is required, ensure two_factor_confirmed_at is set
-                $twoFactorFeature = collect(config('fortify.features'))->first(function ($feature) {
-                    return is_array($feature) && isset($feature['confirm']);
-                });
-                if ($twoFactorFeature && ($twoFactorFeature['confirm'] ?? false)) {
+                $features = config('fortify.features');
+                $twoFactorFeature = null;
+                if (is_array($features)) {
+                    foreach ($features as $feature) {
+                        if (is_array($feature) && isset($feature['confirm'])) {
+                            $twoFactorFeature = $feature;
+                            break;
+                        }
+                    }
+                }
+                if ($twoFactorFeature && $twoFactorFeature['confirm']) {
                     $hasTwoFactor = $user->two_factor_confirmed_at !== null;
                 }
             }

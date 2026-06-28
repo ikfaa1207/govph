@@ -45,11 +45,10 @@ class AppServiceProvider extends ServiceProvider
                 if (str_contains($ability, '.')) {
                     $allowed = $user->hasPermissionTo($ability);
 
-                    // Log unauthorized access attempts
                     if (!$allowed) {
                         \App\Services\Audit\AuditLogger::logUnauthorized(
                             $ability,
-                            explode('.', $ability)[0] ?? null,
+                            explode('.', $ability)[0],
                         );
                     }
 

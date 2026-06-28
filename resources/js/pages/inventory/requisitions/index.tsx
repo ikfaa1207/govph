@@ -1,14 +1,13 @@
-import AppLayout from '@/layouts/app-layout';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Head, useForm, setLayoutProps } from '@inertiajs/react';
-import { PlusCircle, Check, X, ClipboardCheck, Package2, ShieldAlert, Printer } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { PlusCircle, X, ClipboardCheck, Package2, ShieldAlert, Printer } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 interface RequisitionItem {
     id: number;
@@ -60,7 +59,7 @@ interface RequisitionIndexProps {
     };
 }
 
-export default function RequisitionsIndex({ requisitions, items, currentEmployee, auth }: RequisitionIndexProps) {
+export default function RequisitionsIndex({ requisitions, items, auth }: RequisitionIndexProps) {
     const breadcrumbs = [{ title: 'Requisitions (RIS)', href: '/inventory/requisitions' }];
     setLayoutProps({ breadcrumbs });
     const userRole = auth.user.role;
@@ -121,7 +120,11 @@ export default function RequisitionsIndex({ requisitions, items, currentEmployee
 
     const handleApproveSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!selectedReq) return;
+
+        if (!selectedReq) {
+return;
+}
+
         approveForm.post(`/inventory/requisitions/${selectedReq.id}/approve`, {
             onSuccess: () => {
                 setIsApproveOpen(false);
@@ -144,19 +147,25 @@ export default function RequisitionsIndex({ requisitions, items, currentEmployee
 
     const handleIssueSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!selectedReq) return;
+
+        if (!selectedReq) {
+return;
+}
         
         // Double check stock availability
         let stockOk = true;
         issueForm.data.items.forEach(issueItem => {
             const dbItem = selectedReq.items.find(i => i.id === issueItem.id);
+
             if (dbItem && dbItem.item.current_stock < issueItem.quantity_issued) {
                 stockOk = false;
                 toast.error(`Insufficient stock for item: ${dbItem.item.name}. Available: ${dbItem.item.current_stock}`);
             }
         });
 
-        if (!stockOk) return;
+        if (!stockOk) {
+return;
+}
 
         issueForm.post(`/inventory/requisitions/${selectedReq.id}/issue`, {
             onSuccess: () => {
@@ -363,8 +372,9 @@ export default function RequisitionsIndex({ requisitions, items, currentEmployee
                         {selectedReq && (
                             <form onSubmit={handleApproveSubmit} className="space-y-4">
                                 <div className="space-y-3">
-                                    {selectedReq.items.map((item, idx) => {
+                                    {selectedReq.items.map((item) => {
                                         const formItem = approveForm.data.items.find(i => i.id === item.id);
+
                                         return (
                                             <div key={item.id} className="flex justify-between items-center gap-4">
                                                 <div className="flex-1 text-sm font-semibold">{item.item.name}</div>
@@ -379,9 +389,11 @@ export default function RequisitionsIndex({ requisitions, items, currentEmployee
                                                         onChange={e => {
                                                             const newItems = [...approveForm.data.items];
                                                             const target = newItems.find(i => i.id === item.id);
+
                                                             if (target) {
                                                                 target.quantity_approved = parseInt(e.target.value);
                                                             }
+
                                                             approveForm.setData('items', newItems);
                                                         }}
                                                     />
@@ -435,9 +447,11 @@ export default function RequisitionsIndex({ requisitions, items, currentEmployee
                                                             onChange={e => {
                                                                 const newItems = [...issueForm.data.items];
                                                                 const target = newItems.find(i => i.id === item.id);
+
                                                                 if (target) {
                                                                     target.quantity_issued = parseInt(e.target.value);
                                                                 }
+
                                                                 issueForm.setData('items', newItems);
                                                             }}
                                                         />
