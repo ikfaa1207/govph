@@ -94,6 +94,7 @@ export default function HelpdeskIndex({ tickets, isAdmin }: Props) {
     const [openFaq, setOpenFaq] = useState<number | null>(null);
     const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
     const [zoomedImage, setZoomedImage] = useState<string | null>(null);
+    const [scrollKey, setScrollKey] = useState(0);
 
     // Form for ticket creation
     const { 
@@ -154,6 +155,7 @@ return;
             preserveState: true,
             onSuccess: () => {
                 setSelectedTicket(null);
+                setScrollKey(prev => prev + 1);
                 toast.success('Ticket updated successfully.');
             },
             onError: () => {
@@ -406,7 +408,7 @@ return;
                                             No support tickets submitted yet.
                                         </div>
                                     ) : (
-                                        <InfiniteScroll data="tickets" className="space-y-4">
+                                        <InfiniteScroll key={scrollKey} data="tickets" className="space-y-4">
                                             {tickets.data
                                                 .filter(t => !isAdmin || t.user_id === auth.user.id)
                                                 .map(ticket => (
@@ -493,7 +495,7 @@ return;
                                             No support tickets submitted in GIMS.
                                         </div>
                                     ) : (
-                                        <InfiniteScroll data="tickets" className="space-y-4">
+                                        <InfiniteScroll key={scrollKey} data="tickets" className="space-y-4">
                                             {tickets.data.map(ticket => (
                                                 <Card 
                                                     key={ticket.id} 
