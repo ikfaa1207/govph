@@ -144,6 +144,8 @@ export default function HelpdeskIndex({ tickets, isAdmin }: Props) {
         if (!selectedTicket) return;
 
         patchTicket(helpdeskUpdate.url(selectedTicket.id), {
+            preserveScroll: true,
+            preserveState: true,
             onSuccess: () => {
                 setSelectedTicket(null);
                 toast.success('Ticket updated successfully.');
