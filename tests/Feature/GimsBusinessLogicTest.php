@@ -5,8 +5,10 @@ use App\Models\Department;
 use App\Models\Employee;
 use App\Models\Item;
 use App\Models\Office;
+use App\Models\Permission;
 use App\Models\Property;
 use App\Models\PropertyAssignment;
+use App\Models\PropertyTransfer;
 use App\Models\Requisition;
 use App\Models\RequisitionItem;
 use App\Models\Unit;
@@ -32,7 +34,7 @@ test('moving average cost calculations are correct', function () {
         'maximum_stock' => 100,
     ]);
 
-    $valuationService = new ValuationService();
+    $valuationService = new ValuationService;
 
     // 1st Stock In: 10 units @ PHP 100 each
     $valuationService->recordStockIn($item, 10, 100.00, 'Test', 1, 'First delivery');
@@ -61,14 +63,14 @@ test('property assignment routes to PAR or ICS depending on cost threshold', fun
     // Setup foundation records
     $office = Office::create(['code' => 'O-TEST', 'name' => 'Test Office']);
     $dept = Department::create(['office_id' => $office->id, 'code' => 'D-TEST', 'name' => 'Test Dept']);
-    
+
     $custodianUser = User::create([
         'name' => 'Custodian User',
         'email' => 'custodian@example.com',
         'password' => bcrypt('password'),
-        'role' => 'property_custodian'
+        'role' => 'property_custodian',
     ]);
-    
+
     $custodian = Employee::create([
         'user_id' => $custodianUser->id,
         'employee_id' => 'EMP-CUST',
@@ -82,7 +84,7 @@ test('property assignment routes to PAR or ICS depending on cost threshold', fun
         'name' => 'Staff User',
         'email' => 'staff@example.com',
         'password' => bcrypt('password'),
-        'role' => 'employee'
+        'role' => 'employee',
     ]);
 
     $employee = Employee::create([
@@ -94,7 +96,7 @@ test('property assignment routes to PAR or ICS depending on cost threshold', fun
         'department_id' => $dept->id,
     ]);
 
-    \App\Models\Permission::create(['name' => 'property.assign', 'module' => 'property']);
+    Permission::create(['name' => 'property.assign', 'module' => 'property']);
     $custodianUser->givePermissionTo('property.assign');
 
     $category = Category::create(['name' => 'IT Equipment', 'code' => 'IT-EQP', 'is_ppe' => true]);
@@ -167,7 +169,7 @@ test('requisition and issue workflow is successful', function () {
     ]);
 
     // Initial stock in
-    $valuationService = new ValuationService();
+    $valuationService = new ValuationService;
     $valuationService->recordStockIn($item, 50, 100.00, 'Test', 1, 'Initial balance');
 
     // Users
@@ -180,9 +182,9 @@ test('requisition and issue workflow is successful', function () {
     $supplyUser = User::create(['name' => 'Supply', 'email' => 'supply@example.com', 'password' => bcrypt('password'), 'role' => 'supply_officer']);
     $supply = Employee::create(['user_id' => $supplyUser->id, 'employee_id' => 'E03', 'name' => 'Supply', 'position' => 'Supply', 'office_id' => $office->id, 'department_id' => $dept->id]);
 
-    \App\Models\Permission::create(['name' => 'request.create', 'module' => 'requisition']);
-    \App\Models\Permission::create(['name' => 'request.approve', 'module' => 'requisition']);
-    \App\Models\Permission::create(['name' => 'warehouse.issue', 'module' => 'warehouse']);
+    Permission::create(['name' => 'request.create', 'module' => 'requisition']);
+    Permission::create(['name' => 'request.approve', 'module' => 'requisition']);
+    Permission::create(['name' => 'warehouse.issue', 'module' => 'warehouse']);
 
     $employeeUser->givePermissionTo('request.create');
     $headUser->givePermissionTo('request.approve');
@@ -208,7 +210,7 @@ test('requisition and issue workflow is successful', function () {
     $this->post(route('inventory.requisitions.approve', $requisition->id), [
         'items' => [
             ['id' => $requisitionItem->id, 'quantity_approved' => 8],
-        ]
+        ],
     ])->assertRedirect();
 
     $requisition->refresh();
@@ -222,7 +224,7 @@ test('requisition and issue workflow is successful', function () {
     $this->post(route('inventory.requisitions.issue', $requisition->id), [
         'items' => [
             ['id' => $requisitionItem->id, 'quantity_issued' => 8],
-        ]
+        ],
     ])->assertRedirect();
 
     $requisition->refresh();
@@ -236,14 +238,14 @@ test('property assignment supports non-system/external user accountabilities', f
     // Setup foundation records
     $office = Office::create(['code' => 'O-TEST-EXT', 'name' => 'Test External Office']);
     $dept = Department::create(['office_id' => $office->id, 'code' => 'D-TEST-EXT', 'name' => 'Test External Dept']);
-    
+
     $custodianUser = User::create([
         'name' => 'Custodian User',
         'email' => 'custodian.ext@example.com',
         'password' => bcrypt('password'),
-        'role' => 'property_custodian'
+        'role' => 'property_custodian',
     ]);
-    
+
     $custodian = Employee::create([
         'user_id' => $custodianUser->id,
         'employee_id' => 'EMP-CUST-EXT',
@@ -253,7 +255,7 @@ test('property assignment supports non-system/external user accountabilities', f
         'department_id' => $dept->id,
     ]);
 
-    \App\Models\Permission::create(['name' => 'property.assign', 'module' => 'property']);
+    Permission::create(['name' => 'property.assign', 'module' => 'property']);
     $custodianUser->givePermissionTo('property.assign');
 
     $category = Category::create(['name' => 'IT Equipment', 'code' => 'IT-EQP-EXT', 'is_ppe' => true]);
@@ -285,4 +287,97 @@ test('property assignment supports non-system/external user accountabilities', f
     expect($assignment->assigned_to)->toBeNull();
     expect($assignment->non_system_name)->toBe('Pedro Penduko');
     expect($assignment->non_system_department)->toBe('Third-party Auditing Firm');
+});
+
+test('property assigned to a non-system user can be transferred to a system employee', function () {
+    $office = Office::create(['code' => 'O-TEST-TR', 'name' => 'Test Office']);
+    $dept = Department::create(['office_id' => $office->id, 'code' => 'D-TEST-TR', 'name' => 'Test Dept']);
+
+    $custodianUser = User::create([
+        'name' => 'Custodian User',
+        'email' => 'custodian.tr@example.com',
+        'password' => bcrypt('password'),
+        'role' => 'property_custodian',
+    ]);
+
+    $custodian = Employee::create([
+        'user_id' => $custodianUser->id,
+        'employee_id' => 'EMP-CUST-TR',
+        'name' => 'Custodian User',
+        'position' => 'Custodian',
+        'office_id' => $office->id,
+        'department_id' => $dept->id,
+    ]);
+
+    $toEmployeeUser = User::create([
+        'name' => 'Recipient User',
+        'email' => 'recipient.tr@example.com',
+        'password' => bcrypt('password'),
+        'role' => 'employee',
+    ]);
+
+    $toEmployee = Employee::create([
+        'user_id' => $toEmployeeUser->id,
+        'employee_id' => 'EMP-RECIP-TR',
+        'name' => 'Recipient User',
+        'position' => 'Staff',
+        'office_id' => $office->id,
+        'department_id' => $dept->id,
+    ]);
+
+    Permission::create(['name' => 'property.assign', 'module' => 'property']);
+    Permission::create(['name' => 'property.transfer', 'module' => 'property']);
+    $custodianUser->givePermissionTo('property.assign');
+    $custodianUser->givePermissionTo('property.transfer');
+
+    $category = Category::create(['name' => 'IT Equipment', 'code' => 'IT-EQP-TR', 'is_ppe' => true]);
+
+    $ppe = Property::create([
+        'property_number' => 'PPE-TR-01',
+        'serial_number' => 'SN-TR-01',
+        'model' => 'L340 Laptop',
+        'brand' => 'Lenovo',
+        'unit_cost' => 55000.00,
+        'date_acquired' => now()->toDateString(),
+        'category_id' => $category->id,
+        'condition' => 'new',
+        'status' => 'available',
+    ]);
+
+    $this->actingAs($custodianUser);
+
+    // 1. Assign to a non-system external user first
+    $this->post(route('inventory.properties.assign', $ppe->id), [
+        'is_non_system' => true,
+        'non_system_name' => 'Pedro Penduko',
+        'non_system_department' => 'Third-party Auditing Firm',
+        'remarks' => 'Contractor unit assignment.',
+    ])->assertRedirect();
+
+    $ppe->refresh();
+    expect($ppe->status)->toBe('assigned');
+
+    // 2. Transfer from the non-system user to a system employee
+    $this->post(route('inventory.properties.transfer', $ppe->id), [
+        'to_employee_id' => $toEmployee->id,
+        'office_id' => $office->id,
+        'reason' => 'Transferring to regular employee.',
+    ])->assertRedirect();
+
+    $ppe->refresh();
+    expect($ppe->status)->toBe('transferred');
+
+    // 3. Verify transfer record
+    $transfer = PropertyTransfer::where('property_id', $ppe->id)->first();
+    expect($transfer)->not->toBeNull();
+    expect($transfer->from_employee_id)->toBeNull();
+    expect($transfer->to_employee_id)->toBe($toEmployee->id);
+
+    // 4. Verify new assignment
+    $newAssignment = PropertyAssignment::where('property_id', $ppe->id)
+        ->whereNull('returned_date')
+        ->first();
+    expect($newAssignment)->not->toBeNull();
+    expect($newAssignment->assigned_to)->toBe($toEmployee->id);
+    expect($newAssignment->remarks)->toContain('Transferred from Pedro Penduko (Third-party Auditing Firm)');
 });

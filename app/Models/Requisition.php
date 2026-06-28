@@ -15,7 +15,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'status',
     'department_head_id',
     'approved_at',
-    'remarks'
+    'remarks',
 ])]
 class Requisition extends Model
 {
@@ -59,5 +59,15 @@ class Requisition extends Model
     public function items(): HasMany
     {
         return $this->hasMany(RequisitionItem::class);
+    }
+
+    /**
+     * Get the issuances for this requisition.
+     *
+     * @return HasMany<Issuance, $this>
+     */
+    public function issuances(): HasMany
+    {
+        return $this->hasMany(Issuance::class);
     }
 }

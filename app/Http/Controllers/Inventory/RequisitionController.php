@@ -36,7 +36,7 @@ class RequisitionController extends Controller
         $query = Requisition::with(['requester.department', 'departmentHead', 'items.item.unit']);
 
         // Data Scope Restrictions
-        if (!$user->hasPermissionTo('warehouse.issue') && !$user->hasPermissionTo('audit.view')) {
+        if (! $user->hasPermissionTo('warehouse.issue') && ! $user->hasPermissionTo('audit.view')) {
             if ($user->hasPermissionTo('request.approve') && $employee) {
                 // Dept Head sees department requests
                 $query->where('department_id', $employee->department_id);
@@ -76,7 +76,7 @@ class RequisitionController extends Controller
         $user = Auth::user();
         $employee = Employee::where('user_id', $user->id)->first();
 
-        if (!$employee) {
+        if (! $employee) {
             return redirect()->back()->withErrors(['error' => 'You must have an employee profile to file requisitions.']);
         }
 
@@ -89,7 +89,7 @@ class RequisitionController extends Controller
 
         DB::transaction(function () use ($request, $employee) {
             $requisition = Requisition::create([
-                'ris_number' => 'RIS-' . date('Ymd') . '-' . strtoupper(uniqid()),
+                'ris_number' => 'RIS-'.date('Ymd').'-'.strtoupper(uniqid()),
                 'requesting_employee_id' => $employee->id,
                 'department_id' => $employee->department_id,
                 'status' => 'pending_dept_head',
@@ -162,7 +162,7 @@ class RequisitionController extends Controller
         $user = Auth::user();
         $employee = Employee::where('user_id', $user->id)->first();
 
-        if (!$employee) {
+        if (! $employee) {
             return redirect()->back()->withErrors(['error' => 'You must have an employee profile to issue items.']);
         }
 
@@ -176,7 +176,7 @@ class RequisitionController extends Controller
             // Create issuance record
             $issuance = Issuance::create([
                 'requisition_id' => $requisition->id,
-                'issue_number' => 'ISSUE-' . date('Ymd') . '-' . strtoupper(uniqid()),
+                'issue_number' => 'ISSUE-'.date('Ymd').'-'.strtoupper(uniqid()),
                 'issued_date' => now()->toDateString(),
                 'issued_by' => $employee->id,
                 'received_by' => $requisition->requesting_employee_id,
@@ -230,5 +230,43 @@ class RequisitionController extends Controller
         });
 
         return redirect()->back()->with('success', 'Items issued successfully.');
+    }
+
+    /**
+     * Print requisition (RIS form).
+     */
+    public function print(Request $request, Requisition $requisition): Response
+    {
+        Gate::authorize('inventory.view');
+
+        $user = Auth::user();
+        $employee = Employee::where('user_id', $user->id)->first();
+
+        // Data Scope Restrictions
+        if (! $user->hasPermissionTo('warehouse.issue') && ! $user->hasPermissionTo('audit.view')) {
+            if ($user->hasPermissionTo('request.approve') && $employee) {
+                if ($requisition->department_id !== $employee->department_id) {
+                    abort(403, 'Unauthorized.');
+                }
+            } elseif ($employee) {
+                if ($requisition->requesting_employee_id !== $employee->id) {
+                    abort(403, 'Unauthorized.');
+                }
+            } else {
+                abort(403, 'Unauthorized.');
+            }
+        }
+
+        $requisition->load([
+            'requester.department.office',
+            'departmentHead',
+            'items.item.unit',
+            'issuances.issuer',
+            'issuances.receiver',
+        ]);
+
+        return Inertia::render('inventory/requisitions/print', [
+            'requisition' => $requisition,
+        ]);
     }
 }

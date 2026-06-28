@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Head, useForm, setLayoutProps } from '@inertiajs/react';
-import { PlusCircle, Check, X, ClipboardCheck, Package2, ShieldAlert } from 'lucide-react';
+import { PlusCircle, Check, X, ClipboardCheck, Package2, ShieldAlert, Printer } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useState } from 'react';
@@ -292,6 +292,12 @@ export default function RequisitionsIndex({ requisitions, items, currentEmployee
 
                                     {/* Action Buttons depending on role and status */}
                                     <div className="flex items-center gap-2">
+                                        <Button asChild variant="outline" size="sm" className="gap-1">
+                                            <a href={`/inventory/requisitions/${req.id}/print`} target="_blank" rel="noopener noreferrer">
+                                                <Printer className="h-4 w-4" />
+                                                Print RIS
+                                            </a>
+                                        </Button>
                                         {userRole === 'dept_head' && req.status === 'pending_dept_head' && (
                                             <Button size="sm" className="gap-1 bg-indigo-600 hover:bg-indigo-700" onClick={() => openApproveDialog(req)}>
                                                 <ClipboardCheck className="h-4 w-4" />

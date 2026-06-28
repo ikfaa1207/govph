@@ -77,7 +77,7 @@ class PropertyController extends Controller
         ]);
 
         // Auto generate property number
-        $validated['property_number'] = 'PPE-' . date('Y') . '-' . strtoupper(uniqid());
+        $validated['property_number'] = 'PPE-'.date('Y').'-'.strtoupper(uniqid());
         $validated['condition'] = 'new';
         $validated['status'] = 'available';
 
@@ -98,7 +98,7 @@ class PropertyController extends Controller
         $user = Auth::user();
         $custodian = Employee::where('user_id', $user->id)->first();
 
-        if (!$custodian) {
+        if (! $custodian) {
             return redirect()->back()->withErrors(['error' => 'Property Custodian employee profile not found.']);
         }
 
@@ -114,9 +114,9 @@ class PropertyController extends Controller
             // Capitalization threshold routing (PHP 50,000)
             $threshold = 50000.00;
             $isPpe = (float) $property->unit_cost >= $threshold;
-            
+
             $docType = $isPpe ? 'PAR' : 'ICS';
-            $docNo = $docType . '-' . date('Y') . '-' . strtoupper(uniqid());
+            $docNo = $docType.'-'.date('Y').'-'.strtoupper(uniqid());
 
             $isNonSystem = $request->boolean('is_non_system');
 
@@ -159,7 +159,7 @@ class PropertyController extends Controller
         $user = Auth::user();
         $custodian = Employee::where('user_id', $user->id)->first();
 
-        if (!$custodian) {
+        if (! $custodian) {
             return redirect()->back()->withErrors(['error' => 'Property Custodian employee profile not found.']);
         }
 
@@ -170,7 +170,7 @@ class PropertyController extends Controller
         ]);
 
         $activeAssignment = $property->activeAssignment;
-        if (!$activeAssignment) {
+        if (! $activeAssignment) {
             return redirect()->back()->withErrors(['error' => 'Property has no active custodian to transfer from.']);
         }
 
@@ -183,7 +183,7 @@ class PropertyController extends Controller
             // Create transfer record (PTR)
             $transfer = PropertyTransfer::create([
                 'property_id' => $property->id,
-                'ptr_number' => 'PTR-' . date('Y') . '-' . strtoupper(uniqid()),
+                'ptr_number' => 'PTR-'.date('Y').'-'.strtoupper(uniqid()),
                 'transfer_date' => now()->toDateString(),
                 'from_employee_id' => $activeAssignment->assigned_to,
                 'to_employee_id' => $request->input('to_employee_id'),
@@ -197,7 +197,11 @@ class PropertyController extends Controller
             $threshold = 50000.00;
             $isPpe = (float) $property->unit_cost >= $threshold;
             $docType = $isPpe ? 'PAR' : 'ICS';
-            $docNo = $docType . '-' . date('Y') . '-' . strtoupper(uniqid());
+            $docNo = $docType.'-'.date('Y').'-'.strtoupper(uniqid());
+
+            $fromName = $activeAssignment->assigned_to
+                ? "Employee ID {$activeAssignment->assigned_to}"
+                : "{$activeAssignment->non_system_name} ({$activeAssignment->non_system_department})";
 
             PropertyAssignment::create([
                 'property_id' => $property->id,
@@ -206,7 +210,7 @@ class PropertyController extends Controller
                 'document_number' => $docNo,
                 'assigned_by' => $custodian->id,
                 'date_assigned' => now()->toDateString(),
-                'remarks' => "Transferred from Employee ID {$activeAssignment->assigned_to}. PTR Reference: {$transfer->ptr_number}",
+                'remarks' => "Transferred from {$fromName}. PTR Reference: {$transfer->ptr_number}",
             ]);
 
             // Update property status
@@ -229,7 +233,7 @@ class PropertyController extends Controller
         $user = Auth::user();
         $custodian = Employee::where('user_id', $user->id)->first();
 
-        if (!$custodian) {
+        if (! $custodian) {
             return redirect()->back()->withErrors(['error' => 'Property Custodian employee profile not found.']);
         }
 
@@ -251,7 +255,7 @@ class PropertyController extends Controller
             // Create disposal (IIRUP) record
             $disposal = Disposal::create([
                 'property_id' => $property->id,
-                'disposal_number' => 'IIRUP-' . date('Y') . '-' . strtoupper(uniqid()),
+                'disposal_number' => 'IIRUP-'.date('Y').'-'.strtoupper(uniqid()),
                 'disposal_method' => $request->input('disposal_method'),
                 'reason' => $request->input('reason'),
                 'disposal_date' => now()->toDateString(),
