@@ -162,10 +162,12 @@ export default function ItemsIndex({ items, categories: initialCategories, units
                             <DialogContent 
                                 className="max-w-md max-h-[85vh] overflow-y-auto"
                                 onPointerDownOutside={(e) => {
-                                    // Prevent closing the parent modal if clicking inside/on the inline sub-modals
-                                    if (isAddCategoryOpen || isAddLocationOpen) {
-                                        e.preventDefault();
-                                    }
+                                    // Prevent closing on clicking outside the parent dialog
+                                    e.preventDefault();
+                                }}
+                                onInteractOutside={(e) => {
+                                    // Prevent interaction outside from closing the parent dialog
+                                    e.preventDefault();
                                 }}
                                 onEscapeKeyDown={(e) => {
                                     // Prevent escape key from closing the parent if a sub-modal is open
