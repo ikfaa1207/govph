@@ -141,7 +141,18 @@ export default function ItemsIndex({ items, categories: initialCategories, units
 
                     <div className="flex items-center gap-2">
                         {/* Add Item Dialog */}
-                        <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+                        <Dialog 
+                            open={isAddOpen} 
+                            onOpenChange={(open) => {
+                                if (!open) {
+                                    if (!isAddCategoryOpen && !isAddLocationOpen) {
+                                        setIsAddOpen(false);
+                                    }
+                                } else {
+                                    setIsAddOpen(true);
+                                }
+                            }}
+                        >
                             <DialogTrigger asChild>
                                 <Button className="gap-2">
                                     <PlusCircle className="h-4 w-4" />
