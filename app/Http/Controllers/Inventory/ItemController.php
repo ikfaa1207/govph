@@ -1,0 +1,156 @@
+<?php
+
+namespace App\Http\Controllers\Inventory;
+
+use App\Http\Controllers\Controller;
+use App\Models\Category;
+use App\Models\Item;
+use App\Models\Location;
+use App\Models\Unit;
+use App\Services\Audit\AuditLogger;
+use App\Services\Valuation\ValuationService;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
+use Inertia\Inertia;
+use Inertia\Response;
+
+class ItemController extends Controller
+{
+    public function __construct(protected ValuationService $valuationService) {}
+
+    /**
+     * Display a listing of items.
+     */
+    public function index(Request $request): Response
+    {
+        Gate::authorize('inventory.view');
+
+        $query = Item::with(['category', 'unit', 'location.warehouse']);
+
+        // Search filtering
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('item_code', 'like', "%{$search}%")
+                    ->orWhere('stock_number', 'like', "%{$search}%")
+                    ->orWhere('barcode', 'like', "%{$search}%");
+            });
+        }
+
+        // Category filter
+        if ($request->filled('category_id')) {
+            $query->where('category_id', $request->input('category_id'));
+        }
+
+        $items = $query->orderBy('id', 'desc')->get()->map(function ($item) {
+            return [
+                'id' => $item->id,
+                'item_code' => $item->item_code,
+                'stock_number' => $item->stock_number,
+                'name' => $item->name,
+                'description' => $item->description,
+                'category' => $item->category,
+                'unit' => $item->unit,
+                'unit_cost' => $item->unit_cost,
+                'current_stock' => $item->current_stock,
+                'reorder_level' => $item->reorder_level,
+                'status' => $item->status,
+                'location' => $item->location ? $item->location->warehouse->name . ' - ' . $item->location->code : 'None',
+            ];
+        });
+
+        return Inertia::render('inventory/items/index', [
+            'items' => $items,
+            'categories' => Category::all(),
+            'units' => Unit::all(),
+            'locations' => Location::with('warehouse')->get(),
+            'filters' => $request->only(['search', 'category_id']),
+        ]);
+    }
+
+    /**
+     * Store a newly created item in database.
+     */
+    public function store(Request $request): RedirectResponse
+    {
+        Gate::authorize('inventory.create');
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string'],
+            'category_id' => ['required', 'exists:categories,id'],
+            'unit_id' => ['required', 'exists:units,id'],
+            'reorder_level' => ['required', 'integer', 'min:0'],
+            'maximum_stock' => ['required', 'integer', 'min:0'],
+            'location_id' => ['nullable', 'exists:locations,id'],
+            'stock_number' => ['nullable', 'string', 'unique:items,stock_number'],
+            'barcode' => ['nullable', 'string', 'unique:items,barcode'],
+            'expiration_date' => ['nullable', 'date'],
+        ]);
+
+        // Auto-generate code
+        $validated['item_code'] = 'ITEM-' . strtoupper(uniqid());
+        $validated['unit_cost'] = 0.00;
+        $validated['status'] = 'active';
+
+        $item = Item::create($validated);
+
+        // Audit log
+        AuditLogger::log('CREATE_ITEM', $item, null, $item->toArray());
+
+        return redirect()->back()->with('success', 'Item created successfully.');
+    }
+
+    /**
+     * Show detail details of a single item and its stock transactions card ledger.
+     */
+    public function show(Item $item): Response
+    {
+        Gate::authorize('inventory.view');
+
+        $item->load(['category', 'unit', 'location.warehouse']);
+        
+        $transactions = $item->stockTransactions()
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($tx) {
+                // Resolve reference human representation
+                $refLabel = 'Manual Entry';
+                if ($tx->reference_type === \App\Models\ReceivingReport::class) {
+                    $refLabel = 'Receiving Report #' . ($tx->reference?->iar_number ?? $tx->reference_id);
+                } elseif ($tx->reference_type === \App\Models\Issuance::class) {
+                    $refLabel = 'Issuance Slip #' . ($tx->reference?->issue_number ?? $tx->reference_id);
+                }
+
+                return [
+                    'id' => $tx->id,
+                    'transaction_type' => $tx->transaction_type,
+                    'quantity' => $tx->quantity,
+                    'unit_cost' => $tx->unit_cost,
+                    'reference' => $refLabel,
+                    'remarks' => $tx->remarks,
+                    'date' => $tx->created_at->format('Y-m-d H:i'),
+                ];
+            });
+
+        return Inertia::render('inventory/items/show', [
+            'item' => [
+                'id' => $item->id,
+                'item_code' => $item->item_code,
+                'stock_number' => $item->stock_number,
+                'name' => $item->name,
+                'description' => $item->description,
+                'category' => $item->category,
+                'unit' => $item->unit,
+                'unit_cost' => $item->unit_cost,
+                'current_stock' => $item->current_stock,
+                'reorder_level' => $item->reorder_level,
+                'status' => $item->status,
+                'location' => $item->location ? $item->location->warehouse->name . ' - ' . $item->location->code : 'None',
+            ],
+            'transactions' => $transactions,
+        ]);
+    }
+}

@@ -1,0 +1,55 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
+#[Fillable(['user_id', 'employee_id', 'name', 'position', 'office_id', 'department_id'])]
+class Employee extends Model
+{
+    use HasFactory;
+
+    /**
+     * Get the user account associated with this employee.
+     *
+     * @return BelongsTo<User, $this>
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Get the office that this employee belongs to.
+     *
+     * @return BelongsTo<Office, $this>
+     */
+    public function office(): BelongsTo
+    {
+        return $this->belongsTo(Office::class);
+    }
+
+    /**
+     * Get the department that this employee belongs to.
+     *
+     * @return BelongsTo<Department, $this>
+     */
+    public function department(): BelongsTo
+    {
+        return $this->belongsTo(Department::class);
+    }
+
+    /**
+     * Get property assignments (accountabilities) assigned to this employee.
+     *
+     * @return HasMany<PropertyAssignment, $this>
+     */
+    public function propertyAssignments(): HasMany
+    {
+        return $this->hasMany(PropertyAssignment::class, 'assigned_to');
+    }
+}
