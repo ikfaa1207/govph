@@ -37,7 +37,7 @@ interface ItemsIndexProps {
     };
 }
 
-export default function ItemsIndex({ items, categories: initialCategories, units, locations: initialLocations, warehouses, filters }: ItemsIndexProps) {
+export default function ItemsIndex({ items, categories: initialCategories, units, locations: initialLocations, warehouses: initialWarehouses, filters }: ItemsIndexProps) {
     const breadcrumbs = [{ title: 'Supplies Catalog', href: '/inventory/items' }];
     setLayoutProps({ breadcrumbs });
     const [isAddOpen, setIsAddOpen] = useState(false);
@@ -45,8 +45,10 @@ export default function ItemsIndex({ items, categories: initialCategories, units
 
     const [categories, setCategories] = useState(initialCategories);
     const [locations, setLocations] = useState(initialLocations);
+    const [warehouses, setWarehouses] = useState(initialWarehouses);
     const [isAddCategoryOpen, setIsAddCategoryOpen] = useState(false);
     const [isAddLocationOpen, setIsAddLocationOpen] = useState(false);
+    const [isAddWarehouseOpen, setIsAddWarehouseOpen] = useState(false);
 
     const { data, setData, post, processing, errors, reset } = useForm({
         name: '',
@@ -71,6 +73,11 @@ export default function ItemsIndex({ items, categories: initialCategories, units
         warehouse_id: warehouses.length > 0 ? String(warehouses[0].id) : '',
         code: '',
         description: '',
+    });
+
+    const warehouseHttp = useHttp({
+        name: '',
+        address: '',
     });
 
     const handleCategorySubmit = (e: React.FormEvent) => {
@@ -101,6 +108,22 @@ export default function ItemsIndex({ items, categories: initialCategories, units
             },
             onError: () => {
                 toast.error('Failed to create storage location. Check unique constraints.');
+            }
+        });
+    };
+
+    const handleWarehouseSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        warehouseHttp.post('/inventory/warehouses', {
+            onSuccess: (newWarehouse: any) => {
+                setWarehouses([...warehouses, newWarehouse]);
+                locationHttp.setData('warehouse_id', String(newWarehouse.id));
+                setIsAddWarehouseOpen(false);
+                warehouseHttp.reset();
+                toast.success('Warehouse created successfully.');
+            },
+            onError: () => {
+                toast.error('Failed to create warehouse. Check unique constraints.');
             }
         });
     };
@@ -331,8 +354,36 @@ export default function ItemsIndex({ items, categories: initialCategories, units
                         </Dialog>
 
                         {/* Inline Location Creation Dialog */}
-                        <Dialog open={isAddLocationOpen} onOpenChange={setIsAddLocationOpen}>
-                            <DialogContent className="max-w-sm">
+                        <Dialog 
+                            open={isAddLocationOpen} 
+                            onOpenChange={(open) => {
+                                if (!open) {
+                                    if (!isAddWarehouseOpen) {
+                                        setIsAddLocationOpen(false);
+                                    }
+                                } else {
+                                    setIsAddLocationOpen(true);
+                                }
+                            }}
+                        >
+                            <DialogContent 
+                                className="max-w-sm"
+                                onPointerDownOutside={(e) => {
+                                    if (isAddWarehouseOpen) {
+                                        e.preventDefault();
+                                    }
+                                }}
+                                onInteractOutside={(e) => {
+                                    if (isAddWarehouseOpen) {
+                                        e.preventDefault();
+                                    }
+                                }}
+                                onEscapeKeyDown={(e) => {
+                                    if (isAddWarehouseOpen) {
+                                        e.preventDefault();
+                                    }
+                                }}
+                            >
                                 <DialogHeader>
                                     <DialogTitle>Add Storage Location</DialogTitle>
                                     <DialogDescription>Define a new shelf or storage section.</DialogDescription>
@@ -340,16 +391,28 @@ export default function ItemsIndex({ items, categories: initialCategories, units
                                 <form onSubmit={handleLocationSubmit} className="space-y-4">
                                     <div className="space-y-1">
                                         <Label htmlFor="loc_warehouse">Warehouse *</Label>
-                                        <select 
-                                            id="loc_warehouse" 
-                                            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-hidden"
-                                            value={locationHttp.data.warehouse_id} 
-                                            onChange={e => locationHttp.setData('warehouse_id', e.target.value)}
-                                            required
-                                        >
-                                            <option value="">Select Warehouse</option>
-                                            {warehouses.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
-                                        </select>
+                                        <div className="flex gap-1.5">
+                                            <select 
+                                                id="loc_warehouse" 
+                                                className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-hidden"
+                                                value={locationHttp.data.warehouse_id} 
+                                                onChange={e => locationHttp.setData('warehouse_id', e.target.value)}
+                                                required
+                                            >
+                                                <option value="">Select Warehouse</option>
+                                                {warehouses.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
+                                            </select>
+                                            <Button 
+                                                type="button" 
+                                                variant="outline" 
+                                                size="icon" 
+                                                className="h-9 w-9 shrink-0"
+                                                onClick={() => setIsAddWarehouseOpen(true)}
+                                                title="Add New Warehouse"
+                                            >
+                                                <Plus className="h-4 w-4" />
+                                            </Button>
+                                        </div>
                                     </div>
                                     <div className="space-y-1">
                                         <Label htmlFor="loc_code">Shelf/Location Code *</Label>
@@ -374,6 +437,41 @@ export default function ItemsIndex({ items, categories: initialCategories, units
                                     <div className="flex justify-end gap-2 pt-2">
                                         <Button type="button" variant="outline" onClick={() => setIsAddLocationOpen(false)}>Cancel</Button>
                                         <Button type="submit" disabled={locationHttp.processing}>Save Location</Button>
+                                    </div>
+                                </form>
+                            </DialogContent>
+                        </Dialog>
+
+                        {/* Inline Warehouse Creation Dialog */}
+                        <Dialog open={isAddWarehouseOpen} onOpenChange={setIsAddWarehouseOpen}>
+                            <DialogContent className="max-w-sm">
+                                <DialogHeader>
+                                    <DialogTitle>Add New Warehouse</DialogTitle>
+                                    <DialogDescription>Create a new warehouse for location assignment.</DialogDescription>
+                                </DialogHeader>
+                                <form onSubmit={handleWarehouseSubmit} className="space-y-4">
+                                    <div className="space-y-1">
+                                        <Label htmlFor="wh_name">Warehouse Name *</Label>
+                                        <Input 
+                                            id="wh_name" 
+                                            value={warehouseHttp.data.name} 
+                                            onChange={e => warehouseHttp.setData('name', e.target.value)} 
+                                            required 
+                                        />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <Label htmlFor="wh_address">Address</Label>
+                                        <textarea 
+                                            id="wh_address" 
+                                            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-hidden"
+                                            placeholder="e.g. Building B, Main Campus"
+                                            value={warehouseHttp.data.address} 
+                                            onChange={e => warehouseHttp.setData('address', e.target.value)} 
+                                        />
+                                    </div>
+                                    <div className="flex justify-end gap-2 pt-2">
+                                        <Button type="button" variant="outline" onClick={() => setIsAddWarehouseOpen(false)}>Cancel</Button>
+                                        <Button type="submit" disabled={warehouseHttp.processing}>Save Warehouse</Button>
                                     </div>
                                 </form>
                             </DialogContent>

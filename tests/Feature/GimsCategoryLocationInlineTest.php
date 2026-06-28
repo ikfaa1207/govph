@@ -143,3 +143,49 @@ test('location validation enforces uniqueness and required warehouse', function 
     $response->assertStatus(422);
     $response->assertJsonValidationErrors(['warehouse_id', 'code']);
 });
+
+test('authorized user can create warehouse inline', function () {
+    $this->actingAs($this->authorizedUser);
+
+    $response = $this->postJson(route('inventory.warehouses.store'), [
+        'name' => 'Warehouse Beta',
+        'address' => 'Floor 2',
+    ]);
+
+    $response->assertOk();
+    $response->assertJson([
+        'name' => 'Warehouse Beta',
+        'address' => 'Floor 2',
+    ]);
+
+    $this->assertDatabaseHas('warehouses', [
+        'name' => 'Warehouse Beta',
+        'address' => 'Floor 2',
+    ]);
+});
+
+test('unauthorized user cannot create warehouse inline', function () {
+    $this->actingAs($this->unauthorizedUser);
+
+    $response = $this->postJson(route('inventory.warehouses.store'), [
+        'name' => 'Warehouse Beta',
+        'address' => 'Floor 2',
+    ]);
+
+    $response->assertForbidden();
+    $this->assertDatabaseMissing('warehouses', ['name' => 'Warehouse Beta']);
+});
+
+test('warehouse validation enforces uniqueness and required name', function () {
+    // Seed an existing warehouse
+    Warehouse::create(['name' => 'Existing WH', 'address' => 'Floor 1']);
+
+    $this->actingAs($this->authorizedUser);
+
+    $response = $this->postJson(route('inventory.warehouses.store'), [
+        'name' => 'Existing WH',
+    ]);
+
+    $response->assertStatus(422);
+    $response->assertJsonValidationErrors(['name']);
+});

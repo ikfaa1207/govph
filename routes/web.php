@@ -9,6 +9,7 @@ use App\Http\Controllers\Inventory\LocationController;
 use App\Http\Controllers\Inventory\PropertyController;
 use App\Http\Controllers\Inventory\ReportController;
 use App\Http\Controllers\Inventory\RequisitionController;
+use App\Http\Controllers\Inventory\WarehouseController;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'welcome')->name('home');
@@ -22,6 +23,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('inventory/items/{item}', [ItemController::class, 'show'])->name('inventory.items.show');
     Route::post('inventory/categories', [CategoryController::class, 'store'])->name('inventory.categories.store');
     Route::post('inventory/locations', [LocationController::class, 'store'])->name('inventory.locations.store');
+    Route::post('inventory/warehouses', [WarehouseController::class, 'store'])->name('inventory.warehouses.store');
 
     // Requisition/RIS
     Route::get('inventory/requisitions', [RequisitionController::class, 'index'])->name('inventory.requisitions.index');
