@@ -148,7 +148,21 @@ export default function ItemsIndex({ items, categories: initialCategories, units
                                     Add Supply Item
                                 </Button>
                             </DialogTrigger>
-                            <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
+                            <DialogContent 
+                                className="max-w-md max-h-[85vh] overflow-y-auto"
+                                onPointerDownOutside={(e) => {
+                                    // Prevent closing the parent modal if clicking inside/on the inline sub-modals
+                                    if (isAddCategoryOpen || isAddLocationOpen) {
+                                        e.preventDefault();
+                                    }
+                                }}
+                                onEscapeKeyDown={(e) => {
+                                    // Prevent escape key from closing the parent if a sub-modal is open
+                                    if (isAddCategoryOpen || isAddLocationOpen) {
+                                        e.preventDefault();
+                                    }
+                                }}
+                            >
                                 <DialogHeader>
                                     <DialogTitle>Add New Supply Item</DialogTitle>
                                     <DialogDescription>Register a new supply item into the system database.</DialogDescription>
