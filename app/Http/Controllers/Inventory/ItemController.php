@@ -4,9 +4,12 @@ namespace App\Http\Controllers\Inventory;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
+use App\Models\Issuance;
 use App\Models\Item;
 use App\Models\Location;
+use App\Models\ReceivingReport;
 use App\Models\Unit;
+use App\Models\Warehouse;
 use App\Services\Audit\AuditLogger;
 use App\Services\Valuation\ValuationService;
 use Illuminate\Http\RedirectResponse;
@@ -57,7 +60,7 @@ class ItemController extends Controller
                 'current_stock' => $item->current_stock,
                 'reorder_level' => $item->reorder_level,
                 'status' => $item->status,
-                'location' => $item->location ? $item->location->warehouse->name . ' - ' . $item->location->code : 'None',
+                'location' => $item->location ? $item->location->warehouse->name.' - '.$item->location->code : 'None',
             ];
         });
 
@@ -66,6 +69,7 @@ class ItemController extends Controller
             'categories' => Category::all(),
             'units' => Unit::all(),
             'locations' => Location::with('warehouse')->get(),
+            'warehouses' => Warehouse::all(),
             'filters' => $request->only(['search', 'category_id']),
         ]);
     }
@@ -91,7 +95,7 @@ class ItemController extends Controller
         ]);
 
         // Auto-generate code
-        $validated['item_code'] = 'ITEM-' . strtoupper(uniqid());
+        $validated['item_code'] = 'ITEM-'.strtoupper(uniqid());
         $validated['unit_cost'] = 0.00;
         $validated['status'] = 'active';
 
@@ -111,17 +115,17 @@ class ItemController extends Controller
         Gate::authorize('inventory.view');
 
         $item->load(['category', 'unit', 'location.warehouse']);
-        
+
         $transactions = $item->stockTransactions()
             ->orderBy('created_at', 'desc')
             ->get()
             ->map(function ($tx) {
                 // Resolve reference human representation
                 $refLabel = 'Manual Entry';
-                if ($tx->reference_type === \App\Models\ReceivingReport::class) {
-                    $refLabel = 'Receiving Report #' . ($tx->reference?->iar_number ?? $tx->reference_id);
-                } elseif ($tx->reference_type === \App\Models\Issuance::class) {
-                    $refLabel = 'Issuance Slip #' . ($tx->reference?->issue_number ?? $tx->reference_id);
+                if ($tx->reference_type === ReceivingReport::class) {
+                    $refLabel = 'Receiving Report #'.($tx->reference?->iar_number ?? $tx->reference_id);
+                } elseif ($tx->reference_type === Issuance::class) {
+                    $refLabel = 'Issuance Slip #'.($tx->reference?->issue_number ?? $tx->reference_id);
                 }
 
                 return [
@@ -148,7 +152,7 @@ class ItemController extends Controller
                 'current_stock' => $item->current_stock,
                 'reorder_level' => $item->reorder_level,
                 'status' => $item->status,
-                'location' => $item->location ? $item->location->warehouse->name . ' - ' . $item->location->code : 'None',
+                'location' => $item->location ? $item->location->warehouse->name.' - '.$item->location->code : 'None',
             ],
             'transactions' => $transactions,
         ]);

@@ -3,8 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Head, Link, useForm, setLayoutProps } from '@inertiajs/react';
-import { PlusCircle, Search, FileSpreadsheet, Eye, AlertCircle } from 'lucide-react';
+import { Head, Link, useForm, useHttp, setLayoutProps } from '@inertiajs/react';
+import { PlusCircle, Search, FileSpreadsheet, Eye, AlertCircle, Plus } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useState } from 'react';
@@ -30,17 +30,23 @@ interface ItemsIndexProps {
     categories: any[];
     units: any[];
     locations: any[];
+    warehouses: any[];
     filters: {
         search?: string;
         category_id?: string;
     };
 }
 
-export default function ItemsIndex({ items, categories, units, locations, filters }: ItemsIndexProps) {
+export default function ItemsIndex({ items, categories: initialCategories, units, locations: initialLocations, warehouses, filters }: ItemsIndexProps) {
     const breadcrumbs = [{ title: 'Supplies Catalog', href: '/inventory/items' }];
     setLayoutProps({ breadcrumbs });
     const [isAddOpen, setIsAddOpen] = useState(false);
     const [searchVal, setSearchVal] = useState(filters.search || '');
+
+    const [categories, setCategories] = useState(initialCategories);
+    const [locations, setLocations] = useState(initialLocations);
+    const [isAddCategoryOpen, setIsAddCategoryOpen] = useState(false);
+    const [isAddLocationOpen, setIsAddLocationOpen] = useState(false);
 
     const { data, setData, post, processing, errors, reset } = useForm({
         name: '',
@@ -54,6 +60,50 @@ export default function ItemsIndex({ items, categories, units, locations, filter
         barcode: '',
         expiration_date: '',
     });
+
+    const categoryHttp = useHttp({
+        name: '',
+        code: '',
+        is_ppe: false,
+    });
+
+    const locationHttp = useHttp({
+        warehouse_id: warehouses.length > 0 ? String(warehouses[0].id) : '',
+        code: '',
+        description: '',
+    });
+
+    const handleCategorySubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        categoryHttp.post('/inventory/categories', {
+            onSuccess: (newCategory: any) => {
+                setCategories([...categories, newCategory]);
+                setData('category_id', String(newCategory.id));
+                setIsAddCategoryOpen(false);
+                categoryHttp.reset();
+                toast.success('Category created successfully.');
+            },
+            onError: () => {
+                toast.error('Failed to create category. Check unique constraints.');
+            }
+        });
+    };
+
+    const handleLocationSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        locationHttp.post('/inventory/locations', {
+            onSuccess: (newLocation: any) => {
+                setLocations([...locations, newLocation]);
+                setData('location_id', String(newLocation.id));
+                setIsAddLocationOpen(false);
+                locationHttp.reset();
+                toast.success('Storage location created successfully.');
+            },
+            onError: () => {
+                toast.error('Failed to create storage location. Check unique constraints.');
+            }
+        });
+    };
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
@@ -117,16 +167,28 @@ export default function ItemsIndex({ items, categories, units, locations, filter
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-1">
                                             <Label htmlFor="category">Category *</Label>
-                                            <select 
-                                                id="category" 
-                                                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-hidden"
-                                                value={data.category_id} 
-                                                onChange={e => setData('category_id', e.target.value)}
-                                                required
-                                            >
-                                                <option value="">Select Category</option>
-                                                {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                                            </select>
+                                            <div className="flex gap-1.5">
+                                                <select 
+                                                    id="category" 
+                                                    className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-hidden"
+                                                    value={data.category_id} 
+                                                    onChange={e => setData('category_id', e.target.value)}
+                                                    required
+                                                >
+                                                    <option value="">Select Category</option>
+                                                    {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                                </select>
+                                                <Button 
+                                                    type="button" 
+                                                    variant="outline" 
+                                                    size="icon" 
+                                                    className="h-9 w-9 shrink-0"
+                                                    onClick={() => setIsAddCategoryOpen(true)}
+                                                    title="Add New Category"
+                                                >
+                                                    <Plus className="h-4 w-4" />
+                                                </Button>
+                                            </div>
                                             {errors.category_id && <p className="text-xs text-rose-500">{errors.category_id}</p>}
                                         </div>
                                         <div className="space-y-1">
@@ -156,15 +218,31 @@ export default function ItemsIndex({ items, categories, units, locations, filter
                                     </div>
                                     <div className="space-y-1">
                                         <Label htmlFor="location">Storage Location</Label>
-                                        <select 
-                                            id="location" 
-                                            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-hidden"
-                                            value={data.location_id} 
-                                            onChange={e => setData('location_id', e.target.value)}
-                                        >
-                                            <option value="">Select Location</option>
-                                            {locations.map(l => <option key={l.id} value={l.id}>{l.warehouse.name} - {l.code}</option>)}
-                                        </select>
+                                        <div className="flex gap-1.5">
+                                            <select 
+                                                id="location" 
+                                                className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-hidden"
+                                                value={data.location_id} 
+                                                onChange={e => setData('location_id', e.target.value)}
+                                            >
+                                                <option value="">Select Location</option>
+                                                {locations.map(l => (
+                                                    <option key={l.id} value={l.id}>
+                                                        {l.warehouse?.name || 'Warehouse'} - {l.code}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            <Button 
+                                                type="button" 
+                                                variant="outline" 
+                                                size="icon" 
+                                                className="h-9 w-9 shrink-0"
+                                                onClick={() => setIsAddLocationOpen(true)}
+                                                title="Add New Storage Location"
+                                            >
+                                                <Plus className="h-4 w-4" />
+                                            </Button>
+                                        </div>
                                     </div>
                                     <div className="space-y-1">
                                         <Label htmlFor="description">Description</Label>
@@ -173,6 +251,102 @@ export default function ItemsIndex({ items, categories, units, locations, filter
                                     <div className="flex justify-end gap-2 pt-2">
                                         <Button type="button" variant="outline" onClick={() => setIsAddOpen(false)}>Cancel</Button>
                                         <Button type="submit" disabled={processing}>Save Item</Button>
+                                    </div>
+                                </form>
+                            </DialogContent>
+                        </Dialog>
+
+                        {/* Inline Category Creation Dialog */}
+                        <Dialog open={isAddCategoryOpen} onOpenChange={setIsAddCategoryOpen}>
+                            <DialogContent className="max-w-sm">
+                                <DialogHeader>
+                                    <DialogTitle>Add New Category</DialogTitle>
+                                    <DialogDescription>Create a new supply category for the catalog.</DialogDescription>
+                                </DialogHeader>
+                                <form onSubmit={handleCategorySubmit} className="space-y-4">
+                                    <div className="space-y-1">
+                                        <Label htmlFor="cat_name">Category Name *</Label>
+                                        <Input 
+                                            id="cat_name" 
+                                            value={categoryHttp.data.name} 
+                                            onChange={e => categoryHttp.setData('name', e.target.value)} 
+                                            required 
+                                        />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <Label htmlFor="cat_code">Category Code *</Label>
+                                        <Input 
+                                            id="cat_code" 
+                                            placeholder="e.g. OFF-SUPP"
+                                            value={categoryHttp.data.code} 
+                                            onChange={e => categoryHttp.setData('code', e.target.value)} 
+                                            required 
+                                        />
+                                    </div>
+                                    <div className="flex items-center gap-2 pt-2">
+                                        <input 
+                                            type="checkbox" 
+                                            id="cat_is_ppe" 
+                                            className="rounded border-input text-primary focus:ring-primary h-4 w-4"
+                                            checked={categoryHttp.data.is_ppe}
+                                            onChange={e => categoryHttp.setData('is_ppe', e.target.checked)}
+                                        />
+                                        <Label htmlFor="cat_is_ppe" className="cursor-pointer select-none">
+                                            Is PPE (Capitalized Asset)
+                                        </Label>
+                                    </div>
+                                    <div className="flex justify-end gap-2 pt-2">
+                                        <Button type="button" variant="outline" onClick={() => setIsAddCategoryOpen(false)}>Cancel</Button>
+                                        <Button type="submit" disabled={categoryHttp.processing}>Save Category</Button>
+                                    </div>
+                                </form>
+                            </DialogContent>
+                        </Dialog>
+
+                        {/* Inline Location Creation Dialog */}
+                        <Dialog open={isAddLocationOpen} onOpenChange={setIsAddLocationOpen}>
+                            <DialogContent className="max-w-sm">
+                                <DialogHeader>
+                                    <DialogTitle>Add Storage Location</DialogTitle>
+                                    <DialogDescription>Define a new shelf or storage section.</DialogDescription>
+                                </DialogHeader>
+                                <form onSubmit={handleLocationSubmit} className="space-y-4">
+                                    <div className="space-y-1">
+                                        <Label htmlFor="loc_warehouse">Warehouse *</Label>
+                                        <select 
+                                            id="loc_warehouse" 
+                                            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-hidden"
+                                            value={locationHttp.data.warehouse_id} 
+                                            onChange={e => locationHttp.setData('warehouse_id', e.target.value)}
+                                            required
+                                        >
+                                            <option value="">Select Warehouse</option>
+                                            {warehouses.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
+                                        </select>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <Label htmlFor="loc_code">Shelf/Location Code *</Label>
+                                        <Input 
+                                            id="loc_code" 
+                                            placeholder="e.g. SHELF-C-03"
+                                            value={locationHttp.data.code} 
+                                            onChange={e => locationHttp.setData('code', e.target.value)} 
+                                            required 
+                                        />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <Label htmlFor="loc_description">Description</Label>
+                                        <textarea 
+                                            id="loc_description" 
+                                            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-hidden"
+                                            placeholder="e.g. Third tier, row C"
+                                            value={locationHttp.data.description} 
+                                            onChange={e => locationHttp.setData('description', e.target.value)} 
+                                        />
+                                    </div>
+                                    <div className="flex justify-end gap-2 pt-2">
+                                        <Button type="button" variant="outline" onClick={() => setIsAddLocationOpen(false)}>Cancel</Button>
+                                        <Button type="submit" disabled={locationHttp.processing}>Save Location</Button>
                                     </div>
                                 </form>
                             </DialogContent>
