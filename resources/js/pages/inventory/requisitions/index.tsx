@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Head, useForm } from '@inertiajs/react';
+import { Head, useForm, setLayoutProps } from '@inertiajs/react';
 import { PlusCircle, Check, X, ClipboardCheck, Package2, ShieldAlert } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -62,6 +62,7 @@ interface RequisitionIndexProps {
 
 export default function RequisitionsIndex({ requisitions, items, currentEmployee, auth }: RequisitionIndexProps) {
     const breadcrumbs = [{ title: 'Requisitions (RIS)', href: '/inventory/requisitions' }];
+    setLayoutProps({ breadcrumbs });
     const userRole = auth.user.role;
 
     const [isRequestOpen, setIsRequestOpen] = useState(false);
@@ -169,7 +170,7 @@ export default function RequisitionsIndex({ requisitions, items, currentEmployee
     };
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <>
             <Head title="Requisitions Board - GIMS" />
             <div className="space-y-6 p-6">
                 
@@ -455,6 +456,6 @@ export default function RequisitionsIndex({ requisitions, items, currentEmployee
                 </Dialog>
 
             </div>
-        </AppLayout>
+        </>
     );
 }

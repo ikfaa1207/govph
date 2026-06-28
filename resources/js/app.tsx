@@ -19,7 +19,7 @@ createInertiaApp({
             case name.startsWith('settings/'):
                 return [AppLayout, SettingsLayout];
             default:
-                return null;
+                return AppLayout;
         }
     },
     strictMode: true,

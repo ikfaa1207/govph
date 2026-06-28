@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Head, useForm, usePage, router } from '@inertiajs/react';
+import { Head, useForm, usePage, router, setLayoutProps } from '@inertiajs/react';
 import { ShieldCheck, Edit3, UserPlus, AlertCircle, CheckCircle, XCircle, Key } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -40,6 +40,7 @@ export default function UsersIndex({ users, roles, offices, departments }: Users
         { title: 'Administration', href: '#' },
         { title: 'User Management', href: '/inventory/admin/users' }
     ];
+    setLayoutProps({ breadcrumbs });
 
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -198,7 +199,7 @@ export default function UsersIndex({ users, roles, offices, departments }: Users
     };
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <>
             <Head title="User Management - GIMS" />
             <div className="space-y-6 p-6">
                 
@@ -525,6 +526,6 @@ export default function UsersIndex({ users, roles, offices, departments }: Users
                 </Dialog>
 
             </div>
-        </AppLayout>
+        </>
     );
 }

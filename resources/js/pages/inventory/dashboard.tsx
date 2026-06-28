@@ -1,6 +1,6 @@
 import AppLayout from '@/layouts/app-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, setLayoutProps } from '@inertiajs/react';
 import { 
     AlertTriangle, 
     CheckCircle2, 
@@ -30,9 +30,10 @@ interface DashboardProps {
 
 export default function Dashboard({ stats, recentIssuances, recentReceiving, pendingRequests }: DashboardProps) {
     const breadcrumbs = [{ title: 'GIMS Dashboard', href: '/dashboard' }];
+    setLayoutProps({ breadcrumbs });
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <>
             <Head title="GIMS - Government Inventory Management System" />
             <div className="space-y-6 p-6">
                 
@@ -245,6 +246,6 @@ export default function Dashboard({ stats, recentIssuances, recentReceiving, pen
                 </div>
 
             </div>
-        </AppLayout>
+        </>
     );
 }

@@ -1,7 +1,7 @@
 import AppLayout from '@/layouts/app-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Head, usePage } from '@inertiajs/react';
+import { Head, usePage, setLayoutProps } from '@inertiajs/react';
 import { FileText, Printer, Eye, Clipboard, HelpCircle, Loader2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
@@ -19,6 +19,7 @@ interface ReportsIndexProps {
 export default function ReportsIndex({ reportTypes }: ReportsIndexProps) {
     const { auth } = usePage<any>().props;
     const breadcrumbs = [{ title: 'COA Reports Centre', href: '/inventory/reports' }];
+    setLayoutProps({ breadcrumbs });
     const [selectedType, setSelectedType] = useState<string>('rpci');
     const [reportData, setReportData] = useState<any[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
@@ -71,7 +72,7 @@ export default function ReportsIndex({ reportTypes }: ReportsIndexProps) {
     };
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <>
             <Head title="COA Reports Centre - GIMS" />
             <div className="space-y-6 p-6 print:p-0 print:m-0">
                 
@@ -312,6 +313,6 @@ export default function ReportsIndex({ reportTypes }: ReportsIndexProps) {
                 )}
 
             </div>
-        </AppLayout>
+        </>
     );
 }

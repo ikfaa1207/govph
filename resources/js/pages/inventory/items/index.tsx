@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, useForm, setLayoutProps } from '@inertiajs/react';
 import { PlusCircle, Search, FileSpreadsheet, Eye, AlertCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -38,6 +38,7 @@ interface ItemsIndexProps {
 
 export default function ItemsIndex({ items, categories, units, locations, filters }: ItemsIndexProps) {
     const breadcrumbs = [{ title: 'Supplies Catalog', href: '/inventory/items' }];
+    setLayoutProps({ breadcrumbs });
     const [isAddOpen, setIsAddOpen] = useState(false);
     const [searchVal, setSearchVal] = useState(filters.search || '');
 
@@ -77,7 +78,7 @@ export default function ItemsIndex({ items, categories, units, locations, filter
     };
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <>
             <Head title="Supplies Catalog - GIMS" />
             <div className="space-y-6 p-6">
                 
@@ -272,6 +273,6 @@ export default function ItemsIndex({ items, categories, units, locations, filter
                 </Card>
 
             </div>
-        </AppLayout>
+        </>
     );
 }

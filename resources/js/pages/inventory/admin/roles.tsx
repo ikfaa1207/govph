@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Head, useForm } from '@inertiajs/react';
+import { Head, useForm, setLayoutProps } from '@inertiajs/react';
 import { KeyRound, Plus, Edit2, Copy, Trash2, Users } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -35,6 +35,7 @@ export default function RolesIndex({ roles, permissions }: RolesIndexProps) {
         { title: 'Administration', href: '#' },
         { title: 'Roles & Permissions', href: '/inventory/admin/roles' }
     ];
+    setLayoutProps({ breadcrumbs });
 
     const [isAddOpen, setIsAddOpen] = useState(false);
     const [selectedRole, setSelectedRole] = useState<Role | null>(null);
@@ -154,7 +155,7 @@ export default function RolesIndex({ roles, permissions }: RolesIndexProps) {
     };
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <>
             <Head title="Role Matrix - GIMS" />
             <div className="space-y-6 p-6">
                 
@@ -354,6 +355,6 @@ export default function RolesIndex({ roles, permissions }: RolesIndexProps) {
                 </Dialog>
 
             </div>
-        </AppLayout>
+        </>
     );
 }

@@ -1,7 +1,7 @@
 import AppLayout from '@/layouts/app-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, setLayoutProps } from '@inertiajs/react';
 import { ArrowLeft, Clock, ShoppingCart, UserCheck, ShieldAlert } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
@@ -38,9 +38,10 @@ export default function ItemShow({ item, transactions }: ItemShowProps) {
         { title: 'Supplies Catalog', href: '/inventory/items' },
         { title: item.name, href: `/inventory/items/${item.id}` },
     ];
+    setLayoutProps({ breadcrumbs });
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <>
             <Head title={`Ledger - ${item.name}`} />
             <div className="space-y-6 p-6">
                 
@@ -183,6 +184,6 @@ export default function ItemShow({ item, transactions }: ItemShowProps) {
                 </Card>
 
             </div>
-        </AppLayout>
+        </>
     );
 }

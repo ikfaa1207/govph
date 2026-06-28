@@ -2,7 +2,7 @@ import AppLayout from '@/layouts/app-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Head, useForm, usePage } from '@inertiajs/react';
+import { Head, useForm, usePage, setLayoutProps } from '@inertiajs/react';
 import { 
     HelpCircle, Phone, Mail, FileText, PlusCircle, CheckCircle2, 
     Clock, AlertTriangle, User, Calendar, MessageSquare, Shield,
@@ -81,6 +81,7 @@ const isImage = (path: string | null) => {
 export default function HelpdeskIndex({ tickets, isAdmin }: Props) {
     const { auth } = usePage<any>().props;
     const breadcrumbs = [{ title: 'System Helpdesk', href: '/inventory/helpdesk' }];
+    setLayoutProps({ breadcrumbs });
     const [activeTab, setActiveTab] = useState<'support' | 'tickets' | 'admin'>('support');
     const [openFaq, setOpenFaq] = useState<number | null>(null);
     const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
@@ -179,7 +180,7 @@ export default function HelpdeskIndex({ tickets, isAdmin }: Props) {
     };
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <>
             <Head title="System Helpdesk" />
 
             <div className="flex flex-col gap-6 p-4 md:p-6 max-w-7xl mx-auto w-full">
@@ -639,6 +640,6 @@ export default function HelpdeskIndex({ tickets, isAdmin }: Props) {
                     </div>
                 </div>
             )}
-        </AppLayout>
+        </>
     );
 }

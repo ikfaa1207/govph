@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Head, useForm } from '@inertiajs/react';
+import { Head, useForm, setLayoutProps } from '@inertiajs/react';
 import { PlusCircle, UserCheck, RefreshCw, Trash2, ShieldCheck, Clipboard } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -49,6 +49,7 @@ interface PropertyIndexProps {
 
 export default function PropertyIndex({ properties, employees, categories, offices, auth }: PropertyIndexProps) {
     const breadcrumbs = [{ title: 'Property Registry (PPE)', href: '/inventory/properties' }];
+    setLayoutProps({ breadcrumbs });
     const userRole = auth.user.role;
     const canManage = userRole === 'property_custodian' || userRole === 'admin';
 
@@ -168,7 +169,7 @@ export default function PropertyIndex({ properties, employees, categories, offic
     };
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <>
             <Head title="Property Registry - GIMS" />
             <div className="space-y-6 p-6">
                 
@@ -589,6 +590,6 @@ export default function PropertyIndex({ properties, employees, categories, offic
                 </Dialog>
 
             </div>
-        </AppLayout>
+        </>
     );
 }
