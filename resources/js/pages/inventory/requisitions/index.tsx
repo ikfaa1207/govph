@@ -198,17 +198,21 @@ return;
                                     New Requisition (RIS)
                                 </Button>
                             </DialogTrigger>
-                            <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
-                                <DialogHeader>
-                                    <DialogTitle>File Requisition Slip (RIS)</DialogTitle>
-                                    <DialogDescription>Select supplies from the catalog and specify quantities requested.</DialogDescription>
+                            <DialogContent 
+                                className="sm:max-w-2xl sm:p-8 max-h-[85vh] overflow-y-auto"
+                                onPointerDownOutside={(e) => e.preventDefault()}
+                                onInteractOutside={(e) => e.preventDefault()}
+                            >
+                                <DialogHeader className="mb-2">
+                                    <DialogTitle className="text-xl">File Requisition Slip (RIS)</DialogTitle>
+                                    <DialogDescription className="text-sm">Select supplies from the catalog and specify quantities requested.</DialogDescription>
                                 </DialogHeader>
-                                <form onSubmit={handleRequestSubmit} className="space-y-4">
+                                <form onSubmit={handleRequestSubmit} className="space-y-6">
                                     <div className="space-y-4">
                                         {requestForm.data.items.map((item, idx) => (
-                                            <div key={idx} className="flex gap-2 items-end border-b border-border pb-3 last:border-0 last:pb-0">
-                                                <div className="flex-1 space-y-1">
-                                                    <Label>Item *</Label>
+                                            <div key={idx} className="flex gap-4 items-end border-b border-border pb-4 last:border-0 last:pb-0">
+                                                <div className="flex-1 space-y-2">
+                                                    <Label className="text-xs font-semibold">Item *</Label>
                                                     <select
                                                         className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-hidden"
                                                         value={item.item_id}
@@ -227,8 +231,8 @@ return;
                                                         ))}
                                                     </select>
                                                 </div>
-                                                <div className="w-24 space-y-1">
-                                                    <Label>Qty *</Label>
+                                                <div className="w-28 space-y-2">
+                                                    <Label className="text-xs font-semibold">Qty *</Label>
                                                     <Input
                                                         type="number"
                                                         min="1"
@@ -242,7 +246,7 @@ return;
                                                     />
                                                 </div>
                                                 {requestForm.data.items.length > 1 && (
-                                                    <Button type="button" variant="ghost" size="icon" className="text-rose-500 hover:text-rose-600" onClick={() => handleRemoveRequestItem(idx)}>
+                                                    <Button type="button" variant="ghost" size="icon" className="text-rose-500 hover:text-rose-600 h-9 w-9" onClick={() => handleRemoveRequestItem(idx)}>
                                                         <X className="h-4 w-4" />
                                                     </Button>
                                                 )}
@@ -254,20 +258,20 @@ return;
                                         Add Another Item
                                     </Button>
 
-                                    <div className="space-y-1">
-                                        <Label htmlFor="purpose">Purpose / Remarks</Label>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="purpose" className="text-xs font-semibold">Purpose / Remarks</Label>
                                         <textarea
                                             id="purpose"
-                                            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-hidden"
+                                            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-hidden min-h-[80px]"
                                             placeholder="e.g. Office consumption for Q3"
                                             value={requestForm.data.purpose}
                                             onChange={e => requestForm.setData('purpose', e.target.value)}
                                         />
                                     </div>
 
-                                    <div className="flex justify-end gap-2 pt-2">
+                                    <div className="flex justify-end gap-2 pt-4 border-t border-border mt-6">
                                         <Button type="button" variant="outline" onClick={() => setIsRequestOpen(false)}>Cancel</Button>
-                                        <Button type="submit" disabled={requestForm.processing}>Submit RIS</Button>
+                                        <Button type="submit" disabled={requestForm.processing} className="px-5">Submit RIS</Button>
                                     </div>
                                 </form>
                             </DialogContent>
