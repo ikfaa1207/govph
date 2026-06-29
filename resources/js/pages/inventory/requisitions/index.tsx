@@ -1,5 +1,5 @@
 import { Head, useForm, setLayoutProps } from '@inertiajs/react';
-import { PlusCircle, X, ClipboardCheck, Package2, ShieldAlert, Printer } from 'lucide-react';
+import { PlusCircle, X, ClipboardCheck, Package2, ShieldAlert, Printer, Eye, ClipboardList } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
@@ -68,6 +68,7 @@ export default function RequisitionsIndex({ requisitions, items, auth }: Requisi
     const [selectedReq, setSelectedReq] = useState<Requisition | null>(null);
     const [isApproveOpen, setIsApproveOpen] = useState(false);
     const [isIssueOpen, setIsIssueOpen] = useState(false);
+    const [showSummaryPreview, setShowSummaryPreview] = useState(false);
 
     // Form for Request Submission
     const requestForm = useForm({
@@ -191,7 +192,12 @@ return;
                     </div>
 
                     {userRole === 'employee' && (
-                        <Dialog open={isRequestOpen} onOpenChange={setIsRequestOpen}>
+                        <Dialog open={isRequestOpen} onOpenChange={(open) => {
+                            setIsRequestOpen(open);
+                            if (!open) {
+                                setShowSummaryPreview(false);
+                            }
+                        }}>
                             <DialogTrigger asChild>
                                 <Button className="gap-2">
                                     <PlusCircle className="h-4 w-4" />
@@ -287,9 +293,55 @@ return;
                                         />
                                     </div>
 
-                                    <div className="flex justify-end gap-2 pt-4 border-t border-border mt-6">
-                                        <Button type="button" variant="outline" onClick={() => setIsRequestOpen(false)}>Cancel</Button>
-                                        <Button type="submit" disabled={requestForm.processing} className="px-5">Submit RIS</Button>
+                                    {showSummaryPreview && (
+                                        <div className="rounded-lg bg-muted/40 p-4 border border-border space-y-3 animate-in fade-in duration-200">
+                                            <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                                                <ClipboardList className="h-4 w-4 text-primary" />
+                                                Requisition Summary Preview
+                                            </div>
+                                            <div className="space-y-1.5 text-xs text-foreground">
+                                                <div className="grid grid-cols-12 font-medium border-b border-border pb-1 text-muted-foreground">
+                                                    <span className="col-span-8">Item Name</span>
+                                                    <span className="col-span-4 text-right">Quantity</span>
+                                                </div>
+                                                <div className="max-h-[120px] overflow-y-auto space-y-1 pr-1">
+                                                    {requestForm.data.items.map((item, idx) => {
+                                                        const selectedItem = items.find(i => String(i.id) === String(item.item_id));
+                                                        return (
+                                                            <div key={idx} className="grid grid-cols-12 py-0.5">
+                                                                <span className="col-span-8 truncate font-medium">
+                                                                    {selectedItem ? selectedItem.name : <em className="text-muted-foreground">Unselected</em>}
+                                                                </span>
+                                                                <span className="col-span-4 text-right text-muted-foreground font-mono">
+                                                                    {item.quantity} {selectedItem?.unit || ''}
+                                                                </span>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                                <div className="border-t border-border pt-1.5 flex justify-between font-semibold">
+                                                    <span>Total Items: {requestForm.data.items.filter(i => i.item_id).length}</span>
+                                                    <span>Total Qty: {requestForm.data.items.reduce((sum, i) => sum + (i.quantity || 0), 0)}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="flex justify-between items-center pt-4 border-t border-border mt-6">
+                                        <Button 
+                                            type="button" 
+                                            variant="outline" 
+                                            size="sm" 
+                                            className="gap-2 text-xs"
+                                            onClick={() => setShowSummaryPreview(!showSummaryPreview)}
+                                        >
+                                            <Eye className="h-3.5 w-3.5" />
+                                            {showSummaryPreview ? 'Hide Preview' : 'View Summary'}
+                                        </Button>
+                                        <div className="flex gap-2">
+                                            <Button type="button" variant="outline" onClick={() => setIsRequestOpen(false)}>Cancel</Button>
+                                            <Button type="submit" disabled={requestForm.processing} className="px-5">Submit RIS</Button>
+                                        </div>
                                     </div>
                                 </form>
                             </DialogContent>
