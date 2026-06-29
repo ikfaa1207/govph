@@ -7,8 +7,10 @@ use App\Http\Controllers\Inventory\HelpdeskController;
 use App\Http\Controllers\Inventory\ItemController;
 use App\Http\Controllers\Inventory\LocationController;
 use App\Http\Controllers\Inventory\PropertyController;
+use App\Http\Controllers\Inventory\ReceivingReportController;
 use App\Http\Controllers\Inventory\ReportController;
 use App\Http\Controllers\Inventory\RequisitionController;
+use App\Http\Controllers\Inventory\SupplierController;
 use App\Http\Controllers\Inventory\WarehouseController;
 use Illuminate\Support\Facades\Route;
 
@@ -21,6 +23,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('inventory/items', [ItemController::class, 'index'])->name('inventory.items.index');
     Route::post('inventory/items', [ItemController::class, 'store'])->name('inventory.items.store');
     Route::get('inventory/items/{item}', [ItemController::class, 'show'])->name('inventory.items.show');
+
+    // Receiving Reports (Stock In)
+    Route::get('inventory/receiving-reports', [ReceivingReportController::class, 'index'])->name('inventory.receiving.index');
+    Route::post('inventory/receiving-reports', [ReceivingReportController::class, 'store'])->name('inventory.receiving.store');
+    Route::post('inventory/suppliers', [SupplierController::class, 'store'])->name('inventory.suppliers.store');
     Route::post('inventory/categories', [CategoryController::class, 'store'])->name('inventory.categories.store');
     Route::post('inventory/locations', [LocationController::class, 'store'])->name('inventory.locations.store');
     Route::post('inventory/warehouses', [WarehouseController::class, 'store'])->name('inventory.warehouses.store');

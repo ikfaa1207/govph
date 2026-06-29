@@ -68,7 +68,9 @@ test('security page renders without two factor when feature is disabled', functi
 });
 
 test('password can be updated', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->create([
+        'password_change_required' => true,
+    ]);
 
     $response = $this
         ->actingAs($user)
@@ -83,7 +85,9 @@ test('password can be updated', function () {
         ->assertSessionHasNoErrors()
         ->assertRedirect(route('security.edit'));
 
-    expect(Hash::check('SecurePassword123!', $user->refresh()->password))->toBeTrue();
+    $user->refresh();
+    expect(Hash::check('SecurePassword123!', $user->password))->toBeTrue();
+    expect($user->password_change_required)->toBeFalse();
 });
 
 test('correct password must be provided to update password', function () {

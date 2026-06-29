@@ -1,6 +1,6 @@
 import { Link, usePage } from '@inertiajs/react';
 import { BookOpen, FolderGit2 } from 'lucide-react';
-import { LayoutGrid, Package, ClipboardList, Database, FileText, Users, ShieldAlert } from 'lucide-react';
+import { LayoutGrid, Package, ClipboardList, Database, FileText, Users, ShieldAlert, Truck } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -36,6 +36,12 @@ const mainNavItems: GimsNavItem[] = [
         href: items.index.url(),
         icon: Package,
         permission: 'inventory.view',
+    },
+    {
+        title: 'Receiving (Stock In)',
+        href: '/inventory/receiving-reports',
+        icon: Truck,
+        permission: 'warehouse.receive',
     },
     {
         title: 'Requisitions (RIS)',
