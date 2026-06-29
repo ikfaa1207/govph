@@ -194,6 +194,7 @@ return;
                     {userRole === 'employee' && (
                         <Dialog open={isRequestOpen} onOpenChange={(open) => {
                             setIsRequestOpen(open);
+
                             if (!open) {
                                 setShowSummaryPreview(false);
                             }
@@ -307,6 +308,7 @@ return;
                                                 <div className="max-h-[120px] overflow-y-auto space-y-1 pr-1">
                                                     {requestForm.data.items.map((item, idx) => {
                                                         const selectedItem = items.find(i => String(i.id) === String(item.item_id));
+
                                                         return (
                                                             <div key={idx} className="grid grid-cols-12 py-0.5">
                                                                 <span className="col-span-8 truncate font-medium">

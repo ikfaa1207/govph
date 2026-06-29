@@ -53,7 +53,7 @@ interface ReceivingIndexProps {
     };
 }
 
-export default function ReceivingIndex({ reports, suppliers: initialSuppliers, employees, items, auth }: ReceivingIndexProps) {
+export default function ReceivingIndex({ reports, suppliers: initialSuppliers, employees, items }: ReceivingIndexProps) {
     const breadcrumbs = [{ title: 'Receiving (Stock In)', href: '/inventory/receiving-reports' }];
     setLayoutProps({ breadcrumbs });
 
@@ -98,14 +98,13 @@ export default function ReceivingIndex({ reports, suppliers: initialSuppliers, e
         tin: '',
     });
 
-    // Auto-generate suggested IAR number when dialog opens
     useEffect(() => {
         if (isOpen && !data.iar_number) {
             const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
             const rand = Math.floor(1000 + Math.random() * 9000);
             setData('iar_number', `IAR-${dateStr}-${rand}`);
         }
-    }, [isOpen]);
+    }, [isOpen, data.iar_number, setData]);
 
     const handleAddItemRow = () => {
         setData('items', [
@@ -125,8 +124,10 @@ export default function ReceivingIndex({ reports, suppliers: initialSuppliers, e
     const handleRemoveItemRow = (index: number) => {
         if (data.items.length === 1) {
             toast.error('You must receive at least one item.');
+
             return;
         }
+
         const newItems = [...data.items];
         newItems.splice(index, 1);
         setData('items', newItems);
@@ -194,6 +195,7 @@ export default function ReceivingIndex({ reports, suppliers: initialSuppliers, e
                     <div>
                         <Dialog open={isOpen} onOpenChange={(open) => {
                             setIsOpen(open);
+
                             if (!open) {
                                 reset();
                             }
