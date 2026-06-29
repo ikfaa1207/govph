@@ -208,50 +208,68 @@ return;
                                     <DialogDescription className="text-sm">Select supplies from the catalog and specify quantities requested.</DialogDescription>
                                 </DialogHeader>
                                 <form onSubmit={handleRequestSubmit} className="space-y-6">
-                                    <div className="space-y-4">
-                                        {requestForm.data.items.map((item, idx) => (
-                                            <div key={idx} className="flex gap-4 items-end border-b border-border pb-4 last:border-0 last:pb-0">
-                                                <div className="flex-1 space-y-2">
-                                                    <Label className="text-xs font-semibold">Item *</Label>
-                                                    <select
-                                                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-hidden"
-                                                        value={item.item_id}
-                                                        onChange={e => {
-                                                            const newItems = [...requestForm.data.items];
-                                                            newItems[idx].item_id = e.target.value;
-                                                            requestForm.setData('items', newItems);
-                                                        }}
-                                                        required
-                                                    >
-                                                        <option value="">Select Item</option>
-                                                        {items.map(i => (
-                                                            <option key={i.id} value={i.id}>
-                                                                {i.name} (Qty Available: {i.current_stock} {i.unit})
-                                                            </option>
-                                                        ))}
-                                                    </select>
-                                                </div>
-                                                <div className="w-28 space-y-2">
-                                                    <Label className="text-xs font-semibold">Qty *</Label>
-                                                    <Input
-                                                        type="number"
-                                                        min="1"
-                                                        value={item.quantity}
-                                                        onChange={e => {
-                                                            const newItems = [...requestForm.data.items];
-                                                            newItems[idx].quantity = parseInt(e.target.value);
-                                                            requestForm.setData('items', newItems);
-                                                        }}
-                                                        required
-                                                    />
-                                                </div>
-                                                {requestForm.data.items.length > 1 && (
-                                                    <Button type="button" variant="ghost" size="icon" className="text-rose-500 hover:text-rose-600 h-9 w-9" onClick={() => handleRemoveRequestItem(idx)}>
-                                                        <X className="h-4 w-4" />
-                                                    </Button>
-                                                )}
-                                            </div>
-                                        ))}
+                                    <div className="max-h-[30vh] overflow-y-auto rounded-md border border-border">
+                                        <table className="w-full text-left text-xs">
+                                            <thead>
+                                                <tr className="border-b border-border bg-muted/50 font-medium text-muted-foreground">
+                                                    <th className="p-3">Item *</th>
+                                                    <th className="p-3 w-36">Qty Requested *</th>
+                                                    <th className="p-3 text-center w-12"></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-border">
+                                                {requestForm.data.items.map((item, idx) => (
+                                                    <tr key={idx} className="hover:bg-muted/30">
+                                                        <td className="p-2.5">
+                                                            <select
+                                                                className="w-full rounded border border-input bg-background p-1.5 text-xs focus-visible:outline-hidden"
+                                                                value={item.item_id}
+                                                                onChange={e => {
+                                                                    const newItems = [...requestForm.data.items];
+                                                                    newItems[idx].item_id = e.target.value;
+                                                                    requestForm.setData('items', newItems);
+                                                                }}
+                                                                required
+                                                            >
+                                                                <option value="">Select Item</option>
+                                                                {items.map(i => (
+                                                                    <option key={i.id} value={i.id}>
+                                                                        {i.name} (Qty Available: {i.current_stock} {i.unit})
+                                                                    </option>
+                                                                ))}
+                                                            </select>
+                                                        </td>
+                                                        <td className="p-2.5">
+                                                            <Input
+                                                                type="number"
+                                                                min="1"
+                                                                value={item.quantity}
+                                                                onChange={e => {
+                                                                    const newItems = [...requestForm.data.items];
+                                                                    newItems[idx].quantity = parseInt(e.target.value) || 0;
+                                                                    requestForm.setData('items', newItems);
+                                                                }}
+                                                                className="h-8 p-1.5 text-xs"
+                                                                required
+                                                            />
+                                                        </td>
+                                                        <td className="p-2.5 text-center">
+                                                            {requestForm.data.items.length > 1 && (
+                                                                <Button 
+                                                                    type="button" 
+                                                                    variant="ghost" 
+                                                                    size="icon" 
+                                                                    className="h-7 w-7 text-rose-500 hover:bg-rose-50 hover:text-rose-600" 
+                                                                    onClick={() => handleRemoveRequestItem(idx)}
+                                                                >
+                                                                    <X className="h-4 w-4" />
+                                                                </Button>
+                                                            )}
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
                                     </div>
 
                                     <Button type="button" variant="outline" size="sm" onClick={handleAddRequestItem} className="w-full">
