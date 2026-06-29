@@ -32,45 +32,46 @@ class ReceivingReportController extends Controller
     {
         Gate::authorize('warehouse.receive');
 
-        $reports = ReceivingReport::with([
+        $reports = [];
+        foreach (ReceivingReport::with([
             'purchaseOrder.supplier',
             'receiver',
             'inspector',
             'items.item.unit',
-        ])
-            ->orderBy('id', 'desc')
-            ->get()
-            ->map(function ($report) {
-                return [
-                    'id' => $report->id,
-                    'iar_number' => $report->iar_number,
-                    'invoice_number' => $report->invoice_number,
-                    'delivery_receipt_number' => $report->delivery_receipt_number,
-                    'received_date' => $report->received_date,
-                    'purchase_order' => [
-                        'po_number' => $report->purchaseOrder?->po_number,
-                        'supplier_name' => $report->purchaseOrder?->supplier?->name,
-                    ],
-                    'receiver_name' => $report->receiver?->name,
-                    'inspector_name' => $report->inspector?->name,
-                    'items_count' => $report->items->count(),
-                    'remarks' => $report->remarks,
-                    'items' => $report->items->map(function ($item) {
-                        return [
-                            'id' => $item->id,
-                            'name' => $item->item?->name,
-                            'unit' => $item->item?->unit?->abbreviation,
-                            'quantity_received' => $item->quantity_received,
-                            'quantity_accepted' => $item->quantity_accepted,
-                            'quantity_rejected' => $item->quantity_rejected,
-                            'unit_cost' => $item->unit_cost,
-                            'batch_number' => $item->batch_number,
-                            'expiration_date' => $item->expiration_date,
-                            'rejection_reason' => $item->rejection_reason,
-                        ];
-                    }),
+        ])->orderBy('id', 'desc')->get() as $report) {
+            $mappedItems = [];
+            foreach ($report->items as $item) {
+                $mappedItems[] = [
+                    'id' => $item->id,
+                    'name' => $item->item?->name,
+                    'unit' => $item->item?->unit?->abbreviation,
+                    'quantity_received' => $item->quantity_received,
+                    'quantity_accepted' => $item->quantity_accepted,
+                    'quantity_rejected' => $item->quantity_rejected,
+                    'unit_cost' => $item->unit_cost,
+                    'batch_number' => $item->batch_number,
+                    'expiration_date' => $item->expiration_date,
+                    'rejection_reason' => $item->rejection_reason,
                 ];
-            });
+            }
+
+            $reports[] = [
+                'id' => $report->id,
+                'iar_number' => $report->iar_number,
+                'invoice_number' => $report->invoice_number,
+                'delivery_receipt_number' => $report->delivery_receipt_number,
+                'received_date' => $report->received_date,
+                'purchase_order' => [
+                    'po_number' => $report->purchaseOrder?->po_number,
+                    'supplier_name' => $report->purchaseOrder?->supplier?->name,
+                ],
+                'receiver_name' => $report->receiver?->name,
+                'inspector_name' => $report->inspector?->name,
+                'items_count' => $report->items->count(),
+                'remarks' => $report->remarks,
+                'items' => $mappedItems,
+            ];
+        }
 
         return Inertia::render('inventory/receiving/index', [
             'reports' => $reports,
@@ -134,7 +135,7 @@ class ReceivingReportController extends Controller
             // Add items and update inventory stock and moving average costs
             foreach ($validated['items'] as $itemData) {
                 $itemId = $itemData['item_id'];
-                $item = Item::findOrFail($itemId);
+                $item = Item::where('id', $itemId)->firstOrFail();
 
                 $receivedQty = (int) $itemData['quantity_received'];
                 $acceptedQty = (int) $itemData['quantity_accepted'];
