@@ -1,5 +1,5 @@
 import { Head, Link, useForm, useHttp, setLayoutProps } from '@inertiajs/react';
-import { PlusCircle, Search, Eye, AlertCircle, Plus } from 'lucide-react';
+import { PlusCircle, Search, Eye, AlertCircle, Plus, MoreHorizontal } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Can } from '@/components/can';
@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -608,18 +609,18 @@ queryParams.set('search', searchVal);
                             </div>
                         ) : (
                             <div className="overflow-x-auto">
-                                <Table>
+                                <Table className="text-xs">
                                     <TableHeader>
                                         <TableRow>
-                                            <TableHead>Item Code</TableHead>
-                                            <TableHead>Stock No.</TableHead>
-                                            <TableHead>Item Name</TableHead>
+                                            <TableHead className="whitespace-nowrap">Item Code</TableHead>
+                                            <TableHead className="whitespace-nowrap">Stock No.</TableHead>
+                                            <TableHead className="w-[200px]">Item Name</TableHead>
                                             <TableHead>Category</TableHead>
                                             <TableHead>UOM</TableHead>
-                                            <TableHead className="text-right">Unit Cost</TableHead>
-                                            <TableHead className="text-center">Stock Balance</TableHead>
+                                            <TableHead className="text-right whitespace-nowrap">Unit Cost</TableHead>
+                                            <TableHead className="text-center whitespace-nowrap">Stock Balance</TableHead>
                                             <TableHead>Location</TableHead>
-                                            <TableHead className="text-right">Actions</TableHead>
+                                            <TableHead className="text-right whitespace-nowrap">Actions</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -629,16 +630,16 @@ queryParams.set('search', searchVal);
 
                                             return (
                                                 <TableRow key={item.id}>
-                                                    <TableCell className="font-mono text-xs">{item.item_code}</TableCell>
-                                                    <TableCell className="font-mono text-xs text-muted-foreground">{item.stock_number || 'N/A'}</TableCell>
-                                                    <TableCell>
-                                                        <div className="font-semibold">{item.name}</div>
-                                                        <div className="text-xs text-muted-foreground line-clamp-1">{item.description}</div>
+                                                    <TableCell className="font-mono text-[11px] whitespace-nowrap">{item.item_code}</TableCell>
+                                                    <TableCell className="font-mono text-[11px] text-muted-foreground whitespace-nowrap">{item.stock_number || 'N/A'}</TableCell>
+                                                    <TableCell className="max-w-[200px]">
+                                                        <div className="font-semibold truncate" title={item.name}>{item.name}</div>
+                                                        <div className="text-[11px] text-muted-foreground truncate" title={item.description}>{item.description}</div>
                                                     </TableCell>
-                                                    <TableCell className="text-muted-foreground">{item.category?.name}</TableCell>
-                                                    <TableCell>{item.unit?.abbreviation}</TableCell>
-                                                    <TableCell className="text-right">₱{Number(item.unit_cost).toFixed(2)}</TableCell>
-                                                    <TableCell>
+                                                    <TableCell className="text-muted-foreground text-[11px] leading-tight">{item.category?.name}</TableCell>
+                                                    <TableCell className="text-[11px]">{item.unit?.abbreviation}</TableCell>
+                                                    <TableCell className="text-right whitespace-nowrap">₱{Number(item.unit_cost).toFixed(2)}</TableCell>
+                                                    <TableCell className="whitespace-nowrap">
                                                         <div className="flex items-center justify-center gap-2">
                                                             <span className="font-bold">{item.current_stock}</span>
                                                             {isOut ? (
@@ -650,14 +651,24 @@ queryParams.set('search', searchVal);
                                                             )}
                                                         </div>
                                                     </TableCell>
-                                                    <TableCell className="text-xs text-muted-foreground">{item.location}</TableCell>
-                                                    <TableCell className="text-right">
-                                                        <Button size="sm" variant="outline" className="gap-1" asChild>
-                                                            <Link href={`/inventory/items/${item.id}`}>
-                                                                <Eye className="h-3 w-3" />
-                                                                Ledger Card
-                                                            </Link>
-                                                        </Button>
+                                                    <TableCell className="text-[11px] text-muted-foreground leading-tight">{item.location}</TableCell>
+                                                    <TableCell className="text-right whitespace-nowrap">
+                                                        <DropdownMenu>
+                                                            <DropdownMenuTrigger asChild>
+                                                                <Button variant="ghost" className="h-8 w-8 p-0">
+                                                                    <span className="sr-only">Open menu</span>
+                                                                    <MoreHorizontal className="h-4 w-4" />
+                                                                </Button>
+                                                            </DropdownMenuTrigger>
+                                                            <DropdownMenuContent align="end">
+                                                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                                                <DropdownMenuItem asChild>
+                                                                    <Link href={`/inventory/items/${item.id}`} className="cursor-pointer">
+                                                                        <Eye className="mr-2 h-4 w-4 text-sky-500" /> View Ledger Card
+                                                                    </Link>
+                                                                </DropdownMenuItem>
+                                                            </DropdownMenuContent>
+                                                        </DropdownMenu>
                                                     </TableCell>
                                                 </TableRow>
                                             );

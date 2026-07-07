@@ -571,20 +571,20 @@ export default function ReceivingIndex({ reports, suppliers: initialSuppliers, e
 
                 {/* Dialog: Detail View */}
                 <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
-                    <DialogContent className="max-w-2xl">
-                        <DialogHeader>
-                            <DialogTitle className="flex items-center gap-2">
-                                <ClipboardCheck className="h-5 w-5 text-emerald-600" />
-                                Inspection & Acceptance Report: {selectedReport?.iar_number}
+                    <DialogContent className="w-[95vw] max-w-4xl max-h-[90vh] overflow-y-auto overflow-x-hidden p-4 md:p-6">
+                        <DialogHeader className="mb-2 pr-6">
+                            <DialogTitle className="flex items-start md:items-center gap-2 text-left leading-tight break-words">
+                                <ClipboardCheck className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5 md:mt-0" />
+                                <span>Inspection & Acceptance Report: {selectedReport?.iar_number}</span>
                             </DialogTitle>
-                            <DialogDescription>
+                            <DialogDescription className="text-left">
                                 Details and accepted quantities for this delivery record.
                             </DialogDescription>
                         </DialogHeader>
 
                         {selectedReport && (
                             <div className="space-y-6">
-                                <div className="grid grid-cols-2 gap-4 text-xs">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                                     <div className="space-y-2 rounded-md border border-border p-3">
                                         <div className="font-semibold text-muted-foreground flex items-center gap-1.5 mb-1"><Landmark className="h-3.5 w-3.5" /> Procurement</div>
                                         <div><strong>PO Number:</strong> {selectedReport.purchase_order?.po_number}</div>
@@ -607,44 +607,35 @@ export default function ReceivingIndex({ reports, suppliers: initialSuppliers, e
                                     </div>
                                 </div>
 
-                                <div className="space-y-2">
-                                    <h3 className="text-xs font-semibold text-muted-foreground tracking-tight">Delivered Line Items</h3>
-                                    <div className="rounded-md border border-border overflow-hidden">
-                                        <Table className="text-xs">
-                                            <TableHeader>
-                                                <TableRow className="bg-muted/50">
-                                                    <TableHead>Item Name</TableHead>
-                                                    <TableHead className="text-right">Received</TableHead>
-                                                    <TableHead className="text-right font-semibold text-emerald-600">Accepted</TableHead>
-                                                    <TableHead className="text-right text-rose-600">Rejected</TableHead>
-                                                    <TableHead className="text-right font-mono">Unit Cost</TableHead>
-                                                    <TableHead>Batch / Expiry</TableHead>
-                                                </TableRow>
-                                            </TableHeader>
-                                            <TableBody>
-                                                {selectedReport.items.map((line, idx) => (
-                                                    <TableRow key={idx}>
-                                                        <TableCell>
-                                                            <div className="font-medium">{line.name}</div>
-                                                            {line.rejection_reason && <div className="text-[10px] text-rose-500 italic mt-0.5">Reason: {line.rejection_reason}</div>}
-                                                        </TableCell>
-                                                        <TableCell className="text-right">{line.quantity_received} {line.unit}</TableCell>
-                                                        <TableCell className="text-right font-semibold text-emerald-600">{line.quantity_accepted} {line.unit}</TableCell>
-                                                        <TableCell className="text-right font-medium text-rose-600">{line.quantity_rejected} {line.unit}</TableCell>
-                                                        <TableCell className="text-right font-mono">₱{line.unit_cost.toFixed(2)}</TableCell>
-                                                        <TableCell className="text-muted-foreground">
-                                                            {line.batch_number && <div className="text-[10px]">Batch: {line.batch_number}</div>}
-                                                            {line.expiration_date && <div className="text-[10px]">Expiry: {line.expiration_date}</div>}
-                                                            {!line.batch_number && !line.expiration_date && '-'}
-                                                        </TableCell>
-                                                    </TableRow>
-                                                ))}
-                                            </TableBody>
-                                        </Table>
+                                <div className="space-y-3">
+                                    <h3 className="text-sm font-semibold tracking-tight border-b pb-2">Delivered Line Items</h3>
+                                    <div className="space-y-3">
+                                        {selectedReport.items.map((line, idx) => (
+                                            <div key={idx} className="rounded-lg border border-border p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-card shadow-sm">
+                                                <div className="space-y-1.5 flex-1">
+                                                    <div className="font-semibold text-base leading-tight">{line.name}</div>
+                                                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                                                        <span><strong>Cost:</strong> ₱{line.unit_cost.toFixed(2)}</span>
+                                                        {line.batch_number && <span><strong>Batch:</strong> {line.batch_number}</span>}
+                                                        {line.expiration_date && <span><strong>Expiry:</strong> {line.expiration_date}</span>}
+                                                    </div>
+                                                    {line.rejection_reason && (
+                                                        <div className="text-xs text-rose-600 font-medium mt-2 bg-rose-50 dark:bg-rose-950/30 p-2 rounded border border-rose-200 inline-block w-full sm:w-auto">
+                                                            Reason for Rejection: {line.rejection_reason}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div className="flex flex-col gap-1.5 text-xs shrink-0 min-w-[140px]">
+                                                    <div className="flex justify-between sm:justify-end gap-3 items-center"><span className="text-muted-foreground font-medium">Received:</span> <span className="font-medium text-foreground">{line.quantity_received} {line.unit}</span></div>
+                                                    <div className="flex justify-between sm:justify-end gap-3 items-center"><span className="text-muted-foreground font-medium">Accepted:</span> <span className="font-bold text-emerald-600">{line.quantity_accepted} {line.unit}</span></div>
+                                                    <div className="flex justify-between sm:justify-end gap-3 items-center"><span className="text-muted-foreground font-medium">Rejected:</span> <span className="font-semibold text-rose-600">{line.quantity_rejected} {line.unit}</span></div>
+                                                </div>
+                                            </div>
+                                        ))}
                                     </div>
                                 </div>
 
-                                <div className="flex justify-end pt-2">
+                                <div className="flex justify-end pt-4">
                                     <Button onClick={() => setIsDetailOpen(false)}>Close View</Button>
                                 </div>
                             </div>

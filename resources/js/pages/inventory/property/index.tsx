@@ -1,5 +1,5 @@
 import { Head, useForm, setLayoutProps } from '@inertiajs/react';
-import { PlusCircle, UserCheck, RefreshCw, Trash2, ShieldCheck, Clipboard } from 'lucide-react';
+import { PlusCircle, UserCheck, RefreshCw, Trash2, ShieldCheck, Clipboard, MoreHorizontal } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Can } from '@/components/can';
@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { DatePicker } from '@/components/ui/date-picker';
@@ -352,31 +353,31 @@ return;
                             </div>
                         ) : (
                             <div className="overflow-x-auto">
-                                <Table>
+                                <Table className="text-xs">
                                     <TableHeader>
                                         <TableRow>
-                                            <TableHead>Property No.</TableHead>
+                                            <TableHead className="whitespace-nowrap">Property No.</TableHead>
                                             <TableHead>Category</TableHead>
-                                            <TableHead>Equipment Details</TableHead>
-                                            <TableHead className="text-right">Cost</TableHead>
+                                            <TableHead className="w-[180px]">Equipment Details</TableHead>
+                                            <TableHead className="text-right whitespace-nowrap">Cost</TableHead>
                                             <TableHead>Accountable Officer</TableHead>
-                                            <TableHead>Doc Reference</TableHead>
-                                            <TableHead className="text-center">Condition</TableHead>
-                                            <TableHead className="text-center">Status</TableHead>
-                                            {canManage && <TableHead className="text-right">Actions</TableHead>}
+                                            <TableHead className="whitespace-nowrap">Doc Reference</TableHead>
+                                            <TableHead className="text-center whitespace-nowrap">Condition</TableHead>
+                                            <TableHead className="text-center whitespace-nowrap">Status</TableHead>
+                                            {canManage && <TableHead className="text-right whitespace-nowrap">Actions</TableHead>}
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
                                         {properties.data.map((prop) => (
                                             <TableRow key={prop.id}>
-                                                <TableCell className="font-mono text-xs">{prop.property_number}</TableCell>
-                                                <TableCell className="text-muted-foreground">{prop.category?.name}</TableCell>
-                                                <TableCell>
-                                                    <div className="font-semibold">{prop.brand} - {prop.model}</div>
-                                                    <div className="text-xs text-muted-foreground font-mono">S/N: {prop.serial_number}</div>
+                                                <TableCell className="font-mono text-[11px] whitespace-nowrap">{prop.property_number}</TableCell>
+                                                <TableCell className="text-muted-foreground text-[11px]">{prop.category?.name}</TableCell>
+                                                <TableCell className="max-w-[200px]">
+                                                    <div className="font-semibold truncate" title={`${prop.brand} - ${prop.model}`}>{prop.brand} - {prop.model}</div>
+                                                    <div className="text-[11px] text-muted-foreground font-mono truncate" title={`S/N: ${prop.serial_number}`}>S/N: {prop.serial_number}</div>
                                                 </TableCell>
-                                                <TableCell className="text-right">₱{prop.unit_cost.toLocaleString('en-US', { minimumFractionDigits: 2 })}</TableCell>
-                                                <TableCell className="font-medium">
+                                                <TableCell className="text-right font-medium whitespace-nowrap">₱{prop.unit_cost.toLocaleString('en-US', { minimumFractionDigits: 2 })}</TableCell>
+                                                <TableCell className="font-medium text-[11px] leading-tight">
                                                     {prop.active_assignment ? (
                                                         <div className="flex flex-col gap-0.5">
                                                             <span>
@@ -402,7 +403,7 @@ return;
                                                         <span className="text-muted-foreground italic">None Assigned</span>
                                                     )}
                                                 </TableCell>
-                                                <TableCell className="font-mono text-xs text-indigo-500">
+                                                <TableCell className="font-mono text-[10px] text-indigo-500 whitespace-nowrap">
                                                     {prop.active_assignment ? (
                                                         <div className="flex flex-col gap-1">
                                                             <div className="flex items-center gap-1">
@@ -429,42 +430,56 @@ return;
                                                     </Badge>
                                                 </TableCell>
                                                 {canManage && (
-                                                    <TableCell className="text-right space-x-1 whitespace-nowrap">
-                                                        <Can permission="property.assign">
-                                                            {prop.status === 'available' && (
-                                                                <Button size="icon" variant="outline" title="Assign Equipment" onClick={() => openAssignModal(prop)}>
-                                                                    <UserCheck className="h-4 w-4 text-sky-500" />
+                                                    <TableCell className="text-right whitespace-nowrap">
+                                                        <DropdownMenu>
+                                                            <DropdownMenuTrigger asChild>
+                                                                <Button variant="ghost" className="h-8 w-8 p-0">
+                                                                    <span className="sr-only">Open menu</span>
+                                                                    <MoreHorizontal className="h-4 w-4" />
                                                                 </Button>
-                                                            )}
-                                                        </Can>
-                                                        <Can permission="property.transfer">
-                                                            {(prop.status === 'assigned' || prop.status === 'transferred') && (
-                                                                <Button size="icon" variant="outline" title="Transfer Property (PTR)" onClick={() => openTransferModal(prop)}>
-                                                                    <RefreshCw className="h-4 w-4 text-amber-500" />
-                                                                </Button>
-                                                            )}
-                                                        </Can>
-                                                        {(hasAnyPermission(['property.transfer']) || isDeptHead) && (
-                                                            <>
-                                                                {(prop.status === 'assigned' || prop.status === 'transferred') && !prop.active_sub_assignment && (
-                                                                    <Button size="icon" variant="outline" title="Issue Memorandum Receipt (Sub-Assign)" onClick={() => openSubAssignModal(prop)}>
-                                                                        <UserCheck className="h-4 w-4 text-blue-500" />
-                                                                    </Button>
+                                                            </DropdownMenuTrigger>
+                                                            <DropdownMenuContent align="end">
+                                                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                                                <Can permission="property.assign">
+                                                                    {prop.status === 'available' && (
+                                                                        <DropdownMenuItem onClick={() => openAssignModal(prop)}>
+                                                                            <UserCheck className="mr-2 h-4 w-4 text-sky-500" /> Assign Equipment
+                                                                        </DropdownMenuItem>
+                                                                    )}
+                                                                </Can>
+                                                                <Can permission="property.transfer">
+                                                                    {(prop.status === 'assigned' || prop.status === 'transferred') && (
+                                                                        <DropdownMenuItem onClick={() => openTransferModal(prop)}>
+                                                                            <RefreshCw className="mr-2 h-4 w-4 text-amber-500" /> Transfer Property (PTR)
+                                                                        </DropdownMenuItem>
+                                                                    )}
+                                                                </Can>
+                                                                {(hasAnyPermission(['property.transfer']) || isDeptHead) && (
+                                                                    <>
+                                                                        {(prop.status === 'assigned' || prop.status === 'transferred') && !prop.active_sub_assignment && (
+                                                                            <DropdownMenuItem onClick={() => openSubAssignModal(prop)}>
+                                                                                <UserCheck className="mr-2 h-4 w-4 text-blue-500" /> Issue Memo Receipt (MR)
+                                                                            </DropdownMenuItem>
+                                                                        )}
+                                                                        {prop.active_sub_assignment && (
+                                                                            <DropdownMenuItem onClick={() => openReturnSubAssignModal(prop)}>
+                                                                                <RefreshCw className="mr-2 h-4 w-4 text-emerald-500" /> Return Memo Receipt
+                                                                            </DropdownMenuItem>
+                                                                        )}
+                                                                    </>
                                                                 )}
-                                                                {prop.active_sub_assignment && (
-                                                                    <Button size="icon" variant="outline" title="Return Memorandum Receipt" onClick={() => openReturnSubAssignModal(prop)}>
-                                                                        <RefreshCw className="h-4 w-4 text-emerald-500" />
-                                                                    </Button>
-                                                                )}
-                                                            </>
-                                                        )}
-                                                        <Can permission="property.dispose">
-                                                            {prop.status !== 'disposed' && (
-                                                                <Button size="icon" variant="outline" title="Dispose Property (IIRUP)" onClick={() => openDisposeModal(prop)}>
-                                                                    <Trash2 className="h-4 w-4 text-rose-500" />
-                                                                </Button>
-                                                            )}
-                                                        </Can>
+                                                                <Can permission="property.dispose">
+                                                                    {prop.status !== 'disposed' && (
+                                                                        <>
+                                                                            <DropdownMenuSeparator />
+                                                                            <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => openDisposeModal(prop)}>
+                                                                                <Trash2 className="mr-2 h-4 w-4" /> Dispose Property
+                                                                            </DropdownMenuItem>
+                                                                        </>
+                                                                    )}
+                                                                </Can>
+                                                            </DropdownMenuContent>
+                                                        </DropdownMenu>
                                                     </TableCell>
                                                 )}
                                             </TableRow>

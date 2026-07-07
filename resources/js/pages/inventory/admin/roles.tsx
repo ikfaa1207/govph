@@ -1,13 +1,18 @@
 import { Head, useForm, router, setLayoutProps } from '@inertiajs/react';
-import { Plus, Edit2, Copy, Trash2, Users } from 'lucide-react';
+import { Plus, Edit2, Copy, Trash2, Users, ChevronDown, MoreHorizontal, ShieldAlert } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 interface Permission {
     id: number;
@@ -199,31 +204,40 @@ return;
 
                                 <div className="space-y-3 border-t border-border pt-4">
                                     <Label className="text-sm font-bold">Permissions Mapping</Label>
-                                    <div className="space-y-4 mt-2">
+                                    <Accordion type="multiple" className="w-full">
                                         {Object.entries(permissions).map(([module, permList]) => (
-                                            <div key={module} className="space-y-1.5">
-                                                <div className="text-xs font-bold uppercase tracking-wider text-primary">{module} Module</div>
-                                                <div className="grid grid-cols-2 gap-2">
-                                                    {permList.map((perm) => {
-                                                        const isChecked = addForm.data.permissions.includes(perm.id);
-
-                                                        return (
-                                                            <div 
-                                                                key={perm.id}
-                                                                onClick={() => togglePermissionSelection(addForm, perm.id)}
-                                                                className={`p-2 rounded-lg border text-xs cursor-pointer flex items-center justify-between transition-colors ${isChecked ? 'bg-indigo-500/10 border-indigo-500 text-indigo-600 dark:text-indigo-400 font-semibold' : 'border-border bg-background'}`}
-                                                            >
-                                                                <div>
-                                                                    <div>{perm.name}</div>
-                                                                    <div className="text-[10px] text-muted-foreground font-normal leading-normal">{perm.description}</div>
+                                            <AccordionItem key={module} value={module} className="border bg-card mb-2 rounded-lg px-4 data-[state=open]:bg-muted/10">
+                                                <AccordionTrigger className="hover:no-underline py-3">
+                                                    <span className="text-sm font-bold uppercase tracking-wider text-primary">{module} Module</span>
+                                                </AccordionTrigger>
+                                                <AccordionContent>
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 pb-4">
+                                                        {permList.map((perm) => {
+                                                            const isChecked = addForm.data.permissions.includes(perm.id);
+                                                            return (
+                                                                <div key={perm.id} className="flex items-start space-x-3 rounded-md border p-3 bg-background">
+                                                                    <Switch 
+                                                                        id={`add-perm-${perm.id}`}
+                                                                        checked={isChecked}
+                                                                        onCheckedChange={() => togglePermissionSelection(addForm, perm.id)}
+                                                                    />
+                                                                    <div className="space-y-1 leading-none">
+                                                                        <Label 
+                                                                            htmlFor={`add-perm-${perm.id}`}
+                                                                            className="font-semibold cursor-pointer"
+                                                                        >
+                                                                            {perm.name}
+                                                                        </Label>
+                                                                        <p className="text-[11px] text-muted-foreground mt-1 leading-snug">{perm.description}</p>
+                                                                    </div>
                                                                 </div>
-                                                            </div>
-                                                        );
-                                                    })}
-                                                </div>
-                                            </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </AccordionContent>
+                                            </AccordionItem>
                                         ))}
-                                    </div>
+                                    </Accordion>
                                 </div>
 
                                 <div className="flex justify-end gap-2 pt-2">
@@ -236,50 +250,74 @@ return;
                 </div>
 
                 {/* Roles Board */}
-                <div className="grid gap-4 md:grid-cols-2">
-                    {roles.map((role) => (
-                        <Card key={role.id} className="relative overflow-hidden flex flex-col justify-between">
-                            <CardHeader className="pb-2">
-                                <div className="flex justify-between items-start">
-                                    <div>
-                                        <CardTitle className="text-base font-bold text-foreground">{role.name}</CardTitle>
-                                        <CardDescription className="text-xs mt-1 leading-normal">{role.description || 'No description provided.'}</CardDescription>
-                                    </div>
-                                    <Badge variant="outline" className="flex items-center gap-1">
-                                        <Users className="h-3 w-3" />
-                                        {role.users.length} Users
-                                    </Badge>
-                                </div>
-                            </CardHeader>
-                            <CardContent className="space-y-4 pt-2">
-                                <div className="flex flex-wrap gap-1">
-                                    {role.permissions.map(p => (
-                                        <Badge key={p.id} variant="secondary" className="text-[9px] px-1 py-0 font-mono">
-                                            {p.name}
-                                        </Badge>
-                                    ))}
-                                </div>
-
-                                <div className="flex justify-end gap-1.5 border-t border-border pt-3 mt-auto">
-                                    <Button size="sm" variant="ghost" className="gap-1 text-xs" onClick={() => openEditDialog(role)}>
-                                        <Edit2 className="h-3.5 w-3.5" />
-                                        Permissions
-                                    </Button>
-                                    <Button size="sm" variant="ghost" className="gap-1 text-xs text-sky-500" onClick={() => openCloneDialog(role)}>
-                                        <Copy className="h-3.5 w-3.5" />
-                                        Clone
-                                    </Button>
-                                    {role.users.length === 0 && (
-                                        <Button size="sm" variant="ghost" className="gap-1 text-xs text-rose-500" onClick={() => handleDeleteRole(role)}>
-                                            <Trash2 className="h-3.5 w-3.5" />
-                                            Delete
-                                        </Button>
-                                    )}
-                                </div>
-                            </CardContent>
-                        </Card>
-                    ))}
-                </div>
+                <Card>
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead className="w-[30%]">Role / Description</TableHead>
+                                <TableHead>Users Assigned</TableHead>
+                                <TableHead>Permissions Count</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {roles.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
+                                        No roles configured yet.
+                                    </TableCell>
+                                </TableRow>
+                            ) : (
+                                roles.map((role) => (
+                                    <TableRow key={role.id}>
+                                        <TableCell>
+                                            <div className="font-semibold text-foreground">{role.name}</div>
+                                            <div className="text-xs text-muted-foreground">{role.description || 'No description provided'}</div>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Badge variant="outline" className="flex w-fit items-center gap-1 bg-muted/20">
+                                                <Users className="h-3 w-3" />
+                                                {role.users.length} Users
+                                            </Badge>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Badge variant="secondary" className="font-mono">
+                                                {role.permissions.length} Configured
+                                            </Badge>
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="ghost" className="h-8 w-8 p-0">
+                                                        <span className="sr-only">Open menu</span>
+                                                        <MoreHorizontal className="h-4 w-4" />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end">
+                                                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                                    <DropdownMenuItem onClick={() => openEditDialog(role)}>
+                                                        <Edit2 className="mr-2 h-4 w-4" /> Edit Permissions
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem onClick={() => openCloneDialog(role)}>
+                                                        <Copy className="mr-2 h-4 w-4" /> Clone Role
+                                                    </DropdownMenuItem>
+                                                    {role.users.length === 0 && (
+                                                        <>
+                                                            <DropdownMenuSeparator />
+                                                            <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => handleDeleteRole(role)}>
+                                                                <Trash2 className="mr-2 h-4 w-4" /> Delete Role
+                                                            </DropdownMenuItem>
+                                                        </>
+                                                    )}
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            )}
+                        </TableBody>
+                    </Table>
+                </Card>
 
                 {/* Dialog: Edit Permissions */}
                 <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
@@ -303,31 +341,40 @@ return;
 
                                 <div className="space-y-3 border-t border-border pt-4">
                                     <Label className="text-sm font-bold">Permissions Mapping</Label>
-                                    <div className="space-y-4 mt-2">
+                                    <Accordion type="multiple" className="w-full">
                                         {Object.entries(permissions).map(([module, permList]) => (
-                                            <div key={module} className="space-y-1.5">
-                                                <div className="text-xs font-bold uppercase tracking-wider text-primary">{module} Module</div>
-                                                <div className="grid grid-cols-2 gap-2">
-                                                    {permList.map((perm) => {
-                                                        const isChecked = editForm.data.permissions.includes(perm.id);
-
-                                                        return (
-                                                            <div 
-                                                                key={perm.id}
-                                                                onClick={() => togglePermissionSelection(editForm, perm.id)}
-                                                                className={`p-2 rounded-lg border text-xs cursor-pointer flex items-center justify-between transition-colors ${isChecked ? 'bg-indigo-500/10 border-indigo-500 text-indigo-600 dark:text-indigo-400 font-semibold' : 'border-border bg-background'}`}
-                                                            >
-                                                                <div>
-                                                                    <div>{perm.name}</div>
-                                                                    <div className="text-[10px] text-muted-foreground font-normal leading-normal">{perm.description}</div>
+                                            <AccordionItem key={module} value={module} className="border bg-card mb-2 rounded-lg px-4 data-[state=open]:bg-muted/10">
+                                                <AccordionTrigger className="hover:no-underline py-3">
+                                                    <span className="text-sm font-bold uppercase tracking-wider text-primary">{module} Module</span>
+                                                </AccordionTrigger>
+                                                <AccordionContent>
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 pb-4">
+                                                        {permList.map((perm) => {
+                                                            const isChecked = editForm.data.permissions.includes(perm.id);
+                                                            return (
+                                                                <div key={perm.id} className="flex items-start space-x-3 rounded-md border p-3 bg-background">
+                                                                    <Switch 
+                                                                        id={`edit-perm-${perm.id}`}
+                                                                        checked={isChecked}
+                                                                        onCheckedChange={() => togglePermissionSelection(editForm, perm.id)}
+                                                                    />
+                                                                    <div className="space-y-1 leading-none">
+                                                                        <Label 
+                                                                            htmlFor={`edit-perm-${perm.id}`}
+                                                                            className="font-semibold cursor-pointer"
+                                                                        >
+                                                                            {perm.name}
+                                                                        </Label>
+                                                                        <p className="text-[11px] text-muted-foreground mt-1 leading-snug">{perm.description}</p>
+                                                                    </div>
                                                                 </div>
-                                                            </div>
-                                                        );
-                                                    })}
-                                                </div>
-                                            </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </AccordionContent>
+                                            </AccordionItem>
                                         ))}
-                                    </div>
+                                    </Accordion>
                                 </div>
 
                                 <div className="flex justify-end gap-2 pt-2">
