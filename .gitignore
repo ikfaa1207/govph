@@ -27,3 +27,9 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
+
+# AI and Agent Files
+CLAUDE.md
+AGENTS.md
+.agents/
+demo.md
