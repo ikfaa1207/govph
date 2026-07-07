@@ -17,7 +17,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'proceeds',
     'witness_by',
     'approved_by',
-    'status'
+    'status',
 ])]
 class Disposal extends Model
 {

@@ -160,7 +160,7 @@ return;
             current.push(id);
         }
 
-        form.setData('permissions', current);
+        form.setData({ ...form.data, permissions: current });
     };
 
     return (

@@ -1,28 +1,31 @@
 <?php
 
+use App\Models\AuditLog;
 use App\Models\Category;
 use App\Models\Department;
 use App\Models\Employee;
 use App\Models\Item;
 use App\Models\Office;
 use App\Models\Permission;
-use App\Models\Role;
-use App\Models\User;
 use App\Models\Requisition;
 use App\Models\RequisitionItem;
+use App\Models\Role;
 use App\Models\Unit;
-use App\Models\AuditLog;
+use App\Models\User;
+use App\Rules\PasswordPolicyRule;
+use App\Services\Audit\AuditLogger;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 uses(RefreshDatabase::class);
 
 test('unauthorized users are denied access and an audit log entry is created', function () {
     // Create direct employee with no special permissions
-    $user = User::create([
+    $user = User::factory()->employee()->create([
         'name' => 'Normal Staff',
         'email' => 'staff@example.com',
         'password' => bcrypt('password'),
-        'role' => 'employee'
     ]);
 
     $this->actingAs($user);
@@ -47,18 +50,18 @@ test('users can access routes if assigned permission directly or via role', func
     $permission = Permission::create([
         'name' => 'reports.view',
         'module' => 'reports',
-        'description' => 'View reports'
+        'description' => 'View reports',
     ]);
 
     // User 1: Direct Permission
-    $userDirect = User::create(['name' => 'Direct P', 'email' => 'direct@example.com', 'password' => bcrypt('password'), 'role' => 'employee']);
+    $userDirect = User::factory()->employee()->create(['name' => 'Direct P', 'email' => 'direct@example.com', 'password' => bcrypt('password')]);
     $userDirect->givePermissionTo('reports.view');
 
     // User 2: Role Permission
     $role = Role::create(['name' => 'Report Viewer']);
     $role->permissions()->attach($permission->id);
 
-    $userRole = User::create(['name' => 'Role P', 'email' => 'role@example.com', 'password' => bcrypt('password'), 'role' => 'employee']);
+    $userRole = User::factory()->employee()->create(['name' => 'Role P', 'email' => 'role@example.com', 'password' => bcrypt('password')]);
     $userRole->assignRole('Report Viewer');
 
     // Verify User 1
@@ -88,7 +91,7 @@ test('a creator cannot approve their own requisition request', function () {
     ]);
 
     // Creator Department Head (has request.create and request.approve)
-    $headUser = User::create(['name' => 'Head', 'email' => 'head@example.com', 'password' => bcrypt('password'), 'role' => 'dept_head']);
+    $headUser = User::factory()->deptHead()->create(['name' => 'Head', 'email' => 'head@example.com', 'password' => bcrypt('password')]);
     $head = Employee::create(['user_id' => $headUser->id, 'employee_id' => 'E01', 'name' => 'Head', 'position' => 'Head', 'office_id' => $office->id, 'department_id' => $dept->id]);
 
     $permCreate = Permission::create(['name' => 'request.create', 'module' => 'requisitions']);
@@ -115,18 +118,17 @@ test('a creator cannot approve their own requisition request', function () {
     $response = $this->post(route('inventory.requisitions.approve', $requisition->id), [
         'items' => [
             ['id' => $requisitionItem->id, 'quantity_approved' => 10],
-        ]
+        ],
     ]);
 
     $response->assertForbidden();
 });
 
 test('users with password_change_required are redirected to settings', function () {
-    $user = User::create([
+    $user = User::factory()->employee()->create([
         'name' => 'New Employee',
         'email' => 'new@example.com',
         'password' => bcrypt('password'),
-        'role' => 'employee',
         'password_change_required' => true,
     ]);
 
@@ -147,7 +149,7 @@ test('audit log captures module, permission, and user role fields', function () 
     $permission = Permission::create(['name' => 'inventory.view', 'module' => 'inventory', 'description' => 'View inventory']);
     $role->permissions()->attach($permission->id);
 
-    $user = User::create(['name' => 'SO User', 'email' => 'so@example.com', 'password' => bcrypt('password'), 'role' => 'supply_officer']);
+    $user = User::factory()->supplyOfficer()->create(['name' => 'SO User', 'email' => 'so@example.com', 'password' => bcrypt('password')]);
     $user->assignRole('Supply Officer');
 
     $this->actingAs($user);
@@ -157,7 +159,7 @@ test('audit log captures module, permission, and user role fields', function () 
     $category = Category::create(['name' => 'Test Cat', 'code' => 'TC', 'is_ppe' => false]);
     $item = Item::create(['item_code' => 'T-001', 'name' => 'Test Item', 'category_id' => $category->id, 'unit_id' => $unit->id, 'unit_cost' => 50, 'reorder_level' => 5, 'maximum_stock' => 50]);
 
-    \App\Services\Audit\AuditLogger::log(
+    AuditLogger::log(
         'CREATE_ITEM',
         $item,
         null,
@@ -186,7 +188,7 @@ test('public registration route is disabled', function () {
 });
 
 test('password policy validation enforces complexity', function () {
-    $rule = new \App\Rules\PasswordPolicyRule();
+    $rule = new PasswordPolicyRule;
 
     $fails = false;
     $rule->validate('password', 'short', function ($message) use (&$fails) {
@@ -203,11 +205,10 @@ test('password policy validation enforces complexity', function () {
 });
 
 test('password policy prevents reusing last 5 passwords', function () {
-    $user = User::create([
+    $user = User::factory()->employee()->create([
         'name' => 'Test User',
         'email' => 'pw-test@example.com',
         'password' => bcrypt('password123'),
-        'role' => 'employee',
     ]);
 
     // Initial password will automatically be saved to history by User's boot listener.
@@ -217,7 +218,7 @@ test('password policy prevents reusing last 5 passwords', function () {
     ]);
 
     // The new password is 'password123' (which is the same as current/past password)
-    $rule = new \App\Rules\PasswordPolicyRule($user);
+    $rule = new PasswordPolicyRule($user);
     $fails = false;
     $rule->validate('password', 'password123', function ($message) use (&$fails) {
         $fails = true;
@@ -228,19 +229,18 @@ test('password policy prevents reusing last 5 passwords', function () {
 test('super admin account cannot be deactivated or have System Administrator role removed', function () {
     // Seed system administrator role
     $adminRole = Role::create(['name' => 'System Administrator']);
-    
+
     // Create the protected user ID 1
     $superAdmin = new User([
         'name' => 'Super Admin',
         'email' => 'superadmin@example.com',
         'password' => bcrypt('password123456'),
-        'role' => 'admin',
     ]);
     $superAdmin->id = 1;
     $superAdmin->save();
-    
+
     $superAdmin->assignRole($adminRole);
-    
+
     // Give permissions to manage users & super admin bypass
     $superAdmin->givePermissionTo(
         Permission::create(['name' => 'users.manage', 'module' => 'users']),
@@ -266,17 +266,16 @@ test('super admin account cannot be deactivated or have System Administrator rol
 });
 
 test('account lockout occurs after 5 failed login attempts', function () {
-    $user = User::create([
+    $user = User::factory()->employee()->create([
         'name' => 'Lockout User',
         'email' => 'lockout@example.com',
         'password' => bcrypt('SecurePass123!'),
-        'role' => 'employee',
         'is_active' => true,
     ]);
 
     // Simulating 5 failed login attempts and clearing rate limiter each time
     for ($i = 0; $i < 5; $i++) {
-        \Illuminate\Support\Facades\Cache::flush();
+        Cache::flush();
         $response = $this->post('/login', [
             'email' => 'lockout@example.com',
             'password' => 'wrongpassword',
@@ -289,8 +288,8 @@ test('account lockout occurs after 5 failed login attempts', function () {
     expect($user->locked_until->isFuture())->toBeTrue();
 
     // Trying to log in again should throw validation exception
-    \Illuminate\Support\Facades\Cache::flush();
-    
+    Cache::flush();
+
     $response = $this->post('/login', [
         'email' => 'lockout@example.com',
         'password' => 'SecurePass123!',
@@ -299,20 +298,18 @@ test('account lockout occurs after 5 failed login attempts', function () {
 });
 
 test('admin can unlock a locked out account', function () {
-    $admin = User::create([
+    $admin = User::factory()->admin()->create([
         'name' => 'Admin',
         'email' => 'admin-lock@example.com',
         'password' => bcrypt('password123456'),
-        'role' => 'admin',
     ]);
     // Give permissions to manage users
     $admin->givePermissionTo(Permission::create(['name' => 'users.manage', 'module' => 'users']));
 
-    $user = User::create([
+    $user = User::factory()->employee()->create([
         'name' => 'Locked User',
         'email' => 'locked@example.com',
         'password' => bcrypt('SecurePass123!'),
-        'role' => 'employee',
         'locked_until' => now()->addMinutes(30),
         'failed_login_attempts' => 5,
     ]);
@@ -329,11 +326,10 @@ test('admin can unlock a locked out account', function () {
 });
 
 test('password expires after 60 days', function () {
-    $user = User::create([
+    $user = User::factory()->employee()->create([
         'name' => 'Expired User',
         'email' => 'expired@example.com',
         'password' => bcrypt('SecurePass123!'),
-        'role' => 'employee',
     ]);
     $user->password_changed_at = now()->subDays(61);
     $user->saveQuietly();
@@ -349,11 +345,10 @@ test('password expires after 60 days', function () {
 });
 
 test('password expiry warning appears 7 days prior', function () {
-    $user = User::create([
+    $user = User::factory()->employee()->create([
         'name' => 'Warning User',
         'email' => 'warning-pw@example.com',
         'password' => bcrypt('SecurePass123!'),
-        'role' => 'employee',
     ]);
     $user->password_changed_at = now()->subDays(55);
     $user->saveQuietly();
@@ -372,11 +367,10 @@ test('password expiry warning appears 7 days prior', function () {
 });
 
 test('mandatory 2fa redirects users without 2fa', function () {
-    $user = User::create([
+    $user = User::factory()->employee()->create([
         'name' => 'No 2FA User',
         'email' => 'no-2fa@example.com',
         'password' => bcrypt('SecurePass123!'),
-        'role' => 'employee',
         'password_changed_at' => now(),
     ]);
 
@@ -385,22 +379,21 @@ test('mandatory 2fa redirects users without 2fa', function () {
 
     $this->actingAs($user);
 
-    $response = $this->get(route('dashboard') . '?enforce_2fa=1');
+    $response = $this->get(route('dashboard').'?enforce_2fa=1');
     $response->assertRedirect(route('security.edit'));
     $response->assertSessionHas('warning', 'Two-factor authentication is required. Please set it up to continue.');
 });
 
 test('single active session policy invalidates old sessions', function () {
-    $user = User::create([
+    $user = User::factory()->employee()->create([
         'name' => 'Single Session User',
         'email' => 'single-session@example.com',
         'password' => bcrypt('SecurePass123!'),
-        'role' => 'employee',
         'is_active' => true,
     ]);
 
     // Insert mock sessions into database sessions table
-    \Illuminate\Support\Facades\DB::table('sessions')->insert([
+    DB::table('sessions')->insert([
         [
             'id' => 'session_old_1',
             'user_id' => $user->id,
@@ -420,7 +413,7 @@ test('single active session policy invalidates old sessions', function () {
     ]);
 
     // Verify sessions count is 2
-    expect(\Illuminate\Support\Facades\DB::table('sessions')->where('user_id', $user->id)->count())->toBe(2);
+    expect(DB::table('sessions')->where('user_id', $user->id)->count())->toBe(2);
 
     // Simulate login
     $response = $this->post('/login', [
@@ -429,6 +422,402 @@ test('single active session policy invalidates old sessions', function () {
     ]);
 
     // Verify all old sessions were deleted
-    expect(\Illuminate\Support\Facades\DB::table('sessions')->where('user_id', $user->id)->count())->toBe(0);
+    expect(DB::table('sessions')->where('user_id', $user->id)->count())->toBe(0);
 });
 
+test('requisition automatically resolves and sets correct department_head_id on creation', function () {
+    $office = Office::create(['code' => 'O-TEST-1', 'name' => 'Test Office']);
+    $dept = Department::create(['office_id' => $office->id, 'code' => 'D-TEST-1', 'name' => 'Test Dept']);
+    $unit = Unit::create(['name' => 'Piece', 'abbreviation' => 'pc']);
+    $category = Category::create(['name' => 'Office Supplies', 'code' => 'SUPP', 'is_ppe' => false]);
+    $item = Item::create([
+        'item_code' => 'ITEM-BOND-01',
+        'name' => 'Bond Paper',
+        'category_id' => $category->id,
+        'unit_id' => $unit->id,
+        'unit_cost' => 100.00,
+        'reorder_level' => 10,
+        'maximum_stock' => 100,
+    ]);
+
+    // Create staff employee and head employee in the same department
+    $employeeUser = User::factory()->employee()->create(['name' => 'Staff', 'email' => 'staff1@example.com', 'password' => bcrypt('password')]);
+    $employee = Employee::create(['user_id' => $employeeUser->id, 'employee_id' => 'E10', 'name' => 'Staff', 'position' => 'Staff', 'office_id' => $office->id, 'department_id' => $dept->id]);
+
+    $headUser = User::factory()->deptHead()->create(['name' => 'Head', 'email' => 'head1@example.com', 'password' => bcrypt('password')]);
+    $head = Employee::create(['user_id' => $headUser->id, 'employee_id' => 'E11', 'name' => 'Head', 'position' => 'Head', 'office_id' => $office->id, 'department_id' => $dept->id]);
+
+    Permission::create(['name' => 'request.create', 'module' => 'requisition']);
+    $employeeUser->givePermissionTo('request.create');
+
+    $this->actingAs($employeeUser);
+    $response = $this->post(route('inventory.requisitions.store'), [
+        'items' => [
+            ['item_id' => $item->id, 'quantity' => 5],
+        ],
+        'purpose' => 'Office printing',
+    ]);
+
+    $response->assertRedirect();
+    $requisition = Requisition::first();
+    expect($requisition->department_head_id)->toBe($head->id);
+});
+
+test('a department head cannot approve a requisition routed to a different department head', function () {
+    $office = Office::create(['code' => 'O-TEST-2', 'name' => 'Test Office']);
+    $deptA = Department::create(['office_id' => $office->id, 'code' => 'D-A', 'name' => 'Dept A']);
+    $deptB = Department::create(['office_id' => $office->id, 'code' => 'D-B', 'name' => 'Dept B']);
+    $unit = Unit::create(['name' => 'Piece', 'abbreviation' => 'pc']);
+    $category = Category::create(['name' => 'Office Supplies', 'code' => 'SUPP', 'is_ppe' => false]);
+    $item = Item::create([
+        'item_code' => 'ITEM-BOND-02',
+        'name' => 'Bond Paper',
+        'category_id' => $category->id,
+        'unit_id' => $unit->id,
+        'unit_cost' => 100.00,
+        'reorder_level' => 10,
+        'maximum_stock' => 100,
+    ]);
+
+    // Dept A Staff and Head
+    $staffAUser = User::factory()->employee()->create(['name' => 'Staff A', 'email' => 'staffa@example.com', 'password' => bcrypt('password')]);
+    $staffA = Employee::create(['user_id' => $staffAUser->id, 'employee_id' => 'EA1', 'name' => 'Staff A', 'position' => 'Staff A', 'office_id' => $office->id, 'department_id' => $deptA->id]);
+
+    $headAUser = User::factory()->deptHead()->create(['name' => 'Head A', 'email' => 'heada@example.com', 'password' => bcrypt('password')]);
+    $headA = Employee::create(['user_id' => $headAUser->id, 'employee_id' => 'EA2', 'name' => 'Head A', 'position' => 'Head A', 'office_id' => $office->id, 'department_id' => $deptA->id]);
+
+    // Dept B Head
+    $headBUser = User::factory()->deptHead()->create(['name' => 'Head B', 'email' => 'headb@example.com', 'password' => bcrypt('password')]);
+    $headB = Employee::create(['user_id' => $headBUser->id, 'employee_id' => 'EB2', 'name' => 'Head B', 'position' => 'Head B', 'office_id' => $office->id, 'department_id' => $deptB->id]);
+
+    $permCreate = Permission::create(['name' => 'request.create', 'module' => 'requisition']);
+    $permApprove = Permission::create(['name' => 'request.approve', 'module' => 'requisition']);
+
+    $staffAUser->givePermissionTo($permCreate);
+    $headAUser->givePermissionTo($permApprove);
+    $headBUser->givePermissionTo($permApprove);
+
+    // Create requisition for Dept A
+    $this->actingAs($staffAUser);
+    $this->post(route('inventory.requisitions.store'), [
+        'items' => [
+            ['item_id' => $item->id, 'quantity' => 5],
+        ],
+    ]);
+
+    $requisition = Requisition::first();
+    $requisitionItem = RequisitionItem::first();
+
+    // Head B tries to approve it - should fail (403)
+    $this->actingAs($headBUser);
+    $response = $this->post(route('inventory.requisitions.approve', $requisition->id), [
+        'items' => [
+            ['id' => $requisitionItem->id, 'quantity_approved' => 5],
+        ],
+    ]);
+    $response->assertForbidden();
+
+    // Head A can approve it
+    $this->actingAs($headAUser);
+    $responseSuccess = $this->post(route('inventory.requisitions.approve', $requisition->id), [
+        'items' => [
+            ['id' => $requisitionItem->id, 'quantity_approved' => 5],
+        ],
+    ]);
+    $responseSuccess->assertRedirect();
+});
+
+test('system administrators can approve any requisition (override/bypass)', function () {
+    $office = Office::create(['code' => 'O-TEST-3', 'name' => 'Test Office']);
+    $dept = Department::create(['office_id' => $office->id, 'code' => 'D-TEST-3', 'name' => 'Test Dept']);
+    $unit = Unit::create(['name' => 'Piece', 'abbreviation' => 'pc']);
+    $category = Category::create(['name' => 'Office Supplies', 'code' => 'SUPP', 'is_ppe' => false]);
+    $item = Item::create([
+        'item_code' => 'ITEM-BOND-03',
+        'name' => 'Bond Paper',
+        'category_id' => $category->id,
+        'unit_id' => $unit->id,
+        'unit_cost' => 100.00,
+        'reorder_level' => 10,
+        'maximum_stock' => 100,
+    ]);
+
+    $employeeUser = User::factory()->employee()->create(['name' => 'Staff', 'email' => 'staff3@example.com', 'password' => bcrypt('password')]);
+    $employee = Employee::create(['user_id' => $employeeUser->id, 'employee_id' => 'E30', 'name' => 'Staff', 'position' => 'Staff', 'office_id' => $office->id, 'department_id' => $dept->id]);
+
+    $headUser = User::factory()->deptHead()->create(['name' => 'Head', 'email' => 'head3@example.com', 'password' => bcrypt('password')]);
+    $head = Employee::create(['user_id' => $headUser->id, 'employee_id' => 'E31', 'name' => 'Head', 'position' => 'Head', 'office_id' => $office->id, 'department_id' => $dept->id]);
+
+    // Admin user (role admin, has System Administrator role)
+    $adminRole = Role::create(['name' => 'System Administrator']);
+    $adminUser = User::factory()->admin()->create(['name' => 'Admin User', 'email' => 'admin3@example.com', 'password' => bcrypt('password')]);
+    $adminUser->assignRole($adminRole);
+
+    $permCreate = Permission::create(['name' => 'request.create', 'module' => 'requisition']);
+    $permApprove = Permission::create(['name' => 'request.approve', 'module' => 'requisition']);
+    $permSuper = Permission::create(['name' => 'admin.super', 'module' => 'admin']);
+    $adminRole->permissions()->attach($permSuper->id);
+
+    $employeeUser->givePermissionTo($permCreate);
+
+    $this->actingAs($employeeUser);
+    $this->post(route('inventory.requisitions.store'), [
+        'items' => [
+            ['item_id' => $item->id, 'quantity' => 5],
+        ],
+    ]);
+
+    $requisition = Requisition::first();
+    $requisitionItem = RequisitionItem::first();
+
+    // Admin can approve it directly
+    $this->actingAs($adminUser);
+    $response = $this->post(route('inventory.requisitions.approve', $requisition->id), [
+        'items' => [
+            ['id' => $requisitionItem->id, 'quantity_approved' => 5],
+        ],
+    ]);
+    $response->assertRedirect();
+});
+
+test('system administrators can approve a requisition with no designated department head (fallback)', function () {
+    $office = Office::create(['code' => 'O-TEST-4', 'name' => 'Test Office']);
+    $dept = Department::create(['office_id' => $office->id, 'code' => 'D-TEST-4', 'name' => 'Test Dept']);
+    $unit = Unit::create(['name' => 'Piece', 'abbreviation' => 'pc']);
+    $category = Category::create(['name' => 'Office Supplies', 'code' => 'SUPP', 'is_ppe' => false]);
+    $item = Item::create([
+        'item_code' => 'ITEM-BOND-04',
+        'name' => 'Bond Paper',
+        'category_id' => $category->id,
+        'unit_id' => $unit->id,
+        'unit_cost' => 100.00,
+        'reorder_level' => 10,
+        'maximum_stock' => 100,
+    ]);
+
+    $employeeUser = User::factory()->employee()->create(['name' => 'Staff', 'email' => 'staff4@example.com', 'password' => bcrypt('password')]);
+    $employee = Employee::create(['user_id' => $employeeUser->id, 'employee_id' => 'E40', 'name' => 'Staff', 'position' => 'Staff', 'office_id' => $office->id, 'department_id' => $dept->id]);
+
+    // Admin user
+    $adminRole = Role::create(['name' => 'System Administrator']);
+    $adminUser = User::factory()->admin()->create(['name' => 'Admin User', 'email' => 'admin4@example.com', 'password' => bcrypt('password')]);
+    $adminUser->assignRole($adminRole);
+
+    $permCreate = Permission::create(['name' => 'request.create', 'module' => 'requisition']);
+    $permApprove = Permission::create(['name' => 'request.approve', 'module' => 'requisition']);
+    $permSuper = Permission::firstOrCreate(['name' => 'admin.super', 'module' => 'admin']);
+    $adminRole->permissions()->attach($permSuper->id);
+
+    $employeeUser->givePermissionTo($permCreate);
+
+    // Create requisition when no department head exists
+    $this->actingAs($employeeUser);
+    $this->post(route('inventory.requisitions.store'), [
+        'items' => [
+            ['item_id' => $item->id, 'quantity' => 5],
+        ],
+    ]);
+
+    $requisition = Requisition::first();
+    expect($requisition->department_head_id)->toBeNull();
+    $requisitionItem = RequisitionItem::first();
+
+    // Admin can approve it directly
+    $this->actingAs($adminUser);
+    $response = $this->post(route('inventory.requisitions.approve', $requisition->id), [
+        'items' => [
+            ['id' => $requisitionItem->id, 'quantity_approved' => 5],
+        ],
+    ]);
+    $response->assertRedirect();
+});
+
+test('dashboard stats and pending feed are correctly scoped based on role', function () {
+    $office = Office::create(['code' => 'O-TEST-5', 'name' => 'Test Office']);
+    $deptA = Department::create(['office_id' => $office->id, 'code' => 'D-A5', 'name' => 'Dept A']);
+    $deptB = Department::create(['office_id' => $office->id, 'code' => 'D-B5', 'name' => 'Dept B']);
+
+    $staffAUser = User::factory()->employee()->create(['name' => 'Staff A', 'email' => 'staffa5@example.com', 'password' => bcrypt('password')]);
+    $staffA = Employee::create(['user_id' => $staffAUser->id, 'employee_id' => 'EA5', 'name' => 'Staff A', 'position' => 'Staff A', 'office_id' => $office->id, 'department_id' => $deptA->id]);
+
+    $staffBUser = User::factory()->employee()->create(['name' => 'Staff B', 'email' => 'staffb5@example.com', 'password' => bcrypt('password')]);
+    $staffB = Employee::create(['user_id' => $staffBUser->id, 'employee_id' => 'EB5', 'name' => 'Staff B', 'position' => 'Staff B', 'office_id' => $office->id, 'department_id' => $deptB->id]);
+
+    $headAUser = User::factory()->deptHead()->create(['name' => 'Head A', 'email' => 'heada5@example.com', 'password' => bcrypt('password')]);
+    $headA = Employee::create(['user_id' => $headAUser->id, 'employee_id' => 'EHA5', 'name' => 'Head A', 'position' => 'Head A', 'office_id' => $office->id, 'department_id' => $deptA->id]);
+
+    $headBUser = User::factory()->deptHead()->create(['name' => 'Head B', 'email' => 'headb5@example.com', 'password' => bcrypt('password')]);
+    $headB = Employee::create(['user_id' => $headBUser->id, 'employee_id' => 'EHB5', 'name' => 'Head B', 'position' => 'Head B', 'office_id' => $office->id, 'department_id' => $deptB->id]);
+
+    Permission::create(['name' => 'dashboard.view', 'module' => 'dashboard']);
+    Permission::create(['name' => 'request.approve', 'module' => 'requisition']);
+
+    $staffAUser->givePermissionTo('dashboard.view');
+    $staffBUser->givePermissionTo('dashboard.view');
+    $headAUser->givePermissionTo('dashboard.view', 'request.approve');
+    $headBUser->givePermissionTo('dashboard.view', 'request.approve');
+
+    // Create 1 pending requisition for Dept A, and 1 for Dept B
+    Requisition::create([
+        'ris_number' => 'RIS-A',
+        'requesting_employee_id' => $staffA->id,
+        'department_id' => $deptA->id,
+        'status' => 'pending_dept_head',
+        'department_head_id' => $headA->id,
+    ]);
+
+    Requisition::create([
+        'ris_number' => 'RIS-B',
+        'requesting_employee_id' => $staffB->id,
+        'department_id' => $deptB->id,
+        'status' => 'pending_dept_head',
+        'department_head_id' => $headB->id,
+    ]);
+
+    // 1. Regular employee Staff A dashboard - should only see 1 pending requisition (their own)
+    $this->actingAs($staffAUser);
+    $response = $this->get(route('dashboard'));
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->where('stats.pendingRequests', 1)
+        ->has('pendingRequests', 1)
+        ->where('pendingRequests.0.ris_number', 'RIS-A')
+    );
+
+    // 2. Department Head A dashboard - should only see 1 pending requisition (within their department)
+    $this->actingAs($headAUser);
+    $response = $this->get(route('dashboard'));
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->where('stats.pendingRequests', 1)
+        ->has('pendingRequests', 1)
+        ->where('pendingRequests.0.ris_number', 'RIS-A')
+    );
+});
+
+test('2fa enforcement is optional and can be toggled via configuration', function () {
+    $user = User::factory()->employee()->create([
+        'name' => 'Optional 2FA User',
+        'email' => 'optional-2fa@example.com',
+        'password' => bcrypt('SecurePass123!'),
+        'password_changed_at' => now(),
+    ]);
+
+    // Give dashboard permission
+    $user->givePermissionTo(Permission::create(['name' => 'dashboard.view', 'module' => 'dashboard']));
+
+    $this->actingAs($user);
+
+    // 1. By default config('fortify.two_factor_enforced') is false, navigation should succeed (200 OK)
+    config(['fortify.two_factor_enforced' => false]);
+    $response = $this->get(route('dashboard'));
+    $response->assertOk();
+
+    // 2. When config('fortify.two_factor_enforced') is true, it should redirect to security page
+    config(['fortify.two_factor_enforced' => true]);
+    $responseRedirect = $this->get(route('dashboard'));
+    $responseRedirect->assertRedirect(route('security.edit'));
+    $responseRedirect->assertSessionHas('warning', 'Two-factor authentication is required. Please set it up to continue.');
+});
+
+test('admin users can create offices and departments inline', function () {
+    $admin = User::factory()->admin()->create([
+        'name' => 'Admin User',
+        'email' => 'admin-offices@example.com',
+        'password' => bcrypt('password'),
+    ]);
+    $admin->givePermissionTo(Permission::create(['name' => 'users.manage', 'module' => 'users']));
+
+    $this->actingAs($admin);
+
+    // Create office
+    $responseOffice = $this->post(route('inventory.offices.store'), [
+        'name' => 'Office of the Governor',
+        'code' => 'GOV',
+    ]);
+
+    $responseOffice->assertOk();
+    $this->assertDatabaseHas('offices', [
+        'code' => 'GOV',
+        'name' => 'Office of the Governor',
+    ]);
+
+    $officeId = $responseOffice->json('id');
+
+    // Create department under governor office
+    $responseDept = $this->post(route('inventory.departments.store'), [
+        'office_id' => $officeId,
+        'name' => 'Public Information Division',
+        'code' => 'PID',
+    ]);
+
+    $responseDept->assertOk();
+    $this->assertDatabaseHas('departments', [
+        'office_id' => $officeId,
+        'code' => 'PID',
+        'name' => 'Public Information Division',
+    ]);
+});
+
+test('inline office and department creation enforces uniqueness and authorization constraints', function () {
+    $office = Office::create(['code' => 'OFF-1', 'name' => 'Office 1']);
+
+    // Create unauthorized user
+    $staff = User::factory()->employee()->create([
+        'name' => 'Staff User',
+        'email' => 'staff-offices@example.com',
+        'password' => bcrypt('password'),
+    ]);
+
+    // 1. Unauthorized user cannot create office
+    $this->actingAs($staff);
+    $responseAuth = $this->post(route('inventory.offices.store'), [
+        'name' => 'Office 2',
+        'code' => 'OFF-2',
+    ]);
+    $responseAuth->assertForbidden();
+
+    // 2. Admin cannot create office with duplicate code
+    $admin = User::factory()->admin()->create([
+        'name' => 'Admin User',
+        'email' => 'admin-offices2@example.com',
+        'password' => bcrypt('password'),
+    ]);
+    $admin->givePermissionTo(Permission::create(['name' => 'users.manage', 'module' => 'users']));
+
+    $this->actingAs($admin);
+    $responseDuplicate = $this->post(route('inventory.offices.store'), [
+        'name' => 'Office Duplicate',
+        'code' => 'OFF-1', // duplicate
+    ]);
+    $responseDuplicate->assertSessionHasErrors('code');
+});
+
+test('users with inventory.create permission can create units of measurement inline', function () {
+    $user = User::factory()->supplyOfficer()->create([
+        'name' => 'Supply Officer',
+        'email' => 'supply-units@example.com',
+        'password' => bcrypt('password'),
+    ]);
+    $user->givePermissionTo(Permission::create(['name' => 'inventory.create', 'module' => 'inventory']));
+
+    $this->actingAs($user);
+
+    $response = $this->post(route('inventory.units.store'), [
+        'name' => 'Metric Ton',
+        'abbreviation' => 'mt',
+    ]);
+
+    $response->assertOk();
+    $this->assertDatabaseHas('units', [
+        'name' => 'Metric Ton',
+        'abbreviation' => 'mt',
+    ]);
+
+    // Validation duplicate checks
+    $responseDup = $this->post(route('inventory.units.store'), [
+        'name' => 'Metric Ton',
+        'abbreviation' => 'mt',
+    ]);
+    $responseDup->assertSessionHasErrors(['name', 'abbreviation']);
+});

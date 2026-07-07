@@ -43,7 +43,7 @@ class HandleInertiaRequests extends Middleware
                     'roles' => $request->user()->roles->pluck('name')->toArray(),
                     'permissions' => array_values(array_unique(array_merge(
                         $request->user()->permissions->pluck('name')->toArray(),
-                        $request->user()->roles->flatMap(fn($r) => $r->permissions->pluck('name'))->toArray()
+                        $request->user()->roles->flatMap(fn ($r) => $r->permissions->pluck('name'))->toArray()
                     ))),
                 ]) : null,
             ],

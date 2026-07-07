@@ -2,12 +2,16 @@ import { Head, useForm, useHttp, setLayoutProps } from '@inertiajs/react';
 import { PlusCircle, X, Eye, Package2, ClipboardCheck, ArrowDownToLine, Calendar, User, FileText, Landmark, Plus } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
+import { SimplePagination } from '@/components/simple-pagination';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { DatePicker } from '@/components/ui/date-picker';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 interface ReceivingReportItem {
     id: number;
@@ -40,7 +44,10 @@ interface ReceivingReport {
 }
 
 interface ReceivingIndexProps {
-    reports: ReceivingReport[];
+    reports: {
+        data: ReceivingReport[];
+        links: any[];
+    };
     suppliers: any[];
     employees: any[];
     items: any[];
@@ -240,16 +247,14 @@ export default function ReceivingIndex({ reports, suppliers: initialSuppliers, e
                                             <div className="space-y-2">
                                                 <Label htmlFor="supplier" className="text-xs font-semibold">Supplier *</Label>
                                                 <div className="flex gap-1.5">
-                                                    <select
-                                                        id="supplier"
-                                                        className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-hidden"
-                                                        value={data.supplier_id}
-                                                        onChange={e => setData('supplier_id', e.target.value)}
-                                                        required
-                                                    >
-                                                        <option value="">Select Supplier</option>
-                                                        {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                                                    </select>
+                                                    <Select value={String(data.supplier_id)} onValueChange={val => setData('supplier_id', val)} required>
+                                                        <SelectTrigger className="flex-1">
+                                                            <SelectValue placeholder="Select Supplier" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            {suppliers.map(s => <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>)}
+                                                        </SelectContent>
+                                                    </Select>
                                                     <Button
                                                         type="button"
                                                         variant="outline"
@@ -265,11 +270,9 @@ export default function ReceivingIndex({ reports, suppliers: initialSuppliers, e
                                             </div>
                                             <div className="space-y-2">
                                                 <Label htmlFor="po_date" className="text-xs font-semibold">Purchase Order Date *</Label>
-                                                <Input 
-                                                    id="po_date" 
-                                                    type="date" 
+                                                <DatePicker
                                                     value={data.po_date}
-                                                    onChange={e => setData('po_date', e.target.value)}
+                                                    onChange={val => setData('po_date', val)}
                                                     required
                                                 />
                                                 {errors.po_date && <p className="text-xs text-rose-500">{errors.po_date}</p>}
@@ -321,41 +324,35 @@ export default function ReceivingIndex({ reports, suppliers: initialSuppliers, e
                                         <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
                                             <div className="space-y-2">
                                                 <Label htmlFor="received_date" className="text-xs font-semibold">Received Date *</Label>
-                                                <Input 
-                                                    id="received_date" 
-                                                    type="date" 
+                                                <DatePicker
                                                     value={data.received_date}
-                                                    onChange={e => setData('received_date', e.target.value)}
+                                                    onChange={val => setData('received_date', val)}
                                                     required
                                                 />
                                                 {errors.received_date && <p className="text-xs text-rose-500">{errors.received_date}</p>}
                                             </div>
                                             <div className="space-y-2">
                                                 <Label htmlFor="received_by" className="text-xs font-semibold">Received By (Supply Unit) *</Label>
-                                                <select
-                                                    id="received_by"
-                                                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-hidden"
-                                                    value={data.received_by}
-                                                    onChange={e => setData('received_by', e.target.value)}
-                                                    required
-                                                >
-                                                    <option value="">Select Employee</option>
-                                                    {employees.map(e => <option key={e.id} value={e.id}>{e.name} ({e.position})</option>)}
-                                                </select>
+                                                <Select value={String(data.received_by)} onValueChange={val => setData('received_by', val)} required>
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Select Employee" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {employees.map(e => <SelectItem key={e.id} value={String(e.id)}>{e.name} ({e.position})</SelectItem>)}
+                                                    </SelectContent>
+                                                </Select>
                                                 {errors.received_by && <p className="text-xs text-rose-500">{errors.received_by}</p>}
                                             </div>
                                             <div className="space-y-2">
                                                 <Label htmlFor="inspected_by" className="text-xs font-semibold">Inspected By *</Label>
-                                                <select
-                                                    id="inspected_by"
-                                                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-hidden"
-                                                    value={data.inspected_by}
-                                                    onChange={e => setData('inspected_by', e.target.value)}
-                                                    required
-                                                >
-                                                    <option value="">Select Employee</option>
-                                                    {employees.map(e => <option key={e.id} value={e.id}>{e.name} ({e.position})</option>)}
-                                                </select>
+                                                <Select value={String(data.inspected_by)} onValueChange={val => setData('inspected_by', val)} required>
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Select Employee" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {employees.map(e => <SelectItem key={e.id} value={String(e.id)}>{e.name} ({e.position})</SelectItem>)}
+                                                    </SelectContent>
+                                                </Select>
                                                 {errors.inspected_by && <p className="text-xs text-rose-500">{errors.inspected_by}</p>}
                                             </div>
                                         </div>
@@ -392,19 +389,18 @@ export default function ReceivingIndex({ reports, suppliers: initialSuppliers, e
                                                     {data.items.map((row, idx) => (
                                                         <tr key={idx} className="hover:bg-muted/30">
                                                             <td className="p-2.5">
-                                                                <select
-                                                                    className="w-full rounded border border-input bg-background p-1.5 text-xs focus-visible:outline-hidden"
-                                                                    value={row.item_id}
-                                                                    onChange={e => handleItemChange(idx, 'item_id', e.target.value)}
-                                                                    required
-                                                                >
-                                                                    <option value="">Select Item</option>
-                                                                    {items.map(it => (
-                                                                        <option key={it.id} value={it.id}>
-                                                                            {it.name} ({it.unit?.abbreviation || 'unit'})
-                                                                        </option>
-                                                                    ))}
-                                                                </select>
+                                                                <Select value={String(row.item_id)} onValueChange={val => handleItemChange(idx, 'item_id', val)} required>
+                                                                    <SelectTrigger className="h-8 text-xs">
+                                                                        <SelectValue placeholder="Select Item" />
+                                                                    </SelectTrigger>
+                                                                    <SelectContent>
+                                                                        {items.map(it => (
+                                                                            <SelectItem key={it.id} value={String(it.id)}>
+                                                                                {it.name} ({it.unit?.abbreviation || 'unit'})
+                                                                            </SelectItem>
+                                                                        ))}
+                                                                    </SelectContent>
+                                                                </Select>
                                                             </td>
                                                             <td className="p-2.5">
                                                                 <Input 
@@ -447,11 +443,10 @@ export default function ReceivingIndex({ reports, suppliers: initialSuppliers, e
                                                                 />
                                                             </td>
                                                             <td className="p-2.5">
-                                                                <Input 
-                                                                    type="date"
+                                                                <DatePicker
                                                                     value={row.expiration_date}
-                                                                    onChange={e => handleItemChange(idx, 'expiration_date', e.target.value)}
-                                                                    className="h-8 p-1.5 text-xs"
+                                                                    onChange={val => handleItemChange(idx, 'expiration_date', val)}
+                                                                    className="h-8 text-xs font-medium"
                                                                 />
                                                             </td>
                                                             <td className="p-2.5 text-center">
@@ -501,51 +496,74 @@ export default function ReceivingIndex({ reports, suppliers: initialSuppliers, e
                         <CardTitle className="text-base font-semibold">Inspection & Acceptance Registry</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        {reports.length === 0 ? (
-                            <div className="text-center py-12 text-muted-foreground space-y-2">
-                                <ArrowDownToLine className="h-8 w-8 mx-auto text-muted-foreground" />
-                                <p>No receiving reports recorded yet. Click "Receive Delivery" above.</p>
+                        {reports.data.length === 0 ? (
+                            <div className="overflow-x-auto">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>IAR Number</TableHead>
+                                            <TableHead>PO Number</TableHead>
+                                            <TableHead>Supplier</TableHead>
+                                            <TableHead>DR / Invoice</TableHead>
+                                            <TableHead>Date Received</TableHead>
+                                            <TableHead>Items Count</TableHead>
+                                            <TableHead>Receiver</TableHead>
+                                            <TableHead className="text-right">Actions</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        <TableRow>
+                                            <TableCell colSpan={8} className="text-center py-12 text-muted-foreground space-y-2">
+                                                <ArrowDownToLine className="h-8 w-8 mx-auto text-muted-foreground" />
+                                                <p>No receiving reports recorded yet. Click "Receive Delivery" above.</p>
+                                            </TableCell>
+                                        </TableRow>
+                                    </TableBody>
+                                </Table>
                             </div>
                         ) : (
                             <div className="overflow-x-auto">
-                                <table className="w-full text-left text-sm">
-                                    <thead>
-                                        <tr className="border-b border-border pb-2 text-muted-foreground font-medium">
-                                            <th className="py-2">IAR Number</th>
-                                            <th className="py-2">PO Number</th>
-                                            <th className="py-2">Supplier</th>
-                                            <th className="py-2">DR / Invoice</th>
-                                            <th className="py-2">Date Received</th>
-                                            <th className="py-2">Items Count</th>
-                                            <th className="py-2">Receiver</th>
-                                            <th className="py-2 text-right">Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-border">
-                                        {reports.map((report) => (
-                                            <tr key={report.id} className="hover:bg-muted/50">
-                                                <td className="py-3 font-semibold">{report.iar_number}</td>
-                                                <td className="py-3 font-mono text-xs">{report.purchase_order?.po_number || 'N/A'}</td>
-                                                <td className="py-3 text-muted-foreground">{report.purchase_order?.supplier_name || 'N/A'}</td>
-                                                <td className="py-3">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>IAR Number</TableHead>
+                                            <TableHead>PO Number</TableHead>
+                                            <TableHead>Supplier</TableHead>
+                                            <TableHead>DR / Invoice</TableHead>
+                                            <TableHead>Date Received</TableHead>
+                                            <TableHead>Items Count</TableHead>
+                                            <TableHead>Receiver</TableHead>
+                                            <TableHead className="text-right">Actions</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {reports.data.map((report) => (
+                                            <TableRow key={report.id}>
+                                                <TableCell className="font-semibold">{report.iar_number}</TableCell>
+                                                <TableCell className="font-mono text-xs">{report.purchase_order?.po_number || 'N/A'}</TableCell>
+                                                <TableCell className="text-muted-foreground">{report.purchase_order?.supplier_name || 'N/A'}</TableCell>
+                                                <TableCell>
                                                     <div className="text-xs">DR: {report.delivery_receipt_number}</div>
                                                     {report.invoice_number && <div className="text-[10px] text-muted-foreground">INV: {report.invoice_number}</div>}
-                                                </td>
-                                                <td className="py-3 text-xs">{report.received_date}</td>
-                                                <td className="py-3">
+                                                </TableCell>
+                                                <TableCell className="text-xs">{report.received_date}</TableCell>
+                                                <TableCell>
                                                     <Badge variant="outline">{report.items_count} items</Badge>
-                                                </td>
-                                                <td className="py-3 text-xs text-muted-foreground">{report.receiver_name}</td>
-                                                <td className="py-3 text-right">
+                                                </TableCell>
+                                                <TableCell className="text-xs text-muted-foreground">{report.receiver_name}</TableCell>
+                                                <TableCell className="text-right">
                                                     <Button size="sm" variant="outline" className="gap-1" onClick={() => openDetails(report)}>
                                                         <Eye className="h-3 w-3" />
                                                         Details
                                                     </Button>
-                                                </td>
-                                            </tr>
+                                                </TableCell>
+                                            </TableRow>
                                         ))}
-                                    </tbody>
-                                </table>
+                                    </TableBody>
+                                </Table>
+                                <div className="mt-4">
+                                    <SimplePagination links={reports.links} />
+                                </div>
                             </div>
                         )}
                     </CardContent>
@@ -592,37 +610,37 @@ export default function ReceivingIndex({ reports, suppliers: initialSuppliers, e
                                 <div className="space-y-2">
                                     <h3 className="text-xs font-semibold text-muted-foreground tracking-tight">Delivered Line Items</h3>
                                     <div className="rounded-md border border-border overflow-hidden">
-                                        <table className="w-full text-left text-xs">
-                                            <thead>
-                                                <tr className="bg-muted/50 border-b border-border font-medium text-muted-foreground">
-                                                    <th className="p-2">Item Name</th>
-                                                    <th className="p-2 text-right">Received</th>
-                                                    <th className="p-2 text-right font-semibold text-emerald-600">Accepted</th>
-                                                    <th className="p-2 text-right text-rose-600">Rejected</th>
-                                                    <th className="p-2 text-right font-mono">Unit Cost</th>
-                                                    <th className="p-2">Batch / Expiry</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className="divide-y divide-border">
+                                        <Table className="text-xs">
+                                            <TableHeader>
+                                                <TableRow className="bg-muted/50">
+                                                    <TableHead>Item Name</TableHead>
+                                                    <TableHead className="text-right">Received</TableHead>
+                                                    <TableHead className="text-right font-semibold text-emerald-600">Accepted</TableHead>
+                                                    <TableHead className="text-right text-rose-600">Rejected</TableHead>
+                                                    <TableHead className="text-right font-mono">Unit Cost</TableHead>
+                                                    <TableHead>Batch / Expiry</TableHead>
+                                                </TableRow>
+                                            </TableHeader>
+                                            <TableBody>
                                                 {selectedReport.items.map((line, idx) => (
-                                                    <tr key={idx} className="hover:bg-muted/20">
-                                                        <td className="p-2">
+                                                    <TableRow key={idx}>
+                                                        <TableCell>
                                                             <div className="font-medium">{line.name}</div>
                                                             {line.rejection_reason && <div className="text-[10px] text-rose-500 italic mt-0.5">Reason: {line.rejection_reason}</div>}
-                                                        </td>
-                                                        <td className="p-2 text-right">{line.quantity_received} {line.unit}</td>
-                                                        <td className="p-2 text-right font-semibold text-emerald-600">{line.quantity_accepted} {line.unit}</td>
-                                                        <td className="p-2 text-right font-medium text-rose-600">{line.quantity_rejected} {line.unit}</td>
-                                                        <td className="p-2 text-right font-mono">₱{line.unit_cost.toFixed(2)}</td>
-                                                        <td className="p-2 text-muted-foreground">
+                                                        </TableCell>
+                                                        <TableCell className="text-right">{line.quantity_received} {line.unit}</TableCell>
+                                                        <TableCell className="text-right font-semibold text-emerald-600">{line.quantity_accepted} {line.unit}</TableCell>
+                                                        <TableCell className="text-right font-medium text-rose-600">{line.quantity_rejected} {line.unit}</TableCell>
+                                                        <TableCell className="text-right font-mono">₱{line.unit_cost.toFixed(2)}</TableCell>
+                                                        <TableCell className="text-muted-foreground">
                                                             {line.batch_number && <div className="text-[10px]">Batch: {line.batch_number}</div>}
                                                             {line.expiration_date && <div className="text-[10px]">Expiry: {line.expiration_date}</div>}
                                                             {!line.batch_number && !line.expiration_date && '-'}
-                                                        </td>
-                                                    </tr>
+                                                        </TableCell>
+                                                    </TableRow>
                                                 ))}
-                                            </tbody>
-                                        </table>
+                                            </TableBody>
+                                        </Table>
                                     </div>
                                 </div>
 

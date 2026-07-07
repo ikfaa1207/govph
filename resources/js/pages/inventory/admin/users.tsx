@@ -1,13 +1,15 @@
-import { Head, useForm, usePage, router, setLayoutProps } from '@inertiajs/react';
-import { ShieldCheck, Edit3, UserPlus, AlertCircle, CheckCircle, XCircle, Key } from 'lucide-react';
+import { Head, useForm, useHttp, usePage, router, setLayoutProps } from '@inertiajs/react';
+import { ShieldCheck, Edit3, UserPlus, KeyRound, Lock, Unlock, ShieldAlert, AlertCircle, RefreshCw, XCircle, Plus, CheckCircle, Key } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 interface User {
     id: number;
@@ -25,13 +27,13 @@ interface User {
 }
 
 interface UsersProps {
-    users: User[];
+    users: any; // paginator or array (backwards-compatible)
     roles: any[];
     offices: any[];
     departments: any[];
 }
 
-export default function UsersIndex({ users, roles, offices, departments }: UsersProps) {
+export default function UsersIndex({ users, roles, offices: initialOffices, departments: initialDepartments }: UsersProps) {
     const { auth } = usePage().props as any;
     const currentUser = auth.user;
 
@@ -41,13 +43,30 @@ export default function UsersIndex({ users, roles, offices, departments }: Users
     ];
     setLayoutProps({ breadcrumbs });
 
+    const [offices, setOffices] = useState(initialOffices);
+    const [departments, setDepartments] = useState(initialDepartments);
+
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [isCreateOpen, setIsCreateOpen] = useState(false);
+    const [isAddOfficeOpen, setIsAddOfficeOpen] = useState(false);
+    const [isAddDepartmentOpen, setIsAddDepartmentOpen] = useState(false);
+    const [inlineFormContext, setInlineFormContext] = useState<'create' | 'edit'>('create');
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
     // Password reset section state
     const [isResetSectionOpen, setIsResetSectionOpen] = useState(false);
     const [tempPassword, setTempPassword] = useState('');
+
+    const officeHttp = useHttp({
+        name: '',
+        code: '',
+    });
+
+    const departmentHttp = useHttp({
+        office_id: '',
+        name: '',
+        code: '',
+    });
 
     const editForm = useForm({
         name: '',
@@ -69,6 +88,7 @@ export default function UsersIndex({ users, roles, offices, departments }: Users
     });
 
     const [now] = useState(() => Date.now());
+    const [isPaginating, setIsPaginating] = useState(false);
 
     const isUserLocked = (u: User) => {
         if (!u.locked_until) {
@@ -99,9 +119,9 @@ export default function UsersIndex({ users, roles, offices, departments }: Users
         e.preventDefault();
 
         if (!selectedUser) {
-return;
-}
-        
+            return;
+        }
+
         editForm.post(`/inventory/admin/users/${selectedUser.id}`, {
             onSuccess: () => {
                 setIsEditOpen(false);
@@ -129,10 +149,63 @@ return;
         });
     };
 
+    const handleOfficeSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        officeHttp.post('/inventory/offices', {
+            onSuccess: (newOffice: any) => {
+                setOffices([...offices, newOffice]);
+
+                if (inlineFormContext === 'create') {
+                    createForm.setData('office_id', String(newOffice.id));
+                } else {
+                    editForm.setData('office_id', String(newOffice.id));
+                }
+
+                setIsAddOfficeOpen(false);
+                officeHttp.reset();
+                toast.success('Office created successfully.');
+            },
+            onError: (errs) => {
+                const firstError = Object.values(errs)[0];
+                toast.error(firstError || 'Failed to create office. Check unique constraints.');
+            }
+        });
+    };
+
+    const handleDepartmentSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        departmentHttp.post('/inventory/departments', {
+            onSuccess: (newDept: any) => {
+                setDepartments([...departments, newDept]);
+
+                if (inlineFormContext === 'create') {
+                    createForm.setData('department_id', String(newDept.id));
+                } else {
+                    editForm.setData('department_id', String(newDept.id));
+                }
+
+                setIsAddDepartmentOpen(false);
+                departmentHttp.reset();
+                toast.success('Department created successfully.');
+            },
+            onError: (errs) => {
+                const firstError = Object.values(errs)[0];
+                toast.error(firstError || 'Failed to create department. Check unique constraints.');
+            }
+        });
+    };
+
+    const openAddDepartment = (context: 'create' | 'edit') => {
+        setInlineFormContext(context);
+        const form = context === 'create' ? createForm : editForm;
+        departmentHttp.setData('office_id', form.data.office_id);
+        setIsAddDepartmentOpen(true);
+    };
+
     const handleToggleStatus = () => {
         if (!selectedUser) {
-return;
-}
+            return;
+        }
 
         if (selectedUser.id === 1) {
             toast.error('The protected Super Admin account cannot be deactivated.');
@@ -161,8 +234,8 @@ return;
 
     const handleUnlockUser = () => {
         if (!selectedUser) {
-return;
-}
+            return;
+        }
 
         router.post(`/inventory/admin/users/${selectedUser.id}/unlock`, {}, {
             onSuccess: () => {
@@ -178,8 +251,8 @@ return;
 
     const handleResetPassword = () => {
         if (!selectedUser || !tempPassword) {
-return;
-}
+            return;
+        }
 
         if (tempPassword.length < 12) {
             toast.error('Temporary password must be at least 12 characters.');
@@ -213,14 +286,31 @@ return;
             current.push(roleId);
         }
 
-        form.setData('roles', current);
+        if (isEdit) {
+            editForm.setData('roles', current);
+        } else {
+            createForm.setData('roles', current);
+        }
     };
+
+    const isCreateFormValid =
+        createForm.data.name.trim() !== '' &&
+        createForm.data.email.trim() !== '' &&
+        createForm.data.password.trim() !== '' &&
+        createForm.data.office_id !== '' &&
+        createForm.data.department_id !== '' &&
+        createForm.data.roles.length > 0;
+
+    const isEditFormValid =
+        editForm.data.name.trim() !== '' &&
+        editForm.data.email.trim() !== '' &&
+        editForm.data.roles.length > 0;
 
     return (
         <>
             <Head title="User Management - GIMS" />
             <div className="space-y-6 p-6">
-                
+
                 {/* Header Section */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
@@ -242,26 +332,43 @@ return;
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        {users.length === 0 ? (
-                            <div className="text-center py-8 text-sm text-muted-foreground">
-                                No user accounts registered.
+                        {((users && users.data) ? users.data : users).length === 0 ? (
+                            <div className="overflow-x-auto">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>User Name</TableHead>
+                                            <TableHead>Email Address</TableHead>
+                                            <TableHead>Office / Department</TableHead>
+                                            <TableHead>Assigned Roles</TableHead>
+                                            <TableHead className="text-right">Actions</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        <TableRow>
+                                            <TableCell colSpan={5} className="text-center py-8 text-sm text-muted-foreground">
+                                                No user accounts registered.
+                                            </TableCell>
+                                        </TableRow>
+                                    </TableBody>
+                                </Table>
                             </div>
                         ) : (
                             <div className="overflow-x-auto">
-                                <table className="w-full text-left text-sm">
-                                    <thead>
-                                        <tr className="border-b border-border pb-2 text-muted-foreground font-medium">
-                                            <th className="py-2">User Name</th>
-                                            <th className="py-2">Email Address</th>
-                                            <th className="py-2">Office / Department</th>
-                                            <th className="py-2">Assigned Roles</th>
-                                            <th className="py-2 text-right">Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-border">
-                                        {users.map((user) => (
-                                            <tr key={user.id} className="hover:bg-muted/50">
-                                                <td className="py-3">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>User Name</TableHead>
+                                            <TableHead>Email Address</TableHead>
+                                            <TableHead>Office / Department</TableHead>
+                                            <TableHead>Assigned Roles</TableHead>
+                                            <TableHead className="text-right">Actions</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {((users && users.data) ? users.data : users).map((user: User) => (
+                                            <TableRow key={user.id}>
+                                                <TableCell>
                                                     <div className="flex items-center gap-2">
                                                         <span className="font-semibold">{user.name}</span>
                                                         {!user.is_active && (
@@ -276,13 +383,13 @@ return;
                                                         )}
                                                     </div>
                                                     <div className="text-xs text-muted-foreground">{user.employee?.position || 'N/A'}</div>
-                                                </td>
-                                                <td className="py-3 font-mono text-xs">{user.email}</td>
-                                                <td className="py-3">
+                                                </TableCell>
+                                                <TableCell className="font-mono text-xs">{user.email}</TableCell>
+                                                <TableCell>
                                                     <div className="text-sm">{user.employee?.office?.name || 'N/A'}</div>
                                                     <div className="text-xs text-muted-foreground">{user.employee?.department?.name || 'N/A'}</div>
-                                                </td>
-                                                <td className="py-3">
+                                                </TableCell>
+                                                <TableCell>
                                                     <div className="flex flex-wrap gap-1">
                                                         {user.roles.length === 0 ? (
                                                             <span className="text-xs text-muted-foreground italic">No Roles</span>
@@ -294,100 +401,190 @@ return;
                                                             ))
                                                         )}
                                                     </div>
-                                                </td>
-                                                <td className="py-3 text-right">
+                                                </TableCell>
+                                                <TableCell className="text-right">
                                                     <Button size="sm" variant="outline" className="gap-1.5 border-neutral-300 text-neutral-700 hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-300" onClick={() => openEditDialog(user)}>
                                                         <Edit3 className="h-3.5 w-3.5" />
                                                         Manage User
                                                     </Button>
-                                                </td>
-                                            </tr>
+                                                </TableCell>
+                                            </TableRow>
                                         ))}
-                                    </tbody>
-                                </table>
+                                    </TableBody>
+                                </Table>
                             </div>
                         )}
                     </CardContent>
                 </Card>
 
+                    {/* Pagination */}
+                    {users && users.links && (
+                        <nav className="flex items-center justify-between mt-4" aria-label="Pagination">
+                            <div className="text-sm text-muted-foreground">
+                                Page {users.current_page ?? users.meta?.current_page} of {users.last_page ?? users.meta?.last_page}
+                            </div>
+                            <div className="flex gap-2 items-center">
+                                {users.links.map((link: any, idx: number) => {
+                                    // If label is not clickable (null url) render as plain text/separator
+                                    if (!link.url) {
+                                        return (
+                                            <span key={idx} className="px-3 py-1 text-sm text-muted-foreground" dangerouslySetInnerHTML={{ __html: link.label }} />
+                                        );
+                                    }
+
+                                    const isActive = link.active;
+
+                                    return (
+                                        <Button
+                                            key={idx}
+                                            size="sm"
+                                            variant={isActive ? 'default' : 'outline'}
+                                            disabled={isPaginating}
+                                            onClick={() => {
+                                                setIsPaginating(true);
+                                                router.visit(link.url, {
+                                                    preserveState: false,
+                                                    replace: false,
+                                                    onFinish: () => setIsPaginating(false),
+                                                });
+                                            }}
+                                            className={isActive ? 'font-semibold' : ''}
+                                            aria-current={isActive ? 'page' : undefined}
+                                        >
+                                            <span dangerouslySetInnerHTML={{ __html: link.label }} />
+                                        </Button>
+                                    );
+                                })}
+                            </div>
+                        </nav>
+                    )}
+
                 {/* Dialog: Create User */}
                 <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-                    <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
-                        <DialogHeader>
-                            <DialogTitle>Create New User Account</DialogTitle>
-                            <DialogDescription>Add a new employee account, configure organizational parameters, and assign initial roles.</DialogDescription>
+                    <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto" onPointerDownOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()}>
+                        <DialogHeader className="pb-3 border-b border-border">
+                            <DialogTitle className="text-lg font-bold">Create New User Account</DialogTitle>
+                            <DialogDescription className="text-xs">Add employee details, organizational unit, and assign system roles.</DialogDescription>
                         </DialogHeader>
-                        <form onSubmit={handleCreateSubmit} className="space-y-4">
-                            <div className="space-y-1">
-                                <Label htmlFor="cname">Full Name *</Label>
-                                <Input id="cname" value={createForm.data.name} onChange={e => createForm.setData('name', e.target.value)} required placeholder="Juan dela Cruz" />
-                            </div>
-                            <div className="space-y-1">
-                                <Label htmlFor="cemail">Email Address *</Label>
-                                <Input id="cemail" type="email" value={createForm.data.email} onChange={e => createForm.setData('email', e.target.value)} required placeholder="email@example.gov.ph" />
-                            </div>
-                            <div className="space-y-1">
-                                <Label htmlFor="cpassword">Temporary Password *</Label>
-                                <Input id="cpassword" type="password" value={createForm.data.password} onChange={e => createForm.setData('password', e.target.value)} required placeholder="At least 12 chars with complexity" />
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
+                        <form onSubmit={handleCreateSubmit} className="space-y-4 pt-2">
+                            {/* Personal & Job Details */}
+                            <div className="space-y-4">
                                 <div className="space-y-1">
-                                    <Label htmlFor="coffice">Office *</Label>
-                                    <select 
-                                        id="coffice" 
-                                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-hidden"
-                                        value={createForm.data.office_id} 
-                                        onChange={e => createForm.setData('office_id', e.target.value)}
-                                        required
-                                    >
-                                        <option value="">Select Office</option>
-                                        {offices.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
-                                    </select>
+                                    <Label htmlFor="cname" className="text-xs font-semibold text-muted-foreground">Full Name <span className="text-rose-500 font-bold ml-0.5">*</span></Label>
+                                    <Input id="cname" value={createForm.data.name} onChange={e => createForm.setData('name', e.target.value)} required placeholder="Juan dela Cruz" className="h-9" />
+                                    {createForm.errors.name && <p className="text-xs text-rose-500">{createForm.errors.name}</p>}
                                 </div>
+
                                 <div className="space-y-1">
-                                    <Label htmlFor="cdept">Department *</Label>
-                                    <select 
-                                        id="cdept" 
-                                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-hidden"
-                                        value={createForm.data.department_id} 
-                                        onChange={e => createForm.setData('department_id', e.target.value)}
-                                        required
-                                    >
-                                        <option value="">Select Department</option>
-                                        {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
-                                    </select>
+                                    <Label htmlFor="cemail" className="text-xs font-semibold text-muted-foreground">Email Address <span className="text-rose-500 font-bold ml-0.5">*</span></Label>
+                                    <Input id="cemail" type="email" value={createForm.data.email} onChange={e => createForm.setData('email', e.target.value)} required placeholder="email@example.gov.ph" className="h-9" />
+                                    {createForm.errors.email && <p className="text-xs text-rose-500">{createForm.errors.email}</p>}
+                                </div>
+
+                                <div className="space-y-1">
+                                    <Label htmlFor="cpassword" className="text-xs font-semibold text-muted-foreground">Temp Password <span className="text-rose-500 font-bold ml-0.5">*</span></Label>
+                                    <Input id="cpassword" type="password" value={createForm.data.password} onChange={e => createForm.setData('password', e.target.value)} required placeholder="At least 12 characters" className="h-9" />
+                                    {createForm.errors.password && <p className="text-xs text-rose-500">{createForm.errors.password}</p>}
+                                </div>
+
+                                <div className="space-y-1">
+                                    <Label htmlFor="coffice" className="text-xs font-semibold text-muted-foreground">Office <span className="text-rose-500 font-bold ml-0.5">*</span></Label>
+                                    <div className="flex gap-1.5">
+                                        <Select value={String(createForm.data.office_id)} onValueChange={val => createForm.setData('office_id', val)} required>
+                                            <SelectTrigger className="flex-1 min-w-0 h-9">
+                                                <SelectValue placeholder="Select Office" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {offices.map(o => <SelectItem key={o.id} value={String(o.id)}>{o.name}</SelectItem>)}
+                                            </SelectContent>
+                                        </Select>
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="icon"
+                                            className="h-9 w-9 shrink-0"
+                                            onClick={() => {
+                                                setInlineFormContext('create');
+                                                setIsAddOfficeOpen(true);
+                                            }}
+                                            title="Add New Office"
+                                        >
+                                            <Plus className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-1">
+                                    <Label htmlFor="cdept" className="text-xs font-semibold text-muted-foreground">Department <span className="text-rose-500 font-bold ml-0.5">*</span></Label>
+                                    <div className="flex gap-1.5">
+                                        <Select value={String(createForm.data.department_id)} onValueChange={val => createForm.setData('department_id', val)} required>
+                                            <SelectTrigger className="flex-1 min-w-0 h-9">
+                                                <SelectValue placeholder="Select Department" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {departments.map(d => <SelectItem key={d.id} value={String(d.id)}>{d.name}</SelectItem>)}
+                                            </SelectContent>
+                                        </Select>
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="icon"
+                                            className="h-9 w-9 shrink-0"
+                                            onClick={() => openAddDepartment('create')}
+                                            title="Add New Department"
+                                        >
+                                            <Plus className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-1">
+                                    <Label htmlFor="cpos" className="text-xs font-semibold text-muted-foreground">Position / Title</Label>
+                                    <Input id="cpos" value={createForm.data.position} onChange={e => createForm.setData('position', e.target.value)} placeholder="e.g. Supply Officer II" className="h-9" />
                                 </div>
                             </div>
 
-                            <div className="space-y-1">
-                                <Label htmlFor="cpos">Position / Title</Label>
-                                <Input id="cpos" value={createForm.data.position} onChange={e => createForm.setData('position', e.target.value)} placeholder="e.g. Supply Officer II" />
-                            </div>
-
-                            <div className="space-y-2 border-t border-border pt-3">
-                                <Label>Assign Roles *</Label>
-                                <div className="grid grid-cols-2 gap-2 mt-1.5">
+                            {/* Roles & Permission Settings */}
+                            <div className="space-y-2 pt-2 border-t border-border">
+                                <div>
+                                    <h3 className="text-xs font-bold text-foreground">System Permissions</h3>
+                                </div>
+                                <div className="max-h-36 overflow-y-auto bg-neutral-50 dark:bg-neutral-900/60 p-2 rounded-lg border border-border space-y-1">
                                     {roles.map((role) => {
                                         const isChecked = createForm.data.roles.includes(role.id);
 
                                         return (
-                                            <div 
-                                                key={role.id} 
-                                                onClick={() => toggleRoleSelection(role.id, false)}
-                                                className={`p-2.5 rounded-lg border text-xs cursor-pointer flex flex-col gap-1 transition-colors ${isChecked ? 'bg-indigo-500/10 border-indigo-500 text-indigo-600 dark:text-indigo-400 font-semibold' : 'border-border bg-background'}`}
+                                            <label
+                                                key={role.id}
+                                                className={`flex items-center gap-3 py-2 px-2.5 rounded-md text-xs cursor-pointer select-none transition-all ${isChecked ? 'bg-indigo-500/10 text-indigo-900 dark:text-indigo-400 font-semibold' : 'text-muted-foreground hover:bg-neutral-100 hover:text-foreground dark:hover:bg-neutral-800'}`}
                                             >
-                                                <div>{role.name}</div>
-                                                <div className="text-[10px] font-normal text-muted-foreground leading-normal line-clamp-1">{role.description}</div>
-                                            </div>
+                                                <input
+                                                    type="checkbox"
+                                                    className="rounded border-input text-indigo-600 focus:ring-indigo-500 h-4 w-4"
+                                                    checked={isChecked}
+                                                    onChange={() => toggleRoleSelection(role.id, false)}
+                                                />
+                                                <span>{role.name}</span>
+                                            </label>
                                         );
                                     })}
                                 </div>
                             </div>
 
-                            <div className="flex justify-end gap-2 pt-2">
-                                <Button type="button" variant="outline" onClick={() => setIsCreateOpen(false)}>Cancel</Button>
-                                <Button type="submit" disabled={createForm.processing}>Create Account</Button>
+                            {/* Actions Row */}
+                            <div className="flex justify-end gap-2 pt-4 border-t border-border mt-2">
+                                <Button type="button" variant="outline" onClick={() => setIsCreateOpen(false)} className="h-9">Cancel</Button>
+                                <Button
+                                    type="submit"
+                                    disabled={createForm.processing || !isCreateFormValid}
+                                    className={`h-9 font-medium transition-all ${
+                                        (!isCreateFormValid || createForm.processing)
+                                            ? 'bg-neutral-100 text-neutral-400 border border-neutral-200 cursor-not-allowed dark:bg-neutral-800 dark:text-neutral-500 dark:border-neutral-700'
+                                            : 'bg-indigo-600 hover:bg-indigo-700 text-white hover:shadow-xs'
+                                    }`}
+                                >
+                                    Create Account
+                                </Button>
                             </div>
                         </form>
                     </DialogContent>
@@ -395,153 +592,267 @@ return;
 
                 {/* Dialog: Edit User Details */}
                 <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-                    <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
-                        <DialogHeader>
-                            <DialogTitle>Manage User Profile & Roles</DialogTitle>
-                            <DialogDescription>Alter contact information, office structures, and system permissions.</DialogDescription>
+                    <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto" onPointerDownOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()}>
+                        <DialogHeader className="pb-3 border-b border-border">
+                            <DialogTitle className="text-lg font-bold">Manage User Profile & Roles</DialogTitle>
+                            <DialogDescription className="text-xs">Alter contact information, office structures, and system permissions.</DialogDescription>
                         </DialogHeader>
                         {selectedUser && (
-                            <div className="space-y-4">
-                                <form onSubmit={handleEditSubmit} className="space-y-4">
+                            <div className="space-y-4 pt-2">
+                                <form onSubmit={handleEditSubmit} id="edit-user-form" className="space-y-4">
+                                    {/* Personal Info & Job Details */}
                                     <div className="space-y-1">
-                                        <Label htmlFor="uname">Full Name *</Label>
-                                        <Input id="uname" value={editForm.data.name} onChange={e => editForm.setData('name', e.target.value)} required />
+                                        <Label htmlFor="uname" className="text-xs font-semibold text-muted-foreground">Full Name <span className="text-rose-500 font-bold ml-0.5">*</span></Label>
+                                        <Input id="uname" value={editForm.data.name} onChange={e => editForm.setData('name', e.target.value)} required className="h-9" />
                                     </div>
                                     <div className="space-y-1">
-                                        <Label htmlFor="uemail">Email Address *</Label>
-                                        <Input id="uemail" type="email" value={editForm.data.email} onChange={e => editForm.setData('email', e.target.value)} required />
+                                        <Label htmlFor="uemail" className="text-xs font-semibold text-muted-foreground">Email Address <span className="text-rose-500 font-bold ml-0.5">*</span></Label>
+                                        <Input id="uemail" type="email" value={editForm.data.email} onChange={e => editForm.setData('email', e.target.value)} required className="h-9" />
                                     </div>
 
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-1">
-                                            <Label htmlFor="uoffice">Office</Label>
-                                            <select 
-                                                id="uoffice" 
-                                                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-hidden"
-                                                value={editForm.data.office_id} 
-                                                onChange={e => editForm.setData('office_id', e.target.value)}
+                                    <div className="space-y-1">
+                                        <Label htmlFor="uoffice" className="text-xs font-semibold text-muted-foreground">Office</Label>
+                                        <div className="flex gap-1.5">
+                                            <Select value={String(editForm.data.office_id)} onValueChange={val => editForm.setData('office_id', val)}>
+                                                <SelectTrigger className="flex-1 min-w-0 h-9">
+                                                    <SelectValue placeholder="Select Office" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {offices.map(o => <SelectItem key={o.id} value={String(o.id)}>{o.name}</SelectItem>)}
+                                                </SelectContent>
+                                            </Select>
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="icon"
+                                                className="h-9 w-9 shrink-0"
+                                                onClick={() => {
+                                                    setInlineFormContext('edit');
+                                                    setIsAddOfficeOpen(true);
+                                                }}
+                                                title="Add New Office"
                                             >
-                                                <option value="">Select Office</option>
-                                                {offices.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
-                                            </select>
-                                        </div>
-                                        <div className="space-y-1">
-                                            <Label htmlFor="udept">Department</Label>
-                                            <select 
-                                                id="udept" 
-                                                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-hidden"
-                                                value={editForm.data.department_id} 
-                                                onChange={e => editForm.setData('department_id', e.target.value)}
-                                            >
-                                                <option value="">Select Department</option>
-                                                {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
-                                            </select>
+                                                <Plus className="h-4 w-4" />
+                                            </Button>
                                         </div>
                                     </div>
 
                                     <div className="space-y-1">
-                                        <Label htmlFor="upos">Position / Title</Label>
-                                        <Input id="upos" value={editForm.data.position} onChange={e => editForm.setData('position', e.target.value)} />
-                                    </div>
-
-                                    <div className="space-y-2 border-t border-border pt-3">
-                                        <Label>Assign Roles</Label>
-                                        <div className="grid grid-cols-2 gap-2 mt-1.5">
-                                            {roles.map((role) => {
-                                                const isChecked = editForm.data.roles.includes(role.id);
-
-                                                return (
-                                                    <div 
-                                                        key={role.id} 
-                                                        onClick={() => toggleRoleSelection(role.id, true)}
-                                                        className={`p-2.5 rounded-lg border text-xs cursor-pointer flex flex-col gap-1 transition-colors ${isChecked ? 'bg-indigo-500/10 border-indigo-500 text-indigo-600 dark:text-indigo-400 font-semibold' : 'border-border bg-background'}`}
-                                                    >
-                                                        <div>{role.name}</div>
-                                                        <div className="text-[10px] font-normal text-muted-foreground leading-normal line-clamp-1">{role.description}</div>
-                                                    </div>
-                                                );
-                                            })}
+                                        <Label htmlFor="udept" className="text-xs font-semibold text-muted-foreground">Department</Label>
+                                        <div className="flex gap-1.5">
+                                            <Select value={String(editForm.data.department_id)} onValueChange={val => editForm.setData('department_id', val)}>
+                                                <SelectTrigger className="flex-1 min-w-0 h-9">
+                                                    <SelectValue placeholder="Select Department" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {departments.map(d => <SelectItem key={d.id} value={String(d.id)}>{d.name}</SelectItem>)}
+                                                </SelectContent>
+                                            </Select>
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="icon"
+                                                className="h-9 w-9 shrink-0"
+                                                onClick={() => openAddDepartment('edit')}
+                                                title="Add New Department"
+                                            >
+                                                <Plus className="h-4 w-4" />
+                                            </Button>
                                         </div>
                                     </div>
 
-                                    <div className="flex justify-end gap-2 pt-2 border-b border-border pb-4">
-                                        <Button type="button" variant="outline" onClick={() => setIsEditOpen(false)}>Cancel</Button>
-                                        <Button type="submit" disabled={editForm.processing}>Save Changes</Button>
+                                    <div className="space-y-1">
+                                        <Label htmlFor="upos" className="text-xs font-semibold text-muted-foreground">Position / Title</Label>
+                                        <Input id="upos" value={editForm.data.position} onChange={e => editForm.setData('position', e.target.value)} className="h-9" />
                                     </div>
                                 </form>
 
-                                {/* Action Center (Deactivate, Unlock, Reset Password) */}
-                                <div className="space-y-3 pt-2">
-                                    <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Account Action Center</h4>
-                                    
-                                    {isResetSectionOpen ? (
-                                        <div className="p-3 bg-muted rounded-lg border border-border space-y-3">
-                                            <div className="space-y-1">
-                                                <Label htmlFor="temp-pw" className="text-xs">Temporary Password *</Label>
-                                                <Input 
-                                                    id="temp-pw" 
-                                                    type="password" 
-                                                    value={tempPassword} 
+                                {/* Roles Center */}
+                                <div className="space-y-2 pt-2 border-t border-border">
+                                    <div>
+                                        <h3 className="text-xs font-bold text-foreground">Access Permissions <span className="text-rose-500 font-bold ml-0.5">*</span></h3>
+                                    </div>
+                                    <div className="max-h-36 overflow-y-auto bg-neutral-50 dark:bg-neutral-900/60 p-2 rounded-lg border border-border space-y-1">
+                                        {roles.map((role) => {
+                                            const isChecked = editForm.data.roles.includes(role.id);
+
+                                            return (
+                                                <label
+                                                    key={role.id}
+                                                    className={`flex items-center gap-3 py-2 px-2.5 rounded-md text-xs cursor-pointer select-none transition-all ${isChecked ? 'bg-indigo-500/10 text-indigo-900 dark:text-indigo-400 font-semibold' : 'text-muted-foreground hover:bg-neutral-100 hover:text-foreground dark:hover:bg-neutral-800'}`}
+                                                >
+                                                    <input
+                                                        type="checkbox"
+                                                        className="rounded border-input text-indigo-600 focus:ring-indigo-500 h-4 w-4"
+                                                        checked={isChecked}
+                                                        onChange={() => toggleRoleSelection(role.id, true)}
+                                                    />
+                                                    <span>{role.name}</span>
+                                                </label>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+
+                                {/* Action Center */}
+                                <div className="space-y-2 border-t border-border pt-4 mt-2">
+                                    <div className="flex flex-col gap-3">
+                                        {isResetSectionOpen ? (
+                                            <div className="flex items-center gap-2 p-2 bg-muted rounded-md border border-border">
+                                                <Input
+                                                    id="temp-pw"
+                                                    type="password"
+                                                    value={tempPassword}
                                                     onChange={e => setTempPassword(e.target.value)}
-                                                    placeholder="At least 12 characters with complexity"
-                                                    className="h-8 text-xs"
+                                                    placeholder="New temporary password"
+                                                    className="h-8 text-xs flex-1"
                                                 />
-                                            </div>
-                                            <div className="flex gap-2">
-                                                <Button size="sm" onClick={handleResetPassword} className="h-8 text-xs bg-indigo-600 hover:bg-indigo-700 text-white">
-                                                    Save Password
+                                                <Button size="sm" onClick={handleResetPassword} className="h-8 text-xs bg-indigo-600 text-white">
+                                                    Save
                                                 </Button>
                                                 <Button size="sm" variant="ghost" onClick={() => setIsResetSectionOpen(false)} className="h-8 text-xs">
                                                     Cancel
                                                 </Button>
                                             </div>
-                                        </div>
-                                    ) : (
-                                        <div className="flex flex-wrap gap-2">
-                                            <Button
-                                                type="button"
-                                                variant={selectedUser.is_active ? "destructive" : "default"}
-                                                size="sm"
-                                                className="h-8.5 text-xs font-medium"
-                                                onClick={handleToggleStatus}
-                                                disabled={selectedUser.id === 1}
-                                            >
-                                                {selectedUser.is_active ? (
-                                                    <span className="flex items-center gap-1.5"><XCircle className="h-3.5 w-3.5" /> Deactivate Account</span>
-                                                ) : (
-                                                    <span className="flex items-center gap-1.5"><CheckCircle className="h-3.5 w-3.5" /> Activate Account</span>
-                                                )}
-                                            </Button>
+                                        ) : (
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex gap-1.5">
+                                                    <Button
+                                                        type="button"
+                                                        variant={selectedUser.is_active ? "destructive" : "default"}
+                                                        size="sm"
+                                                        className="h-9 text-xs font-medium"
+                                                        onClick={handleToggleStatus}
+                                                        disabled={selectedUser.id === 1}
+                                                    >
+                                                        {selectedUser.is_active ? (
+                                                            <span className="flex items-center gap-1.5"><XCircle className="h-3.5 w-3.5" /></span>
+                                                        ) : (
+                                                            <span className="flex items-center gap-1.5"><CheckCircle className="h-3.5 w-3.5" /></span>
+                                                        )}
+                                                    </Button>
 
-                                            {isUserLocked(selectedUser) && (
-                                                <Button
-                                                    type="button"
-                                                    variant="outline"
-                                                    size="sm"
-                                                    className="h-8.5 text-xs font-medium border-amber-500 text-amber-600 hover:bg-amber-500/10"
-                                                    onClick={handleUnlockUser}
-                                                >
-                                                    <ShieldCheck className="h-3.5 w-3.5 mr-1" />
-                                                    Unlock Account
-                                                </Button>
-                                            )}
+                                                    {isUserLocked(selectedUser) && (
+                                                        <Button
+                                                            type="button"
+                                                            variant="outline"
+                                                            size="sm"
+                                                            className="h-9 text-xs font-medium border-amber-500 text-amber-600 hover:bg-amber-500/10"
+                                                            onClick={handleUnlockUser}
+                                                        >
+                                                            <ShieldCheck className="h-3.5 w-3.5" />
+                                                        </Button>
+                                                    )}
 
-                                            <Button
-                                                type="button"
-                                                variant="outline"
-                                                size="sm"
-                                                className="h-8.5 text-xs font-medium border-neutral-300 text-neutral-700 hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-300"
-                                                onClick={() => setIsResetSectionOpen(true)}
-                                                disabled={selectedUser.id === 1 && currentUser.id !== 1}
-                                            >
-                                                <Key className="h-3.5 w-3.5 mr-1.5" />
-                                                Reset Password
-                                            </Button>
-                                        </div>
-                                    )}
+                                                    <Button
+                                                        type="button"
+                                                        variant="outline"
+                                                        size="sm"
+                                                        className="h-9 text-xs font-medium border-neutral-300 text-neutral-700 hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-300"
+                                                        onClick={() => setIsResetSectionOpen(true)}
+                                                        disabled={selectedUser.id === 1 && currentUser.id !== 1}
+                                                    >
+                                                        <Key className="h-3.5 w-3.5" />
+                                                    </Button>
+                                                </div>
+
+                                                <div className="flex gap-2">
+                                                    <Button type="button" variant="outline" onClick={() => setIsEditOpen(false)} className="h-9">Cancel</Button>
+                                                    <Button type="submit" form="edit-user-form" disabled={editForm.processing || !isEditFormValid} className="h-9 font-medium bg-indigo-600 hover:bg-indigo-700 text-white">Save Changes</Button>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         )}
+                    </DialogContent>
+                </Dialog>
+
+                {/* Inline Office Creation Dialog */}
+                <Dialog open={isAddOfficeOpen} onOpenChange={setIsAddOfficeOpen}>
+                    <DialogContent className="max-w-sm">
+                        <DialogHeader>
+                            <DialogTitle>Add New Office</DialogTitle>
+                            <DialogDescription>Create a new office/agency division.</DialogDescription>
+                        </DialogHeader>
+                        <form onSubmit={handleOfficeSubmit} className="space-y-4">
+                            <div className="space-y-1">
+                                <Label htmlFor="office_name">Office Name *</Label>
+                                <Input
+                                    id="office_name"
+                                    value={officeHttp.data.name}
+                                    onChange={e => officeHttp.setData('name', e.target.value)}
+                                    required
+                                    placeholder="e.g. Office of the Regional Director"
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <Label htmlFor="office_code">Office Code *</Label>
+                                <Input
+                                    id="office_code"
+                                    placeholder="e.g. ORD"
+                                    value={officeHttp.data.code}
+                                    onChange={e => officeHttp.setData('code', e.target.value)}
+                                    required
+                                />
+                            </div>
+                            <div className="flex justify-end gap-2 pt-2">
+                                <Button type="button" variant="outline" onClick={() => setIsAddOfficeOpen(false)}>Cancel</Button>
+                                <Button type="submit" disabled={officeHttp.processing}>Save Office</Button>
+                            </div>
+                        </form>
+                    </DialogContent>
+                </Dialog>
+
+                {/* Inline Department Creation Dialog */}
+                <Dialog open={isAddDepartmentOpen} onOpenChange={setIsAddDepartmentOpen}>
+                    <DialogContent className="max-w-sm">
+                        <DialogHeader>
+                            <DialogTitle>Add New Department</DialogTitle>
+                            <DialogDescription>Create a new department under an office.</DialogDescription>
+                        </DialogHeader>
+                        <form onSubmit={handleDepartmentSubmit} className="space-y-4">
+                            <div className="space-y-1">
+                                <Label htmlFor="dept_office">Parent Office *</Label>
+                                <Select 
+                                    value={String(departmentHttp.data.office_id)} 
+                                    onValueChange={val => departmentHttp.setData('office_id', val)} 
+                                    required
+                                >
+                                    <SelectTrigger className="w-full">
+                                        <SelectValue placeholder="Select Office" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {offices.map(o => <SelectItem key={o.id} value={String(o.id)}>{o.name}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-1">
+                                <Label htmlFor="dept_name">Department Name *</Label>
+                                <Input
+                                    id="dept_name"
+                                    value={departmentHttp.data.name}
+                                    onChange={e => departmentHttp.setData('name', e.target.value)}
+                                    required
+                                    placeholder="e.g. Finance and Administrative Division"
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <Label htmlFor="dept_code">Department Code *</Label>
+                                <Input
+                                    id="dept_code"
+                                    placeholder="e.g. FAD"
+                                    value={departmentHttp.data.code}
+                                    onChange={e => departmentHttp.setData('code', e.target.value)}
+                                    required
+                                />
+                            </div>
+                            <div className="flex justify-end gap-2 pt-2">
+                                <Button type="button" variant="outline" onClick={() => setIsAddDepartmentOpen(false)}>Cancel</Button>
+                                <Button type="submit" disabled={departmentHttp.processing}>Save Department</Button>
+                            </div>
+                        </form>
                     </DialogContent>
                 </Dialog>
 

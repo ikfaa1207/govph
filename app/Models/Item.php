@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
+use App\Enums\ItemStatus;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable([
@@ -22,11 +24,22 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'expiration_date',
     'barcode',
     'image_path',
-    'status'
+    'status',
 ])]
 class Item extends Model
 {
     use HasFactory;
+
+    protected function casts(): array
+    {
+        return [
+            'status' => ItemStatus::class,
+            'unit_cost' => 'decimal:2',
+            'reorder_level' => 'integer',
+            'maximum_stock' => 'integer',
+            'expiration_date' => 'date',
+        ];
+    }
 
     /**
      * Get the category of this item.
@@ -69,10 +82,14 @@ class Item extends Model
     }
 
     /**
-     * Get the current stock quantity.
+     * Get the departments that stock this item.
+     *
+     * @return BelongsToMany<Department, $this>
      */
-    public function getCurrentStockAttribute(): int
+    public function departments(): BelongsToMany
     {
-        return (int) $this->stockTransactions()->sum('quantity');
+        return $this->belongsToMany(Department::class, 'department_items')
+            ->withPivot('current_stock')
+            ->withTimestamps();
     }
 }

@@ -30,6 +30,7 @@ const mainNavItems: GimsNavItem[] = [
         title: 'Dashboard',
         href: dashboard.url(),
         icon: LayoutGrid,
+        permission: 'dashboard.view',
     },
     {
         title: 'Supplies Catalog',

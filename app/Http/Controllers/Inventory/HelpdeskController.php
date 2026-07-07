@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Ticket;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -16,10 +17,12 @@ class HelpdeskController extends Controller
      */
     public function index(Request $request): Response
     {
+        Gate::authorize('viewAny', Ticket::class);
+
         $user = $request->user();
 
         // Determine if user has admin privileges
-        $isAdmin = $user->hasRole('System Administrator') || $user->hasPermissionTo('users.manage');
+        $isAdmin = $user->can('users.manage');
 
         if ($isAdmin) {
             $tickets = Inertia::scroll(fn () => Ticket::with('user.employee')
@@ -42,6 +45,8 @@ class HelpdeskController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        Gate::authorize('create', Ticket::class);
+
         if ($request->has('attachment') && ! $request->hasFile('attachment')) {
             $request->request->remove('attachment');
             $request->files->remove('attachment');
@@ -71,12 +76,7 @@ class HelpdeskController extends Controller
      */
     public function update(Request $request, Ticket $ticket): RedirectResponse
     {
-        $user = $request->user();
-        $isAdmin = $user->hasRole('System Administrator') || $user->hasPermissionTo('users.manage');
-
-        if (! $isAdmin) {
-            abort(403, 'Unauthorized action.');
-        }
+        Gate::authorize('update', $ticket);
 
         $validated = $request->validate([
             'status' => ['required', 'string', 'in:open,in_progress,resolved'],

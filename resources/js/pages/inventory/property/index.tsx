@@ -2,12 +2,18 @@ import { Head, useForm, setLayoutProps } from '@inertiajs/react';
 import { PlusCircle, UserCheck, RefreshCw, Trash2, ShieldCheck, Clipboard } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { Can } from '@/components/can';
+import { SimplePagination } from '@/components/simple-pagination';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { DatePicker } from '@/components/ui/date-picker';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { usePermissions } from '@/hooks/use-permissions';
 
 interface Property {
     id: number;
@@ -35,28 +41,37 @@ interface Property {
 }
 
 interface PropertyIndexProps {
-    properties: Property[];
+    properties: {
+        data: Property[];
+        links: any[];
+    };
     employees: any[];
     categories: any[];
     offices: any[];
     auth: {
         user: {
             role: 'admin' | 'supply_officer' | 'property_custodian' | 'dept_head' | 'employee' | 'auditor';
+            roles?: string[];
         };
     };
+    current_employee: any;
 }
 
-export default function PropertyIndex({ properties, employees, categories, offices, auth }: PropertyIndexProps) {
+export default function PropertyIndex({ properties, employees, categories, offices, auth, current_employee }: PropertyIndexProps) {
     const breadcrumbs = [{ title: 'Property Registry (PPE)', href: '/inventory/properties' }];
     setLayoutProps({ breadcrumbs });
-    const userRole = auth.user.role;
-    const canManage = userRole === 'property_custodian' || userRole === 'admin';
+    
+    const { hasAnyPermission } = usePermissions();
+    const isDeptHead = auth.user.roles?.includes('Department Head');
+    const canManage = hasAnyPermission(['property.assign', 'property.transfer', 'property.dispose']) || isDeptHead;
 
     const [isAddOpen, setIsAddOpen] = useState(false);
     const [selectedProp, setSelectedProp] = useState<Property | null>(null);
     const [isAssignOpen, setIsAssignOpen] = useState(false);
     const [isTransferOpen, setIsTransferOpen] = useState(false);
     const [isDisposeOpen, setIsDisposeOpen] = useState(false);
+    const [isSubAssignOpen, setIsSubAssignOpen] = useState(false);
+    const [isReturnSubAssignOpen, setIsReturnSubAssignOpen] = useState(false);
 
     // Form for Adding Property
     const addForm = useForm({
@@ -91,6 +106,20 @@ export default function PropertyIndex({ properties, employees, categories, offic
         reason: 'broken',
         appraised_value: 0,
         proceeds: 0,
+    });
+
+    // Form for Sub-Assignment (MR)
+    const subAssignForm = useForm({
+        issued_to: '',
+        is_non_system: false,
+        non_system_name: '',
+        non_system_department: '',
+        remarks: '',
+    });
+
+    // Form for Return Sub-Assignment
+    const returnSubAssignForm = useForm({
+        remarks: '',
     });
 
     const handleAddSubmit = (e: React.FormEvent) => {
@@ -179,6 +208,54 @@ return;
         });
     };
 
+    const openSubAssignModal = (prop: Property) => {
+        setSelectedProp(prop);
+        subAssignForm.reset();
+        setIsSubAssignOpen(true);
+    };
+
+    const handleSubAssignSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+
+        if (!selectedProp) {
+return;
+}
+
+        subAssignForm.post(`/inventory/properties/${selectedProp.id}/sub-assign`, {
+            onSuccess: () => {
+                setIsSubAssignOpen(false);
+                toast.success('Memorandum Receipt (MR) issued successfully.');
+            },
+            onError: () => {
+                toast.error('Failed to issue MR.');
+            }
+        });
+    };
+
+    const openReturnSubAssignModal = (prop: Property) => {
+        setSelectedProp(prop);
+        returnSubAssignForm.reset();
+        setIsReturnSubAssignOpen(true);
+    };
+
+    const handleReturnSubAssignSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+
+        if (!selectedProp || !selectedProp.active_sub_assignment) {
+return;
+}
+
+        returnSubAssignForm.post(`/inventory/properties/sub-assignments/${selectedProp.active_sub_assignment.id}/return`, {
+            onSuccess: () => {
+                setIsReturnSubAssignOpen(false);
+                toast.success('Memorandum Receipt returned successfully.');
+            },
+            onError: () => {
+                toast.error('Failed to return MR.');
+            }
+        });
+    };
+
     return (
         <>
             <Head title="Property Registry - GIMS" />
@@ -191,7 +268,7 @@ return;
                         <p className="text-sm text-muted-foreground">Manage capitalized properties, serial codes, and handovers.</p>
                     </div>
 
-                    {canManage && (
+                    <Can permission="property.assign">
                         <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
                             <DialogTrigger asChild>
                                 <Button className="gap-2">
@@ -226,26 +303,31 @@ return;
                                         </div>
                                         <div className="space-y-1">
                                             <Label htmlFor="cat">Category *</Label>
-                                            <select 
-                                                id="cat" 
-                                                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-hidden"
-                                                value={addForm.data.category_id} 
-                                                onChange={e => addForm.setData('category_id', e.target.value)}
-                                                required
-                                            >
-                                                <option value="">Select Category</option>
-                                                {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                                            </select>
+                                            <Select value={String(addForm.data.category_id)} onValueChange={val => addForm.setData('category_id', val)} required>
+                                                <SelectTrigger className="w-full">
+                                                    <SelectValue placeholder="Select Category" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {categories.map(c => <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>)}
+                                                </SelectContent>
+                                            </Select>
                                         </div>
                                     </div>
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-1">
                                             <Label htmlFor="acq">Acquisition Date *</Label>
-                                            <Input id="acq" type="date" value={addForm.data.date_acquired} onChange={e => addForm.setData('date_acquired', e.target.value)} required />
+                                            <DatePicker 
+                                                value={addForm.data.date_acquired} 
+                                                onChange={val => addForm.setData('date_acquired', val)} 
+                                                required 
+                                            />
                                         </div>
                                         <div className="space-y-1">
                                             <Label htmlFor="war">Warranty Expiration</Label>
-                                            <Input id="war" type="date" value={addForm.data.warranty_expiration} onChange={e => addForm.setData('warranty_expiration', e.target.value)} />
+                                            <DatePicker 
+                                                value={addForm.data.warranty_expiration} 
+                                                onChange={val => addForm.setData('warranty_expiration', val)} 
+                                            />
                                         </div>
                                     </div>
                                     <div className="flex justify-end gap-2 pt-2">
@@ -255,7 +337,7 @@ return;
                                 </form>
                             </DialogContent>
                         </Dialog>
-                    )}
+                    </Can>
                 </div>
 
                 {/* Properties Registry Board */}
@@ -264,91 +346,134 @@ return;
                         <CardTitle className="text-base font-semibold">Tracked Properties & Accountabilities</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        {properties.length === 0 ? (
+                        {properties.data.length === 0 ? (
                             <div className="text-center py-12 text-muted-foreground">
                                 No properties registered in the system.
                             </div>
                         ) : (
                             <div className="overflow-x-auto">
-                                <table className="w-full text-left text-sm">
-                                    <thead>
-                                        <tr className="border-b border-border pb-2 text-muted-foreground font-medium">
-                                            <th className="py-2">Property No.</th>
-                                            <th className="py-2">Category</th>
-                                            <th className="py-2">Equipment Details</th>
-                                            <th className="py-2">Cost</th>
-                                            <th className="py-2">Accountable Officer</th>
-                                            <th className="py-2">Doc Reference</th>
-                                            <th className="py-2">Condition</th>
-                                            <th className="py-2">Status</th>
-                                            {canManage && <th className="py-2 text-right">Actions</th>}
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-border">
-                                        {properties.map((prop) => (
-                                            <tr key={prop.id} className="hover:bg-muted/50">
-                                                <td className="py-3 font-mono text-xs">{prop.property_number}</td>
-                                                <td className="py-3 text-muted-foreground">{prop.category?.name}</td>
-                                                <td className="py-3">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Property No.</TableHead>
+                                            <TableHead>Category</TableHead>
+                                            <TableHead>Equipment Details</TableHead>
+                                            <TableHead className="text-right">Cost</TableHead>
+                                            <TableHead>Accountable Officer</TableHead>
+                                            <TableHead>Doc Reference</TableHead>
+                                            <TableHead className="text-center">Condition</TableHead>
+                                            <TableHead className="text-center">Status</TableHead>
+                                            {canManage && <TableHead className="text-right">Actions</TableHead>}
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {properties.data.map((prop) => (
+                                            <TableRow key={prop.id}>
+                                                <TableCell className="font-mono text-xs">{prop.property_number}</TableCell>
+                                                <TableCell className="text-muted-foreground">{prop.category?.name}</TableCell>
+                                                <TableCell>
                                                     <div className="font-semibold">{prop.brand} - {prop.model}</div>
                                                     <div className="text-xs text-muted-foreground font-mono">S/N: {prop.serial_number}</div>
-                                                </td>
-                                                <td className="py-3">₱{prop.unit_cost.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
-                                                <td className="py-3 font-medium">
+                                                </TableCell>
+                                                <TableCell className="text-right">₱{prop.unit_cost.toLocaleString('en-US', { minimumFractionDigits: 2 })}</TableCell>
+                                                <TableCell className="font-medium">
                                                     {prop.active_assignment ? (
-                                                        prop.active_assignment.assignee?.name || (
-                                                            <div className="flex flex-col gap-0.5">
-                                                                <span className="font-semibold">{prop.active_assignment.non_system_name}</span>
+                                                        <div className="flex flex-col gap-0.5">
+                                                            <span>
+                                                                {prop.active_assignment.assignee?.name || (
+                                                                    <span className="font-semibold">{prop.active_assignment.non_system_name}</span>
+                                                                )}
+                                                            </span>
+                                                            {!prop.active_assignment.assignee && (
                                                                 <span className="text-[10px] text-amber-600 bg-amber-50 dark:bg-amber-950/30 px-1 py-0.5 rounded border border-amber-200/50 w-fit">
                                                                     External ({prop.active_assignment.non_system_department})
                                                                 </span>
-                                                            </div>
-                                                        )
+                                                            )}
+                                                            {prop.active_sub_assignment && (
+                                                                <div className="mt-1 flex flex-col gap-0.5 p-1.5 bg-blue-50 dark:bg-blue-950/30 border border-blue-200/50 rounded-md">
+                                                                    <span className="text-[10px] font-semibold text-blue-700 dark:text-blue-400 uppercase tracking-wider">Sub-Assigned To (MR)</span>
+                                                                    <span className="text-xs text-blue-900 dark:text-blue-300">
+                                                                        {prop.active_sub_assignment.assignee?.name || prop.active_sub_assignment.non_system_name}
+                                                                    </span>
+                                                                </div>
+                                                            )}
+                                                        </div>
                                                     ) : (
                                                         <span className="text-muted-foreground italic">None Assigned</span>
                                                     )}
-                                                </td>
-                                                <td className="py-3 font-mono text-xs text-indigo-500">
+                                                </TableCell>
+                                                <TableCell className="font-mono text-xs text-indigo-500">
                                                     {prop.active_assignment ? (
-                                                        <div className="flex items-center gap-1">
-                                                            <Clipboard className="h-3.5 w-3.5 text-indigo-500" />
-                                                            {prop.active_assignment.document_number}
+                                                        <div className="flex flex-col gap-1">
+                                                            <div className="flex items-center gap-1">
+                                                                <Clipboard className="h-3.5 w-3.5 text-indigo-500" />
+                                                                {prop.active_assignment.document_number}
+                                                            </div>
+                                                            {prop.active_sub_assignment && (
+                                                                <div className="flex items-center gap-1 text-[10px] text-blue-600 dark:text-blue-400">
+                                                                    <Clipboard className="h-3 w-3" />
+                                                                    {prop.active_sub_assignment.mr_number}
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     ) : '-'}
-                                                </td>
-                                                <td className="py-3 capitalize">
+                                                </TableCell>
+                                                <TableCell className="text-center capitalize">
                                                     <Badge variant={prop.condition === 'new' || prop.condition === 'good' ? 'default' : 'destructive'} className="text-[10px] px-1.5 py-0">
                                                         {prop.condition.replace(/_/g, ' ')}
                                                     </Badge>
-                                                </td>
-                                                <td className="py-3 capitalize">
+                                                </TableCell>
+                                                <TableCell className="text-center capitalize">
                                                     <Badge variant="outline" className="text-[10px] px-1.5 py-0">
                                                         {prop.status}
                                                     </Badge>
-                                                </td>
+                                                </TableCell>
                                                 {canManage && (
-                                                    <td className="py-3 text-right space-x-1 whitespace-nowrap">
-                                                        {prop.status === 'available' && (
-                                                            <Button size="icon" variant="outline" title="Assign Equipment" onClick={() => openAssignModal(prop)}>
-                                                                <UserCheck className="h-4 w-4 text-sky-500" />
-                                                            </Button>
+                                                    <TableCell className="text-right space-x-1 whitespace-nowrap">
+                                                        <Can permission="property.assign">
+                                                            {prop.status === 'available' && (
+                                                                <Button size="icon" variant="outline" title="Assign Equipment" onClick={() => openAssignModal(prop)}>
+                                                                    <UserCheck className="h-4 w-4 text-sky-500" />
+                                                                </Button>
+                                                            )}
+                                                        </Can>
+                                                        <Can permission="property.transfer">
+                                                            {(prop.status === 'assigned' || prop.status === 'transferred') && (
+                                                                <Button size="icon" variant="outline" title="Transfer Property (PTR)" onClick={() => openTransferModal(prop)}>
+                                                                    <RefreshCw className="h-4 w-4 text-amber-500" />
+                                                                </Button>
+                                                            )}
+                                                        </Can>
+                                                        {(hasAnyPermission(['property.transfer']) || isDeptHead) && (
+                                                            <>
+                                                                {(prop.status === 'assigned' || prop.status === 'transferred') && !prop.active_sub_assignment && (
+                                                                    <Button size="icon" variant="outline" title="Issue Memorandum Receipt (Sub-Assign)" onClick={() => openSubAssignModal(prop)}>
+                                                                        <UserCheck className="h-4 w-4 text-blue-500" />
+                                                                    </Button>
+                                                                )}
+                                                                {prop.active_sub_assignment && (
+                                                                    <Button size="icon" variant="outline" title="Return Memorandum Receipt" onClick={() => openReturnSubAssignModal(prop)}>
+                                                                        <RefreshCw className="h-4 w-4 text-emerald-500" />
+                                                                    </Button>
+                                                                )}
+                                                            </>
                                                         )}
-                                                        {(prop.status === 'assigned' || prop.status === 'transferred') && (
-                                                            <Button size="icon" variant="outline" title="Transfer Property (PTR)" onClick={() => openTransferModal(prop)}>
-                                                                <RefreshCw className="h-4 w-4 text-amber-500" />
-                                                            </Button>
-                                                        )}
-                                                        {prop.status !== 'disposed' && (
-                                                            <Button size="icon" variant="outline" title="Dispose Property (IIRUP)" onClick={() => openDisposeModal(prop)}>
-                                                                <Trash2 className="h-4 w-4 text-rose-500" />
-                                                            </Button>
-                                                        )}
-                                                    </td>
+                                                        <Can permission="property.dispose">
+                                                            {prop.status !== 'disposed' && (
+                                                                <Button size="icon" variant="outline" title="Dispose Property (IIRUP)" onClick={() => openDisposeModal(prop)}>
+                                                                    <Trash2 className="h-4 w-4 text-rose-500" />
+                                                                </Button>
+                                                            )}
+                                                        </Can>
+                                                    </TableCell>
                                                 )}
-                                            </tr>
+                                            </TableRow>
                                         ))}
-                                    </tbody>
-                                </table>
+                                    </TableBody>
+                                </Table>
+                                <div className="mt-4">
+                                    <SimplePagination links={properties.links} />
+                                </div>
                             </div>
                         )}
                     </CardContent>
@@ -426,16 +551,14 @@ return;
                                 {!assignForm.data.is_non_system ? (
                                     <div className="space-y-1">
                                         <Label htmlFor="assignee">Employee *</Label>
-                                        <select 
-                                            id="assignee" 
-                                            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-hidden"
-                                            value={assignForm.data.assigned_to} 
-                                            onChange={e => assignForm.setData('assigned_to', e.target.value)}
-                                            required={!assignForm.data.is_non_system}
-                                        >
-                                            <option value="">Select Employee</option>
-                                            {employees.map(e => <option key={e.id} value={e.id}>{e.name} ({e.position})</option>)}
-                                        </select>
+                                        <Select value={String(assignForm.data.assigned_to)} onValueChange={val => assignForm.setData('assigned_to', val)} required={!assignForm.data.is_non_system}>
+                                            <SelectTrigger className="w-full">
+                                                <SelectValue placeholder="Select Employee" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {employees.map(e => <SelectItem key={e.id} value={String(e.id)}>{e.name} ({e.position})</SelectItem>)}
+                                            </SelectContent>
+                                        </Select>
                                         {assignForm.errors.assigned_to && (
                                             <p className="text-xs text-destructive">{assignForm.errors.assigned_to}</p>
                                         )}
@@ -498,30 +621,26 @@ return;
                             <form onSubmit={handleTransferSubmit} className="space-y-4">
                                 <div className="space-y-1">
                                     <Label htmlFor="new_assignee">Recipient Employee *</Label>
-                                    <select 
-                                        id="new_assignee" 
-                                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-hidden"
-                                        value={transferForm.data.to_employee_id} 
-                                        onChange={e => transferForm.setData('to_employee_id', e.target.value)}
-                                        required
-                                    >
-                                        <option value="">Select Recipient</option>
-                                        {employees.map(e => <option key={e.id} value={e.id}>{e.name} ({e.position})</option>)}
-                                    </select>
+                                    <Select value={String(transferForm.data.to_employee_id)} onValueChange={val => transferForm.setData('to_employee_id', val)} required>
+                                        <SelectTrigger className="w-full">
+                                            <SelectValue placeholder="Select Recipient" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {employees.map(e => <SelectItem key={e.id} value={String(e.id)}>{e.name} ({e.position})</SelectItem>)}
+                                        </SelectContent>
+                                    </Select>
                                 </div>
 
                                 <div className="space-y-1">
                                     <Label htmlFor="office">Target Office *</Label>
-                                    <select 
-                                        id="office" 
-                                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-hidden"
-                                        value={transferForm.data.office_id} 
-                                        onChange={e => transferForm.setData('office_id', e.target.value)}
-                                        required
-                                    >
-                                        <option value="">Select Office</option>
-                                        {offices.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
-                                    </select>
+                                    <Select value={String(transferForm.data.office_id)} onValueChange={val => transferForm.setData('office_id', val)} required>
+                                        <SelectTrigger className="w-full">
+                                            <SelectValue placeholder="Select Office" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {offices.map(o => <SelectItem key={o.id} value={String(o.id)}>{o.name}</SelectItem>)}
+                                        </SelectContent>
+                                    </Select>
                                 </div>
 
                                 <div className="space-y-1">
@@ -550,33 +669,31 @@ return;
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-1">
                                         <Label htmlFor="method">Disposal Method *</Label>
-                                        <select 
-                                            id="method" 
-                                            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-hidden"
-                                            value={disposeForm.data.disposal_method} 
-                                            onChange={e => disposeForm.setData('disposal_method', e.target.value)}
-                                            required
-                                        >
-                                            <option value="destruction">Destruction</option>
-                                            <option value="auction">Public Auction</option>
-                                            <option value="transfer">Transfer to other Agency</option>
-                                            <option value="donation">Donation</option>
-                                        </select>
+                                        <Select value={String(disposeForm.data.disposal_method)} onValueChange={val => disposeForm.setData('disposal_method', val as any)} required>
+                                            <SelectTrigger className="w-full">
+                                                <SelectValue placeholder="Select Method" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="destruction">Destruction</SelectItem>
+                                                <SelectItem value="auction">Public Auction</SelectItem>
+                                                <SelectItem value="transfer">Transfer to other Agency</SelectItem>
+                                                <SelectItem value="donation">Donation</SelectItem>
+                                            </SelectContent>
+                                        </Select>
                                     </div>
                                     <div className="space-y-1">
                                         <Label htmlFor="disp_reason">Reason *</Label>
-                                        <select 
-                                            id="disp_reason" 
-                                            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-hidden"
-                                            value={disposeForm.data.reason} 
-                                            onChange={e => disposeForm.setData('reason', e.target.value)}
-                                            required
-                                        >
-                                            <option value="broken">Broken / Unrepairable</option>
-                                            <option value="obsolete">Obsolete / Outdated</option>
-                                            <option value="lost">Lost / Stolen</option>
-                                            <option value="condemned">Condemned</option>
-                                        </select>
+                                        <Select value={String(disposeForm.data.reason)} onValueChange={val => disposeForm.setData('reason', val as any)} required>
+                                            <SelectTrigger className="w-full">
+                                                <SelectValue placeholder="Select Reason" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="broken">Broken / Unrepairable</SelectItem>
+                                                <SelectItem value="obsolete">Obsolete / Outdated</SelectItem>
+                                                <SelectItem value="lost">Lost / Stolen</SelectItem>
+                                                <SelectItem value="condemned">Condemned</SelectItem>
+                                            </SelectContent>
+                                        </Select>
                                     </div>
                                 </div>
 
@@ -594,6 +711,131 @@ return;
                                 <div className="flex justify-end gap-2 pt-2">
                                     <Button type="button" variant="outline" onClick={() => setIsDisposeOpen(false)}>Cancel</Button>
                                     <Button type="submit" disabled={disposeForm.processing} className="bg-rose-600 hover:bg-rose-700 text-white">Execute Disposal</Button>
+                                </div>
+                            </form>
+                        )}
+                    </DialogContent>
+                </Dialog>
+
+                {/* Dialog: Issue Memorandum Receipt (Sub-Assign) */}
+                <Dialog open={isSubAssignOpen} onOpenChange={setIsSubAssignOpen}>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Issue Memorandum Receipt (MR)</DialogTitle>
+                            <DialogDescription>Internally track custody of this property within your department.</DialogDescription>
+                        </DialogHeader>
+                        {selectedProp && (
+                            <form onSubmit={handleSubAssignSubmit} className="space-y-4">
+                                <div className="space-y-3">
+                                    <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">MR Assignee Type</Label>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                subAssignForm.setData(data => ({
+                                                    ...data,
+                                                    is_non_system: false,
+                                                    non_system_name: '',
+                                                    non_system_department: '',
+                                                }));
+                                            }}
+                                            className={`flex flex-col items-center gap-1 p-3 rounded-lg border-2 text-xs font-semibold transition-all ${
+                                                !subAssignForm.data.is_non_system
+                                                    ? 'border-blue-600 bg-blue-50/50 text-blue-600 dark:border-blue-400 dark:bg-blue-950/20 dark:text-blue-400'
+                                                    : 'border-border bg-card text-muted-foreground hover:bg-muted/50'
+                                            }`}
+                                        >
+                                            <span>Registered Employee</span>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                subAssignForm.setData(data => ({
+                                                    ...data,
+                                                    is_non_system: true,
+                                                    issued_to: '',
+                                                }));
+                                            }}
+                                            className={`flex flex-col items-center gap-1 p-3 rounded-lg border-2 text-xs font-semibold transition-all ${
+                                                subAssignForm.data.is_non_system
+                                                    ? 'border-blue-600 bg-blue-50/50 text-blue-600 dark:border-blue-400 dark:bg-blue-950/20 dark:text-blue-400'
+                                                    : 'border-border bg-card text-muted-foreground hover:bg-muted/50'
+                                            }`}
+                                        >
+                                            <span>Non-System User</span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {!subAssignForm.data.is_non_system ? (
+                                    <div className="space-y-1">
+                                        <Label htmlFor="mr_assignee">Employee *</Label>
+                                        <Select value={String(subAssignForm.data.issued_to)} onValueChange={val => subAssignForm.setData('issued_to', val)} required={!subAssignForm.data.is_non_system}>
+                                            <SelectTrigger className="w-full">
+                                                <SelectValue placeholder="Select Employee" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {employees
+                                                    .filter(e => current_employee && e.department_id === current_employee.department_id)
+                                                    .map(e => <SelectItem key={e.id} value={String(e.id)}>{e.name} ({e.position})</SelectItem>)
+                                                }
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-3">
+                                        <div className="space-y-1">
+                                            <Label htmlFor="mr_non_system_name">Full Name *</Label>
+                                            <Input
+                                                id="mr_non_system_name"
+                                                type="text"
+                                                value={subAssignForm.data.non_system_name}
+                                                onChange={e => subAssignForm.setData('non_system_name', e.target.value)}
+                                                required={subAssignForm.data.is_non_system}
+                                            />
+                                        </div>
+                                        <p className="text-xs text-muted-foreground mt-2">
+                                            <em>Note: Department will automatically be set to your current department.</em>
+                                        </p>
+                                    </div>
+                                )}
+
+                                <div className="space-y-1">
+                                    <Label htmlFor="mr_rem">Remarks</Label>
+                                    <textarea id="mr_rem" className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-hidden" value={subAssignForm.data.remarks} onChange={e => subAssignForm.setData('remarks', e.target.value)} />
+                                </div>
+
+                                <div className="flex justify-end gap-2 pt-2">
+                                    <Button type="button" variant="outline" onClick={() => setIsSubAssignOpen(false)}>Cancel</Button>
+                                    <Button type="submit" disabled={subAssignForm.processing} className="bg-blue-600 hover:bg-blue-700 text-white">Issue MR</Button>
+                                </div>
+                            </form>
+                        )}
+                    </DialogContent>
+                </Dialog>
+
+                {/* Dialog: Return Memorandum Receipt */}
+                <Dialog open={isReturnSubAssignOpen} onOpenChange={setIsReturnSubAssignOpen}>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Return Memorandum Receipt (MR)</DialogTitle>
+                            <DialogDescription>Mark the property as returned to the Department Custodian.</DialogDescription>
+                        </DialogHeader>
+                        {selectedProp && selectedProp.active_sub_assignment && (
+                            <form onSubmit={handleReturnSubAssignSubmit} className="space-y-4">
+                                <div className="p-3 bg-blue-50 dark:bg-blue-950/30 rounded border border-blue-200/50 mb-2">
+                                    <p className="text-sm font-semibold text-blue-900 dark:text-blue-300">Returning MR from:</p>
+                                    <p className="text-xs text-blue-800 dark:text-blue-400 mt-1">
+                                        {selectedProp.active_sub_assignment.assignee?.name || selectedProp.active_sub_assignment.non_system_name}
+                                    </p>
+                                </div>
+                                <div className="space-y-1">
+                                    <Label htmlFor="ret_mr_rem">Return Remarks / Condition Notes</Label>
+                                    <textarea id="ret_mr_rem" className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-hidden" value={returnSubAssignForm.data.remarks} onChange={e => returnSubAssignForm.setData('remarks', e.target.value)} />
+                                </div>
+                                <div className="flex justify-end gap-2 pt-2">
+                                    <Button type="button" variant="outline" onClick={() => setIsReturnSubAssignOpen(false)}>Cancel</Button>
+                                    <Button type="submit" disabled={returnSubAssignForm.processing} className="bg-emerald-600 hover:bg-emerald-700 text-white">Confirm Return</Button>
                                 </div>
                             </form>
                         )}

@@ -28,6 +28,10 @@ class DemoDataSeeder extends Seeder
      */
     public function run(): void
     {
+        if (! app()->environment('local')) {
+            abort(403, 'Demo data seeder can only be run in local environment.');
+        }
+
         // Disable foreign key constraints to safely truncate/delete existing records
         DB::statement('PRAGMA foreign_keys = OFF;');
 

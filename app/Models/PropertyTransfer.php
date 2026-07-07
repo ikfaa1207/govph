@@ -16,7 +16,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'office_id',
     'reason',
     'approved_by',
-    'status'
+    'status',
 ])]
 class PropertyTransfer extends Model
 {

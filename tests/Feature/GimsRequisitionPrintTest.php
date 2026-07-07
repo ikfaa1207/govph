@@ -41,32 +41,32 @@ beforeEach(function () {
 
     // Create Users & Employees
     // 1. Requester Employee (Dept A)
-    $this->requesterUser = User::create(['name' => 'Requester', 'email' => 'req@example.com', 'password' => bcrypt('password'), 'role' => 'employee']);
+    $this->requesterUser = User::factory()->employee()->create(['name' => 'Requester', 'email' => 'req@example.com', 'password' => bcrypt('password')]);
     $this->requesterEmp = Employee::create(['user_id' => $this->requesterUser->id, 'employee_id' => 'EMP-REQ', 'name' => 'Requester Employee', 'position' => 'Staff', 'office_id' => $this->office->id, 'department_id' => $this->deptA->id]);
     $this->requesterUser->givePermissionTo($this->permView);
 
     // 2. Department Head (Dept A)
-    $this->deptHeadUser = User::create(['name' => 'Dept Head A', 'email' => 'head-a@example.com', 'password' => bcrypt('password'), 'role' => 'dept_head']);
+    $this->deptHeadUser = User::factory()->deptHead()->create(['name' => 'Dept Head A', 'email' => 'head-a@example.com', 'password' => bcrypt('password')]);
     $this->deptHeadEmp = Employee::create(['user_id' => $this->deptHeadUser->id, 'employee_id' => 'EMP-HEAD-A', 'name' => 'Dept Head A Employee', 'position' => 'Chief Accountant', 'office_id' => $this->office->id, 'department_id' => $this->deptA->id]);
     $this->deptHeadUser->givePermissionTo($this->permView, $this->permApprove);
 
     // 3. Other Employee (Dept B)
-    $this->otherUser = User::create(['name' => 'Other', 'email' => 'other@example.com', 'password' => bcrypt('password'), 'role' => 'employee']);
+    $this->otherUser = User::factory()->employee()->create(['name' => 'Other', 'email' => 'other@example.com', 'password' => bcrypt('password')]);
     $this->otherEmp = Employee::create(['user_id' => $this->otherUser->id, 'employee_id' => 'EMP-OTHER', 'name' => 'Other Employee', 'position' => 'Staff', 'office_id' => $this->office->id, 'department_id' => $this->deptB->id]);
     $this->otherUser->givePermissionTo($this->permView);
 
     // 4. Other Department Head (Dept B)
-    $this->otherHeadUser = User::create(['name' => 'Dept Head B', 'email' => 'head-b@example.com', 'password' => bcrypt('password'), 'role' => 'dept_head']);
+    $this->otherHeadUser = User::factory()->deptHead()->create(['name' => 'Dept Head B', 'email' => 'head-b@example.com', 'password' => bcrypt('password')]);
     $this->otherHeadEmp = Employee::create(['user_id' => $this->otherHeadUser->id, 'employee_id' => 'EMP-HEAD-B', 'name' => 'Dept Head B Employee', 'position' => 'HR Manager', 'office_id' => $this->office->id, 'department_id' => $this->deptB->id]);
     $this->otherHeadUser->givePermissionTo($this->permView, $this->permApprove);
 
     // 5. Supply Officer
-    $this->supplyUser = User::create(['name' => 'Supply Officer', 'email' => 'supply@example.com', 'password' => bcrypt('password'), 'role' => 'supply_officer']);
+    $this->supplyUser = User::factory()->supplyOfficer()->create(['name' => 'Supply Officer', 'email' => 'supply@example.com', 'password' => bcrypt('password')]);
     $this->supplyEmp = Employee::create(['user_id' => $this->supplyUser->id, 'employee_id' => 'EMP-SUPPLY', 'name' => 'Supply Officer Employee', 'position' => 'Supply Officer', 'office_id' => $this->office->id, 'department_id' => $this->deptA->id]);
     $this->supplyUser->givePermissionTo($this->permView, $this->permIssue);
 
     // 6. Auditor
-    $this->auditorUser = User::create(['name' => 'Auditor', 'email' => 'auditor@example.com', 'password' => bcrypt('password'), 'role' => 'auditor']);
+    $this->auditorUser = User::factory()->auditor()->create(['name' => 'Auditor', 'email' => 'auditor@example.com', 'password' => bcrypt('password')]);
     $this->auditorEmp = Employee::create(['user_id' => $this->auditorUser->id, 'employee_id' => 'EMP-AUDIT', 'name' => 'Auditor Employee', 'position' => 'State Auditor', 'office_id' => $this->office->id, 'department_id' => $this->deptA->id]);
     $this->auditorUser->givePermissionTo($this->permView, $this->permAudit);
 

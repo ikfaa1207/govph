@@ -7,9 +7,12 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Laravel\Fortify\Contracts\PasskeyUser;
 use Laravel\Fortify\PasskeyAuthenticatable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
@@ -23,16 +26,17 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property string|null $two_factor_secret
  * @property string|null $two_factor_recovery_codes
  * @property Carbon|null $two_factor_confirmed_at
- * @property string|null $remember_token
+ * @property Carbon|null $remember_token
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
+ * @property Employee|null $employee
  */
-#[Fillable(['name', 'email', 'password', 'role', 'is_active', 'password_change_required', 'password_changed_at', 'failed_login_attempts', 'locked_until'])]
+#[Fillable(['name', 'email', 'password', 'is_active', 'password_change_required', 'password_changed_at', 'failed_login_attempts', 'locked_until'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable implements PasskeyUser
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable, HasPermissions;
+    use HasFactory, HasPermissions, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable;
 
     /**
      * Get the attributes that should be cast.
@@ -61,13 +65,17 @@ class User extends Authenticatable implements PasskeyUser
         static::saving(function (User $user) {
             if ($user->isDirty('password')) {
                 $user->password_changed_at = now();
+
+                if (auth()->check() && auth()->id() === $user->id) {
+                    $user->password_change_required = false;
+                }
             }
         });
 
         static::saved(function (User $user) {
             if ($user->wasChanged('password') || $user->wasRecentlyCreated) {
                 // Save current password hash to history
-                \Illuminate\Support\Facades\DB::table('password_histories')->insert([
+                DB::table('password_histories')->insert([
                     'user_id' => $user->id,
                     'password' => $user->password,
                     'created_at' => now(),
@@ -79,9 +87,9 @@ class User extends Authenticatable implements PasskeyUser
     /**
      * Get the employee profile associated with the user.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasOne<\App\Models\Employee, $this>
+     * @return HasOne<Employee, $this>
      */
-    public function employee(): \Illuminate\Database\Eloquent\Relations\HasOne
+    public function employee(): HasOne
     {
         return $this->hasOne(Employee::class);
     }
@@ -89,9 +97,9 @@ class User extends Authenticatable implements PasskeyUser
     /**
      * Get the support tickets submitted by the user.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany<\App\Models\Ticket, $this>
+     * @return HasMany<Ticket, $this>
      */
-    public function tickets(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function tickets(): HasMany
     {
         return $this->hasMany(Ticket::class);
     }

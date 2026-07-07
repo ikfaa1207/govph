@@ -1,13 +1,16 @@
 import { Head, useForm, setLayoutProps } from '@inertiajs/react';
-import { PlusCircle, X, ClipboardCheck, Package2, ShieldAlert, Printer, Eye, ClipboardList } from 'lucide-react';
+import { PlusCircle, X, ClipboardCheck, Package2, ShieldAlert, Printer, Eye, ClipboardList, ChevronDown } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 interface RequisitionItem {
     id: number;
@@ -55,14 +58,38 @@ interface RequisitionIndexProps {
             name: string;
             email: string;
             role: 'admin' | 'supply_officer' | 'property_custodian' | 'dept_head' | 'employee' | 'auditor';
+            permissions?: string[];
         };
     };
 }
 
-export default function RequisitionsIndex({ requisitions, items, auth }: RequisitionIndexProps) {
+export default function RequisitionsIndex({ requisitions, items, auth, currentEmployee }: RequisitionIndexProps) {
     const breadcrumbs = [{ title: 'Requisitions (RIS)', href: '/inventory/requisitions' }];
     setLayoutProps({ breadcrumbs });
     const userRole = auth.user.role;
+
+    const permissions = auth.user.permissions || [];
+    const canCreate = permissions.includes('request.create');
+    const canApprove = permissions.includes('request.approve');
+    const canIssue = permissions.includes('warehouse.issue');
+
+    const canUserApproveReq = (req: Requisition) => {
+        if (!canApprove) {
+            return false;
+        }
+
+        if (currentEmployee && req.requesting_employee_id === currentEmployee.id) {
+            return false;
+        }
+
+        const isAdmin = userRole === 'admin';
+
+        if (isAdmin) {
+            return true;
+        }
+
+        return currentEmployee && req.department_head_id === currentEmployee.id;
+    };
 
     const [isRequestOpen, setIsRequestOpen] = useState(false);
     const [selectedReq, setSelectedReq] = useState<Requisition | null>(null);
@@ -191,7 +218,7 @@ return;
                         <p className="text-sm text-muted-foreground">Submit supply requests, authorize approvals, and manage handovers.</p>
                     </div>
 
-                    {userRole === 'employee' && (
+                    {canCreate && (
                         <Dialog open={isRequestOpen} onOpenChange={(open) => {
                             setIsRequestOpen(open);
 
@@ -216,37 +243,40 @@ return;
                                 </DialogHeader>
                                 <form onSubmit={handleRequestSubmit} className="space-y-6">
                                     <div className="max-h-[30vh] overflow-y-auto rounded-md border border-border">
-                                        <table className="w-full text-left text-xs">
-                                            <thead>
-                                                <tr className="border-b border-border bg-muted/50 font-medium text-muted-foreground">
-                                                    <th className="p-3">Item *</th>
-                                                    <th className="p-3 w-36">Qty Requested *</th>
-                                                    <th className="p-3 text-center w-12"></th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className="divide-y divide-border">
+                                        <Table className="text-xs">
+                                            <TableHeader>
+                                                <TableRow className="bg-muted/50">
+                                                    <TableHead className="p-3">Item *</TableHead>
+                                                    <TableHead className="p-3 w-36">Qty Requested *</TableHead>
+                                                    <TableHead className="p-3 text-center w-12"></TableHead>
+                                                </TableRow>
+                                            </TableHeader>
+                                            <TableBody>
                                                 {requestForm.data.items.map((item, idx) => (
-                                                    <tr key={idx} className="hover:bg-muted/30">
-                                                        <td className="p-2.5">
-                                                            <select
-                                                                className="w-full rounded border border-input bg-background p-1.5 text-xs focus-visible:outline-hidden"
-                                                                value={item.item_id}
-                                                                onChange={e => {
+                                                    <TableRow key={idx}>
+                                                        <TableCell className="p-2.5">
+                                                            <Select
+                                                                value={String(item.item_id)}
+                                                                onValueChange={val => {
                                                                     const newItems = [...requestForm.data.items];
-                                                                    newItems[idx].item_id = e.target.value;
+                                                                    newItems[idx].item_id = val;
                                                                     requestForm.setData('items', newItems);
                                                                 }}
                                                                 required
                                                             >
-                                                                <option value="">Select Item</option>
-                                                                {items.map(i => (
-                                                                    <option key={i.id} value={i.id}>
-                                                                        {i.name} (Qty Available: {i.current_stock} {i.unit})
-                                                                    </option>
-                                                                ))}
-                                                            </select>
-                                                        </td>
-                                                        <td className="p-2.5">
+                                                                <SelectTrigger className="w-full h-8 text-xs">
+                                                                    <SelectValue placeholder="Select Item" />
+                                                                </SelectTrigger>
+                                                                <SelectContent>
+                                                                    {items.map(i => (
+                                                                        <SelectItem key={i.id} value={String(i.id)}>
+                                                                            {i.name} (Qty Available: {i.current_stock} {i.unit})
+                                                                        </SelectItem>
+                                                                    ))}
+                                                                </SelectContent>
+                                                            </Select>
+                                                        </TableCell>
+                                                        <TableCell className="p-2.5">
                                                             <Input
                                                                 type="number"
                                                                 min="1"
@@ -259,8 +289,8 @@ return;
                                                                 className="h-8 p-1.5 text-xs"
                                                                 required
                                                             />
-                                                        </td>
-                                                        <td className="p-2.5 text-center">
+                                                        </TableCell>
+                                                        <TableCell className="p-2.5 text-center">
                                                             {requestForm.data.items.length > 1 && (
                                                                 <Button 
                                                                     type="button" 
@@ -272,11 +302,11 @@ return;
                                                                     <X className="h-4 w-4" />
                                                                 </Button>
                                                             )}
-                                                        </td>
-                                                    </tr>
+                                                        </TableCell>
+                                                    </TableRow>
                                                 ))}
-                                            </tbody>
-                                        </table>
+                                            </TableBody>
+                                        </Table>
                                     </div>
 
                                     <Button type="button" variant="outline" size="sm" onClick={handleAddRequestItem} className="w-full">
@@ -362,77 +392,88 @@ return;
                     ) : (
                         requisitions.map((req) => (
                             <Card key={req.id} className="relative overflow-hidden">
-                                <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between pb-3">
-                                    <div>
-                                        <div className="flex items-center gap-2">
-                                            <CardTitle className="text-base font-semibold font-mono text-primary">{req.ris_number}</CardTitle>
-                                            <Badge variant="outline" className="capitalize">
-                                                {req.status.replace(/_/g, ' ')}
-                                            </Badge>
-                                        </div>
-                                        <CardDescription>
-                                            Submitted by <strong>{req.requester?.name}</strong> ({req.requester?.department?.name || 'Staff'}) on {new Date(req.created_at).toLocaleDateString()}
-                                        </CardDescription>
-                                    </div>
-
-                                    {/* Action Buttons depending on role and status */}
-                                    <div className="flex items-center gap-2">
-                                        <Button asChild variant="outline" size="sm" className="gap-1">
-                                            <a href={`/inventory/requisitions/${req.id}/print`} target="_blank" rel="noopener noreferrer">
-                                                <Printer className="h-4 w-4" />
-                                                Print RIS
-                                            </a>
-                                        </Button>
-                                        {userRole === 'dept_head' && req.status === 'pending_dept_head' && (
-                                            <Button size="sm" className="gap-1 bg-indigo-600 hover:bg-indigo-700" onClick={() => openApproveDialog(req)}>
-                                                <ClipboardCheck className="h-4 w-4" />
-                                                Approve RIS
-                                            </Button>
-                                        )}
-                                        {userRole === 'supply_officer' && (req.status === 'pending_supply' || req.status === 'partially_issued') && (
-                                            <Button size="sm" className="gap-1 bg-emerald-600 hover:bg-emerald-700" onClick={() => openIssueDialog(req)}>
-                                                <Package2 className="h-4 w-4" />
-                                                Issue Supplies
-                                            </Button>
-                                        )}
-                                    </div>
-                                </CardHeader>
-                                
-                                <CardContent className="border-t border-border pt-4">
-                                    <div className="space-y-4">
-                                        {/* Items requested grid */}
-                                        <div className="overflow-x-auto">
-                                            <table className="w-full text-left text-xs">
-                                                <thead>
-                                                    <tr className="border-b border-border pb-1 text-muted-foreground font-semibold">
-                                                        <th className="py-1">Supply Name</th>
-                                                        <th className="py-1 text-right">Requested Qty</th>
-                                                        <th className="py-1 text-right">Approved Qty</th>
-                                                        <th className="py-1 text-right">Issued Qty</th>
-                                                        <th className="py-1 text-right">On Hand Stock</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody className="divide-y divide-border">
-                                                    {req.items.map((item) => (
-                                                        <tr key={item.id}>
-                                                            <td className="py-2 font-medium">{item.item.name}</td>
-                                                            <td className="py-2 text-right">{item.quantity_requested} {item.item.unit?.abbreviation || 'pcs'}</td>
-                                                            <td className="py-2 text-right text-indigo-600 dark:text-indigo-400 font-semibold">{item.quantity_approved}</td>
-                                                            <td className="py-2 text-right text-emerald-600 dark:text-emerald-400 font-bold">{item.quantity_issued}</td>
-                                                            <td className="py-2 text-right font-mono text-muted-foreground">{item.item.current_stock}</td>
-                                                        </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
-                                        </div>
-
-                                        {req.remarks && (
-                                            <div className="bg-muted/40 p-2.5 rounded text-xs text-muted-foreground">
-                                                <strong>Purpose:</strong> {req.remarks}
+                                <Collapsible>
+                                    <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between pb-3">
+                                        <div>
+                                            <div className="flex items-center gap-2">
+                                                <CardTitle className="text-base font-semibold font-mono text-primary">{req.ris_number}</CardTitle>
+                                                <Badge variant="outline" className="capitalize">
+                                                    {req.status.replace(/_/g, ' ')}
+                                                </Badge>
                                             </div>
-                                        )}
-                                    </div>
-                                </CardContent>
+                                            <CardDescription>
+                                                Submitted by <strong>{req.requester?.name}</strong> ({req.requester?.department?.name || 'Staff'}) on {new Date(req.created_at).toLocaleDateString()}
+                                            </CardDescription>
+                                        </div>
+
+                                        {/* Action Buttons depending on role and status */}
+                                        <div className="flex items-center gap-2">
+                                            <Button asChild variant="outline" size="sm" className="gap-1">
+                                                <a href={`/inventory/requisitions/${req.id}/print`} target="_blank" rel="noopener noreferrer">
+                                                    <Printer className="h-4 w-4" />
+                                                    Print RIS
+                                                </a>
+                                            </Button>
+                                            {canUserApproveReq(req) && req.status === 'pending_dept_head' && (
+                                                <Button size="sm" className="gap-1 bg-indigo-600 hover:bg-indigo-700" onClick={() => openApproveDialog(req)}>
+                                                    <ClipboardCheck className="h-4 w-4" />
+                                                    Approve RIS
+                                                </Button>
+                                            )}
+                                            {canIssue && (req.status === 'pending_supply' || req.status === 'partially_issued') && (
+                                                <Button size="sm" className="gap-1 bg-emerald-600 hover:bg-emerald-700" onClick={() => openIssueDialog(req)}>
+                                                    <Package2 className="h-4 w-4" />
+                                                    Issue Supplies
+                                                </Button>
+                                            )}
+                                            <CollapsibleTrigger asChild>
+                                                <Button variant="ghost" size="sm" className="w-8 h-8 p-0 [&[data-state=open]>svg]:rotate-180">
+                                                    <ChevronDown className="h-4 w-4 transition-transform duration-200" />
+                                                    <span className="sr-only">Toggle</span>
+                                                </Button>
+                                            </CollapsibleTrigger>
+                                        </div>
+                                    </CardHeader>
+                                    
+                                    <CollapsibleContent>
+                                        <CardContent className="border-t border-border pt-4">
+                                            <div className="space-y-4">
+                                                {/* Items requested grid */}
+                                                <div className="overflow-x-auto">
+
+                                                    <Table className="text-xs">
+                                                        <TableHeader>
+                                                            <TableRow>
+                                                                <TableHead>Supply Name</TableHead>
+                                                                <TableHead className="text-right">Requested Qty</TableHead>
+                                                                <TableHead className="text-right">Approved Qty</TableHead>
+                                                                <TableHead className="text-right">Issued Qty</TableHead>
+                                                                <TableHead className="text-right">On Hand Stock</TableHead>
+                                                            </TableRow>
+                                                        </TableHeader>
+                                                        <TableBody>
+                                                            {req.items.map((item) => (
+                                                                <TableRow key={item.id}>
+                                                                    <TableCell className="font-medium">{item.item.name}</TableCell>
+                                                                    <TableCell className="text-right">{item.quantity_requested} {item.item.unit?.abbreviation || 'pcs'}</TableCell>
+                                                                    <TableCell className="text-right text-indigo-600 dark:text-indigo-400 font-semibold">{item.quantity_approved}</TableCell>
+                                                                    <TableCell className="text-right text-emerald-600 dark:text-emerald-400 font-bold">{item.quantity_issued}</TableCell>
+                                                                    <TableCell className="text-right font-mono text-muted-foreground">{item.item.current_stock}</TableCell>
+                                                                </TableRow>
+                                                            ))}
+                                                        </TableBody>
+                                                    </Table>
+                                                </div>
+
+                                                {req.remarks && (
+                                                    <div className="bg-muted/40 p-2.5 rounded text-xs text-muted-foreground">
+                                                        <strong>Purpose:</strong> {req.remarks}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </CardContent>
+                                    </CollapsibleContent>
+                                </Collapsible>
                             </Card>
                         ))
                     )}

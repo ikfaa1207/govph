@@ -64,11 +64,10 @@ test('property assignment routes to PAR or ICS depending on cost threshold', fun
     $office = Office::create(['code' => 'O-TEST', 'name' => 'Test Office']);
     $dept = Department::create(['office_id' => $office->id, 'code' => 'D-TEST', 'name' => 'Test Dept']);
 
-    $custodianUser = User::create([
+    $custodianUser = User::factory()->propertyCustodian()->create([
         'name' => 'Custodian User',
         'email' => 'custodian@example.com',
         'password' => bcrypt('password'),
-        'role' => 'property_custodian',
     ]);
 
     $custodian = Employee::create([
@@ -80,11 +79,10 @@ test('property assignment routes to PAR or ICS depending on cost threshold', fun
         'department_id' => $dept->id,
     ]);
 
-    $employeeUser = User::create([
+    $employeeUser = User::factory()->employee()->create([
         'name' => 'Staff User',
         'email' => 'staff@example.com',
         'password' => bcrypt('password'),
-        'role' => 'employee',
     ]);
 
     $employee = Employee::create([
@@ -173,13 +171,13 @@ test('requisition and issue workflow is successful', function () {
     $valuationService->recordStockIn($item, 50, 100.00, 'Test', 1, 'Initial balance');
 
     // Users
-    $employeeUser = User::create(['name' => 'Staff', 'email' => 'staff@example.com', 'password' => bcrypt('password'), 'role' => 'employee']);
+    $employeeUser = User::factory()->employee()->create(['name' => 'Staff', 'email' => 'staff@example.com', 'password' => bcrypt('password')]);
     $employee = Employee::create(['user_id' => $employeeUser->id, 'employee_id' => 'E01', 'name' => 'Staff', 'position' => 'Staff', 'office_id' => $office->id, 'department_id' => $dept->id]);
 
-    $headUser = User::create(['name' => 'Head', 'email' => 'head@example.com', 'password' => bcrypt('password'), 'role' => 'dept_head']);
+    $headUser = User::factory()->deptHead()->create(['name' => 'Head', 'email' => 'head@example.com', 'password' => bcrypt('password')]);
     $head = Employee::create(['user_id' => $headUser->id, 'employee_id' => 'E02', 'name' => 'Head', 'position' => 'Head', 'office_id' => $office->id, 'department_id' => $dept->id]);
 
-    $supplyUser = User::create(['name' => 'Supply', 'email' => 'supply@example.com', 'password' => bcrypt('password'), 'role' => 'supply_officer']);
+    $supplyUser = User::factory()->supplyOfficer()->create(['name' => 'Supply', 'email' => 'supply@example.com', 'password' => bcrypt('password')]);
     $supply = Employee::create(['user_id' => $supplyUser->id, 'employee_id' => 'E03', 'name' => 'Supply', 'position' => 'Supply', 'office_id' => $office->id, 'department_id' => $dept->id]);
 
     Permission::create(['name' => 'request.create', 'module' => 'requisition']);
@@ -200,7 +198,7 @@ test('requisition and issue workflow is successful', function () {
     ])->assertRedirect();
 
     $requisition = Requisition::first();
-    expect($requisition->status)->toBe('pending_dept_head');
+    expect($requisition->status->value)->toBe('pending_dept_head');
 
     $requisitionItem = RequisitionItem::first();
     expect($requisitionItem->quantity_requested)->toBe(10);
@@ -214,7 +212,7 @@ test('requisition and issue workflow is successful', function () {
     ])->assertRedirect();
 
     $requisition->refresh();
-    expect($requisition->status)->toBe('pending_supply');
+    expect($requisition->status->value)->toBe('pending_supply');
 
     $requisitionItem->refresh();
     expect($requisitionItem->quantity_approved)->toBe(8);
@@ -228,7 +226,7 @@ test('requisition and issue workflow is successful', function () {
     ])->assertRedirect();
 
     $requisition->refresh();
-    expect($requisition->status)->toBe('issued');
+    expect($requisition->status->value)->toBe('issued');
 
     $item->refresh();
     expect($item->current_stock)->toBe(42); // 50 - 8 = 42
@@ -239,11 +237,10 @@ test('property assignment supports non-system/external user accountabilities', f
     $office = Office::create(['code' => 'O-TEST-EXT', 'name' => 'Test External Office']);
     $dept = Department::create(['office_id' => $office->id, 'code' => 'D-TEST-EXT', 'name' => 'Test External Dept']);
 
-    $custodianUser = User::create([
+    $custodianUser = User::factory()->propertyCustodian()->create([
         'name' => 'Custodian User',
         'email' => 'custodian.ext@example.com',
         'password' => bcrypt('password'),
-        'role' => 'property_custodian',
     ]);
 
     $custodian = Employee::create([
@@ -293,11 +290,10 @@ test('property assigned to a non-system user can be transferred to a system empl
     $office = Office::create(['code' => 'O-TEST-TR', 'name' => 'Test Office']);
     $dept = Department::create(['office_id' => $office->id, 'code' => 'D-TEST-TR', 'name' => 'Test Dept']);
 
-    $custodianUser = User::create([
+    $custodianUser = User::factory()->propertyCustodian()->create([
         'name' => 'Custodian User',
         'email' => 'custodian.tr@example.com',
         'password' => bcrypt('password'),
-        'role' => 'property_custodian',
     ]);
 
     $custodian = Employee::create([
@@ -309,11 +305,10 @@ test('property assigned to a non-system user can be transferred to a system empl
         'department_id' => $dept->id,
     ]);
 
-    $toEmployeeUser = User::create([
+    $toEmployeeUser = User::factory()->employee()->create([
         'name' => 'Recipient User',
         'email' => 'recipient.tr@example.com',
         'password' => bcrypt('password'),
-        'role' => 'employee',
     ]);
 
     $toEmployee = Employee::create([
@@ -355,7 +350,7 @@ test('property assigned to a non-system user can be transferred to a system empl
     ])->assertRedirect();
 
     $ppe->refresh();
-    expect($ppe->status)->toBe('assigned');
+    expect($ppe->status->value)->toBe('assigned');
 
     // 2. Transfer from the non-system user to a system employee
     $this->post(route('inventory.properties.transfer', $ppe->id), [
@@ -365,7 +360,7 @@ test('property assigned to a non-system user can be transferred to a system empl
     ])->assertRedirect();
 
     $ppe->refresh();
-    expect($ppe->status)->toBe('transferred');
+    expect($ppe->status->value)->toBe('transferred');
 
     // 3. Verify transfer record
     $transfer = PropertyTransfer::where('property_id', $ppe->id)->first();

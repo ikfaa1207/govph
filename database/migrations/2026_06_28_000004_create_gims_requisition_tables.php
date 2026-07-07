@@ -17,12 +17,12 @@ return new class extends Migration
             $table->foreignId('requesting_employee_id')->constrained('employees');
             $table->foreignId('department_id')->constrained();
             $table->enum('status', [
-                'pending_dept_head', 
-                'rejected_dept_head', 
-                'pending_supply', 
-                'issued', 
-                'partially_issued', 
-                'cancelled'
+                'pending_dept_head',
+                'rejected_dept_head',
+                'pending_supply',
+                'issued',
+                'partially_issued',
+                'cancelled',
             ])->default('pending_dept_head');
             $table->foreignId('department_head_id')->nullable()->constrained('employees')->nullOnDelete();
             $table->timestamp('approved_at')->nullable();

@@ -7,6 +7,7 @@ use App\Models\AuditLog;
 use App\Models\Item;
 use App\Models\Property;
 use App\Models\StockTransaction;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
@@ -27,14 +28,14 @@ class ReportController extends Controller
                 ['id' => 'rpcppe', 'name' => 'Report on Physical Count of Property, Plant, & Equipment (RPCPPE)'],
                 ['id' => 'stock_ledger', 'name' => 'Stock Card Ledger'],
                 ['id' => 'audit_trail', 'name' => 'Secure Audit Log Trail'],
-            ]
+            ],
         ]);
     }
 
     /**
      * Fetch report data dynamically.
      */
-    public function generate(Request $request, string $type): \Illuminate\Http\JsonResponse
+    public function generate(Request $request, string $type): JsonResponse
     {
         if ($type === 'audit_trail') {
             Gate::authorize('audit.view');
@@ -52,6 +53,7 @@ class ReportController extends Controller
                     ->get()
                     ->map(function ($item) {
                         $stock = $item->current_stock;
+
                         return [
                             'item_code' => $item->item_code,
                             'stock_number' => $item->stock_number,
@@ -64,6 +66,7 @@ class ReportController extends Controller
                             'location' => $item->location->code ?? 'None',
                         ];
                     });
+
                 return response()->json($items);
 
             case 'rpcppe':
@@ -78,16 +81,17 @@ class ReportController extends Controller
                             'category' => $prop->category->name,
                             'unit_cost' => $prop->unit_cost,
                             'condition' => ucfirst($prop->condition),
-                            'status' => ucfirst($prop->status),
+                            'status' => ucfirst($prop->status->value),
                             'accountable_officer' => $prop->activeAssignment?->assignee->name ?? 'None',
                             'date_acquired' => $prop->date_acquired,
                         ];
                     });
+
                 return response()->json($properties);
 
             case 'stock_ledger':
                 $itemId = $request->input('item_id');
-                if (!$itemId) {
+                if (! $itemId) {
                     return response()->json([]);
                 }
                 $txs = StockTransaction::where('item_id', $itemId)
@@ -103,10 +107,11 @@ class ReportController extends Controller
                             'remarks' => $tx->remarks,
                         ];
                     });
+
                 return response()->json($txs);
 
             case 'audit_trail':
-                $logs = AuditLog::with('user')
+                $logs = AuditLog::with('user.roles')
                     ->orderBy('id', 'desc')
                     ->limit(200)
                     ->get()
@@ -114,13 +119,14 @@ class ReportController extends Controller
                         return [
                             'id' => $log->id,
                             'operator' => $log->user->name ?? 'System',
-                            'role' => $log->user->role ?? 'N/A',
+                            'role' => $log->user ? $log->user->roles->pluck('name')->join(', ') : 'N/A',
                             'action' => $log->action,
-                            'target' => class_basename($log->model_type) . " #{$log->model_id}",
+                            'target' => class_basename($log->model_type)." #{$log->model_id}",
                             'ip' => $log->ip_address,
                             'date' => $log->created_at->format('Y-m-d H:i:s'),
                         ];
                     });
+
                 return response()->json($logs);
 
             default:

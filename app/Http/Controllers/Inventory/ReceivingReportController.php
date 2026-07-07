@@ -32,13 +32,12 @@ class ReceivingReportController extends Controller
     {
         Gate::authorize('warehouse.receive');
 
-        $reports = [];
-        foreach (ReceivingReport::with([
+        $reports = ReceivingReport::with([
             'purchaseOrder.supplier',
             'receiver',
             'inspector',
             'items.item.unit',
-        ])->orderBy('id', 'desc')->get() as $report) {
+        ])->orderBy('id', 'desc')->paginate(15)->through(function ($report) {
             $mappedItems = [];
             foreach ($report->items as $item) {
                 $mappedItems[] = [
@@ -55,7 +54,7 @@ class ReceivingReportController extends Controller
                 ];
             }
 
-            $reports[] = [
+            return [
                 'id' => $report->id,
                 'iar_number' => $report->iar_number,
                 'invoice_number' => $report->invoice_number,
@@ -71,7 +70,7 @@ class ReceivingReportController extends Controller
                 'remarks' => $report->remarks,
                 'items' => $mappedItems,
             ];
-        }
+        });
 
         return Inertia::render('inventory/receiving/index', [
             'reports' => $reports,

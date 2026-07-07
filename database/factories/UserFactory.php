@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
@@ -56,5 +57,46 @@ class UserFactory extends Factory
             'two_factor_recovery_codes' => encrypt(json_encode(['recovery-code-1'])),
             'two_factor_confirmed_at' => now(),
         ]);
+    }
+
+    /**
+     * Assign a Spatie role after creation.
+     */
+    public function role(string $roleName): static
+    {
+        return $this->afterCreating(function (User $user) use ($roleName) {
+            $role = Role::firstOrCreate(['name' => $roleName]);
+            $user->assignRole($role);
+        });
+    }
+
+    public function admin(): static
+    {
+        return $this->role('System Administrator');
+    }
+
+    public function supplyOfficer(): static
+    {
+        return $this->role('Supply Officer');
+    }
+
+    public function propertyCustodian(): static
+    {
+        return $this->role('Property Custodian');
+    }
+
+    public function deptHead(): static
+    {
+        return $this->role('Department Head');
+    }
+
+    public function employee(): static
+    {
+        return $this->role('Requesting Employee');
+    }
+
+    public function auditor(): static
+    {
+        return $this->role('Auditor');
     }
 }

@@ -3,6 +3,7 @@ import { ArrowLeft, Clock, ShieldAlert } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 interface Transaction {
     id: number;
@@ -78,7 +79,7 @@ export default function ItemShow({ item, transactions }: ItemShowProps) {
                             </div>
                             <div>
                                 <span className="text-muted-foreground block text-xs">Moving Average Cost</span>
-                                <span className="font-semibold text-primary">₱{item.unit_cost.toFixed(2)}</span>
+                                <span className="font-semibold text-primary">₱{Number(item.unit_cost).toFixed(2)}</span>
                             </div>
                             <div>
                                 <span className="text-muted-foreground block text-xs">Storage Location</span>
@@ -134,27 +135,45 @@ export default function ItemShow({ item, transactions }: ItemShowProps) {
                     </CardHeader>
                     <CardContent>
                         {transactions.length === 0 ? (
-                            <div className="text-center py-8 text-sm text-muted-foreground">
-                                No stock transactions recorded for this item.
+                            <div className="overflow-x-auto">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Date / Time</TableHead>
+                                            <TableHead className="text-center">Type</TableHead>
+                                            <TableHead className="text-right">Quantity</TableHead>
+                                            <TableHead className="text-right">Unit Cost</TableHead>
+                                            <TableHead>Reference</TableHead>
+                                            <TableHead>Remarks</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        <TableRow>
+                                            <TableCell colSpan={6} className="text-center py-8 text-sm text-muted-foreground">
+                                                No stock transactions recorded for this item.
+                                            </TableCell>
+                                        </TableRow>
+                                    </TableBody>
+                                </Table>
                             </div>
                         ) : (
                             <div className="overflow-x-auto">
-                                <table className="w-full text-left text-sm">
-                                    <thead>
-                                        <tr className="border-b border-border pb-2 text-muted-foreground font-medium">
-                                            <th className="py-2">Date / Time</th>
-                                            <th className="py-2">Type</th>
-                                            <th className="py-2 text-right">Quantity</th>
-                                            <th className="py-2 text-right">Unit Cost</th>
-                                            <th className="py-2">Reference</th>
-                                            <th className="py-2">Remarks</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-border">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Date / Time</TableHead>
+                                            <TableHead className="text-center">Type</TableHead>
+                                            <TableHead className="text-right">Quantity</TableHead>
+                                            <TableHead className="text-right">Unit Cost</TableHead>
+                                            <TableHead>Reference</TableHead>
+                                            <TableHead>Remarks</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
                                         {transactions.map((tx) => (
-                                            <tr key={tx.id} className="hover:bg-muted/50">
-                                                <td className="py-3 text-muted-foreground">{tx.date}</td>
-                                                <td className="py-3">
+                                            <TableRow key={tx.id}>
+                                                <TableCell className="text-muted-foreground">{tx.date}</TableCell>
+                                                <TableCell className="text-center">
                                                     {tx.transaction_type === 'in' ? (
                                                         <Badge className="bg-emerald-500 hover:bg-emerald-600 text-white font-medium capitalize">
                                                             Stock In
@@ -164,19 +183,19 @@ export default function ItemShow({ item, transactions }: ItemShowProps) {
                                                             Stock Out
                                                         </Badge>
                                                     )}
-                                                </td>
-                                                <td className="py-3 text-right font-bold">
+                                                </TableCell>
+                                                <TableCell className="text-right font-bold">
                                                     {tx.quantity > 0 ? `+${tx.quantity}` : tx.quantity}
-                                                </td>
-                                                <td className="py-3 text-right">₱{tx.unit_cost.toFixed(2)}</td>
-                                                <td className="py-3 text-muted-foreground font-medium">{tx.reference}</td>
-                                                <td className="py-3 text-xs text-muted-foreground max-w-xs truncate" title={tx.remarks}>
+                                                </TableCell>
+                                                <TableCell className="text-right">₱{Number(tx.unit_cost).toFixed(2)}</TableCell>
+                                                <TableCell className="text-muted-foreground font-medium">{tx.reference}</TableCell>
+                                                <TableCell className="text-xs text-muted-foreground max-w-xs truncate" title={tx.remarks}>
                                                     {tx.remarks || '-'}
-                                                </td>
-                                            </tr>
+                                                </TableCell>
+                                            </TableRow>
                                         ))}
-                                    </tbody>
-                                </table>
+                                    </TableBody>
+                                </Table>
                             </div>
                         )}
                     </CardContent>

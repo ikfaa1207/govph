@@ -11,6 +11,7 @@ use App\Models\ReceivingReport;
 use App\Models\Unit;
 use App\Models\Warehouse;
 use App\Services\Audit\AuditLogger;
+use App\Services\DocumentSequenceService;
 use App\Services\Valuation\ValuationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -20,7 +21,10 @@ use Inertia\Response;
 
 class ItemController extends Controller
 {
-    public function __construct(protected ValuationService $valuationService) {}
+    public function __construct(
+        protected ValuationService $valuationService,
+        protected DocumentSequenceService $sequences
+    ) {}
 
     /**
      * Display a listing of items.
@@ -47,7 +51,7 @@ class ItemController extends Controller
             $query->where('category_id', $request->input('category_id'));
         }
 
-        $items = $query->orderBy('id', 'desc')->get()->map(function ($item) {
+        $items = $query->orderBy('id', 'desc')->paginate(15)->through(function ($item) {
             return [
                 'id' => $item->id,
                 'item_code' => $item->item_code,
@@ -95,7 +99,7 @@ class ItemController extends Controller
         ]);
 
         // Auto-generate code
-        $validated['item_code'] = 'ITEM-'.strtoupper(uniqid());
+        $validated['item_code'] = $this->sequences->next('ITEM');
         $validated['unit_cost'] = 0.00;
         $validated['status'] = 'active';
 

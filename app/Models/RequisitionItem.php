@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'item_id',
     'quantity_requested',
     'quantity_approved',
-    'quantity_issued'
+    'quantity_issued',
 ])]
 class RequisitionItem extends Model
 {

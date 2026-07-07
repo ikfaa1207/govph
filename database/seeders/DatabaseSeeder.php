@@ -5,14 +5,14 @@ namespace Database\Seeders;
 use App\Models\Category;
 use App\Models\Department;
 use App\Models\Employee;
+use App\Models\Location;
 use App\Models\Office;
+use App\Models\Permission;
+use App\Models\Role;
 use App\Models\Supplier;
 use App\Models\Unit;
 use App\Models\User;
 use App\Models\Warehouse;
-use App\Models\Location;
-use App\Models\Permission;
-use App\Models\Role;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
@@ -105,26 +105,26 @@ class DatabaseSeeder extends Seeder
         $permissions = [
             // Dashboard
             ['name' => 'dashboard.view', 'module' => 'dashboard', 'description' => 'View main dashboard metrics'],
-            
+
             // Inventory Module
             ['name' => 'inventory.view', 'module' => 'inventory', 'description' => 'View supplies and items list'],
             ['name' => 'inventory.create', 'module' => 'inventory', 'description' => 'Add new items to catalog'],
             ['name' => 'inventory.update', 'module' => 'inventory', 'description' => 'Update item specifications'],
             ['name' => 'inventory.delete', 'module' => 'inventory', 'description' => 'Archive or delete catalog items'],
-            
+
             // Warehouse Module
             ['name' => 'warehouse.view', 'module' => 'warehouse', 'description' => 'View stock balances and locations'],
             ['name' => 'warehouse.issue', 'module' => 'warehouse', 'description' => 'Authorize and issue items to employees'],
             ['name' => 'warehouse.receive', 'module' => 'warehouse', 'description' => 'Inspect and accept deliveries'],
             ['name' => 'warehouse.transfer', 'module' => 'warehouse', 'description' => 'Move items between storage sections'],
             ['name' => 'warehouse.adjust', 'module' => 'warehouse', 'description' => 'Perform stock count corrections'],
-            
+
             // Procurement Module
             ['name' => 'procurement.view', 'module' => 'procurement', 'description' => 'View purchase requests/orders'],
             ['name' => 'procurement.create', 'module' => 'procurement', 'description' => 'Request purchases or draft orders'],
             ['name' => 'procurement.receive', 'module' => 'procurement', 'description' => 'Mark delivery logs as received'],
             ['name' => 'procurement.approve', 'module' => 'procurement', 'description' => 'Approve/Sign purchasing documents'],
-            
+
             // Requisitions Module
             ['name' => 'request.create', 'module' => 'requisition', 'description' => 'Submit a new requisition request (RIS)'],
             ['name' => 'request.approve', 'module' => 'requisition', 'description' => 'Approve department requisitions'],
@@ -135,18 +135,19 @@ class DatabaseSeeder extends Seeder
             ['name' => 'property.assign', 'module' => 'property', 'description' => 'Handover equipment (generate PAR/ICS)'],
             ['name' => 'property.transfer', 'module' => 'property', 'description' => 'Approve equipment re-assignment (PTR)'],
             ['name' => 'property.dispose', 'module' => 'property', 'description' => 'Dispose of unserviceable property (IIRUP)'],
-            
+
             // Reports Module
             ['name' => 'reports.view', 'module' => 'reports', 'description' => 'View physical count and ledger reports'],
             ['name' => 'reports.export', 'module' => 'reports', 'description' => 'Export compilations to spreadsheet format'],
             ['name' => 'reports.print', 'module' => 'reports', 'description' => 'Print formal government formats'],
-            
+
             // Administration Module
             ['name' => 'users.manage', 'module' => 'administration', 'description' => 'Manage user accounts and details'],
             ['name' => 'roles.manage', 'module' => 'administration', 'description' => 'Manage custom roles and access levels'],
             ['name' => 'permissions.manage', 'module' => 'administration', 'description' => 'Manage direct permission lists'],
             ['name' => 'settings.manage', 'module' => 'administration', 'description' => 'Manage system-wide parameters'],
-            
+            ['name' => 'admin.super', 'module' => 'administration', 'description' => 'Super Administrator Bypass'],
+
             // Audit Module
             ['name' => 'audit.view', 'module' => 'audit', 'description' => 'View audit trails for inspection'],
         ];
@@ -165,21 +166,21 @@ class DatabaseSeeder extends Seeder
         $roleAuditor = Role::create(['name' => 'Auditor', 'description' => 'Inspects ledgers, transaction cards, and audit logs.']);
 
         // Admin gets all permissions
-        $roleAdmin->permissions()->sync(array_values(array_map(fn($m) => $m->id, $permissionModels)));
+        $roleAdmin->permissions()->sync(array_values(array_map(fn ($m) => $m->id, $permissionModels)));
 
         // Supply Officer permissions
-        $roleSupply->permissions()->sync(array_map(fn($name) => $permissionModels[$name]->id, [
+        $roleSupply->permissions()->sync(array_map(fn ($name) => $permissionModels[$name]->id, [
             'dashboard.view',
             'inventory.view', 'inventory.create', 'inventory.update', 'inventory.delete',
             'warehouse.view', 'warehouse.issue', 'warehouse.receive', 'warehouse.transfer', 'warehouse.adjust',
             'procurement.view', 'procurement.create', 'procurement.receive',
-            'property.view',
+            'property.view', 'property.assign', 'property.transfer', 'property.dispose',
             'reports.view', 'reports.export', 'reports.print',
             'request.create',
         ]));
 
         // Property Custodian permissions
-        $roleCustodian->permissions()->sync(array_map(fn($name) => $permissionModels[$name]->id, [
+        $roleCustodian->permissions()->sync(array_map(fn ($name) => $permissionModels[$name]->id, [
             'dashboard.view',
             'inventory.view',
             'warehouse.view',
@@ -189,7 +190,7 @@ class DatabaseSeeder extends Seeder
         ]));
 
         // Department Head permissions
-        $roleHead->permissions()->sync(array_map(fn($name) => $permissionModels[$name]->id, [
+        $roleHead->permissions()->sync(array_map(fn ($name) => $permissionModels[$name]->id, [
             'dashboard.view',
             'inventory.view',
             'warehouse.view',
@@ -200,7 +201,7 @@ class DatabaseSeeder extends Seeder
         ]));
 
         // Requesting Employee permissions
-        $roleEmployee->permissions()->sync(array_map(fn($name) => $permissionModels[$name]->id, [
+        $roleEmployee->permissions()->sync(array_map(fn ($name) => $permissionModels[$name]->id, [
             'dashboard.view',
             'inventory.view',
             'property.view',
@@ -208,7 +209,7 @@ class DatabaseSeeder extends Seeder
         ]));
 
         // Auditor permissions
-        $roleAuditor->permissions()->sync(array_map(fn($name) => $permissionModels[$name]->id, [
+        $roleAuditor->permissions()->sync(array_map(fn ($name) => $permissionModels[$name]->id, [
             'dashboard.view',
             'inventory.view',
             'warehouse.view',
@@ -223,7 +224,6 @@ class DatabaseSeeder extends Seeder
             [
                 'name' => 'Admin User',
                 'email' => 'admin@example.com',
-                'role' => 'admin', // Deprecated direct column, but keeping for compatibility
                 'role_to_assign' => $roleAdmin,
                 'employee_id' => 'EMP-ADMIN-01',
                 'position' => 'Super Administrator',
@@ -232,7 +232,6 @@ class DatabaseSeeder extends Seeder
             [
                 'name' => 'Supply Officer',
                 'email' => 'supply@example.com',
-                'role' => 'supply_officer',
                 'role_to_assign' => $roleSupply,
                 'employee_id' => 'EMP-SUPPLY-02',
                 'position' => 'Chief Supply Officer',
@@ -241,7 +240,6 @@ class DatabaseSeeder extends Seeder
             [
                 'name' => 'Property Custodian',
                 'email' => 'custodian@example.com',
-                'role' => 'property_custodian',
                 'role_to_assign' => $roleCustodian,
                 'employee_id' => 'EMP-CUST-03',
                 'position' => 'Property Custodian II',
@@ -250,7 +248,6 @@ class DatabaseSeeder extends Seeder
             [
                 'name' => 'Department Head',
                 'email' => 'head@example.com',
-                'role' => 'dept_head',
                 'role_to_assign' => $roleHead,
                 'employee_id' => 'EMP-HEAD-04',
                 'position' => 'HR Director',
@@ -259,7 +256,6 @@ class DatabaseSeeder extends Seeder
             [
                 'name' => 'Requesting Employee',
                 'email' => 'employee@example.com',
-                'role' => 'employee',
                 'role_to_assign' => $roleEmployee,
                 'employee_id' => 'EMP-STAFF-05',
                 'position' => 'HR Specialist',
@@ -268,7 +264,6 @@ class DatabaseSeeder extends Seeder
             [
                 'name' => 'COA Auditor',
                 'email' => 'auditor@example.com',
-                'role' => 'auditor',
                 'role_to_assign' => $roleAuditor,
                 'employee_id' => 'EMP-AUDIT-06',
                 'position' => 'State Auditor III',
@@ -281,7 +276,6 @@ class DatabaseSeeder extends Seeder
                 'name' => $data['name'],
                 'email' => $data['email'],
                 'password' => Hash::make('password'),
-                'role' => $data['role'],
             ]);
 
             // Assign role using our new HasPermissions trait helper

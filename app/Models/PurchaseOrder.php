@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'supplier_id',
     'po_date',
     'delivery_date',
-    'status'
+    'status',
 ])]
 class PurchaseOrder extends Model
 {

@@ -2,7 +2,7 @@ import { Head, useForm, usePage, setLayoutProps, InfiniteScroll } from '@inertia
 import { 
     HelpCircle, Phone, Mail, FileText, PlusCircle, CheckCircle2, 
     Clock, AlertTriangle, MessageSquare, Shield,
-    UserCheck, ChevronDown, Check, ArrowRight, Loader2
+    UserCheck, ChevronDown, Check, ArrowRight, Loader2, Paperclip, X
 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -10,6 +10,7 @@ import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { store as helpdeskStore, update as helpdeskUpdate } from '@/routes/helpdesk';
 
 // FAQ list
@@ -330,32 +331,38 @@ return;
                                             <div className="grid grid-cols-2 gap-3">
                                                 <div className="space-y-1.5">
                                                     <Label htmlFor="category" className="text-xs">Category</Label>
-                                                    <select 
-                                                        id="category"
-                                                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-hidden"
+                                                    <Select
                                                         value={ticketData.category}
-                                                        onChange={e => setTicketData('category', e.target.value)}
+                                                        onValueChange={(val: any) => setTicketData('category', val)}
                                                     >
-                                                        <option value="technical">Technical</option>
-                                                        <option value="discrepancy">Discrepancy</option>
-                                                        <option value="request">Request</option>
-                                                        <option value="other">Other</option>
-                                                    </select>
+                                                        <SelectTrigger id="category" className="w-full">
+                                                            <SelectValue placeholder="Select Category" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            <SelectItem value="technical">Technical</SelectItem>
+                                                            <SelectItem value="discrepancy">Discrepancy</SelectItem>
+                                                            <SelectItem value="request">Request</SelectItem>
+                                                            <SelectItem value="other">Other</SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
                                                     <InputError message={ticketErrors.category} />
                                                 </div>
 
                                                 <div className="space-y-1.5">
                                                     <Label htmlFor="priority" className="text-xs">Priority</Label>
-                                                    <select 
-                                                        id="priority"
-                                                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-hidden"
+                                                    <Select
                                                         value={ticketData.priority}
-                                                        onChange={e => setTicketData('priority', e.target.value)}
+                                                        onValueChange={(val: any) => setTicketData('priority', val)}
                                                     >
-                                                        <option value="low">Low</option>
-                                                        <option value="medium">Medium</option>
-                                                        <option value="high">High</option>
-                                                    </select>
+                                                        <SelectTrigger id="priority" className="w-full">
+                                                            <SelectValue placeholder="Select Priority" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            <SelectItem value="low">Low</SelectItem>
+                                                            <SelectItem value="medium">Medium</SelectItem>
+                                                            <SelectItem value="high">High</SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
                                                     <InputError message={ticketErrors.priority} />
                                                 </div>
                                             </div>
@@ -376,13 +383,43 @@ return;
 
                                             <div className="space-y-1.5">
                                                 <Label htmlFor="attachment" className="text-xs">File Attachment (Optional, max 5MB)</Label>
-                                                <input 
-                                                    id="attachment"
-                                                    type="file"
-                                                    accept="image/*,.pdf"
-                                                    className="w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm focus-visible:outline-hidden file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 dark:file:bg-neutral-800 dark:file:text-indigo-400"
-                                                    onChange={e => setTicketData('attachment', e.target.files ? e.target.files[0] : null)}
-                                                />
+                                                <div className="flex flex-col gap-2">
+                                                    {!ticketData.attachment ? (
+                                                        <Button
+                                                            type="button"
+                                                            variant="outline"
+                                                            className="w-full h-10 border-dashed bg-muted/20 hover:bg-muted/50 transition-colors"
+                                                            onClick={() => document.getElementById('attachment')?.click()}
+                                                        >
+                                                            <Paperclip className="h-4 w-4 mr-2" />
+                                                            Choose File...
+                                                        </Button>
+                                                    ) : (
+                                                        <div className="flex items-center justify-between p-2.5 border rounded-md bg-muted/30 text-xs">
+                                                            <div className="flex items-center gap-2 truncate">
+                                                                <FileText className="h-4 w-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
+                                                                <span className="truncate max-w-[200px] font-medium text-foreground">{ticketData.attachment.name}</span>
+                                                                <span className="text-muted-foreground shrink-0">({(ticketData.attachment.size / 1024 / 1024).toFixed(2)} MB)</span>
+                                                            </div>
+                                                            <Button
+                                                                type="button"
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                className="h-6 w-6 p-0 hover:bg-destructive/10 hover:text-destructive shrink-0 ml-2"
+                                                                onClick={() => setTicketData('attachment', null)}
+                                                            >
+                                                                <X className="h-4 w-4" />
+                                                            </Button>
+                                                        </div>
+                                                    )}
+                                                    <input 
+                                                        id="attachment"
+                                                        type="file"
+                                                        accept="image/*,.pdf"
+                                                        className="hidden"
+                                                        onChange={e => setTicketData('attachment', e.target.files ? e.target.files[0] : null)}
+                                                    />
+                                                </div>
                                                 <InputError message={ticketErrors.attachment} />
                                             </div>
 
@@ -601,16 +638,19 @@ return;
 
                                                 <div className="space-y-1.5">
                                                     <Label htmlFor="admin-status" className="text-xs">Resolution Status</Label>
-                                                    <select 
-                                                        id="admin-status"
-                                                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-hidden"
+                                                    <Select
                                                         value={adminData.status}
-                                                        onChange={e => setAdminData('status', e.target.value)}
+                                                        onValueChange={val => setAdminData('status', val)}
                                                     >
-                                                        <option value="open">Open</option>
-                                                        <option value="in_progress">In Progress</option>
-                                                        <option value="resolved">Resolved</option>
-                                                    </select>
+                                                        <SelectTrigger id="admin-status" className="w-full">
+                                                            <SelectValue placeholder="Select Status" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            <SelectItem value="open">Open</SelectItem>
+                                                            <SelectItem value="in_progress">In Progress</SelectItem>
+                                                            <SelectItem value="resolved">Resolved</SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
                                                     <InputError message={adminErrors.status} />
                                                 </div>
 

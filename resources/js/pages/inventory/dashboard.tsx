@@ -10,9 +10,11 @@ import {
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 interface DashboardProps {
     stats: {
+        inventoryType: string;
         totalItems: number;
         lowStocks: number;
         outOfStocks: number;
@@ -52,7 +54,7 @@ export default function Dashboard({ stats, recentIssuances, recentReceiving, pen
                     {/* Metrics 1: Total Stock Value */}
                     <Card className="relative overflow-hidden bg-linear-to-br from-indigo-500/10 via-background to-background">
                         <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-                            <CardTitle className="text-sm font-medium text-muted-foreground">Total Supplies Value</CardTitle>
+                            <CardTitle className="text-sm font-medium text-muted-foreground">{stats.inventoryType} Value</CardTitle>
                             <TrendingDown className="h-4 w-4 text-indigo-500" />
                         </CardHeader>
                         <CardContent>
@@ -64,7 +66,7 @@ export default function Dashboard({ stats, recentIssuances, recentReceiving, pen
                     {/* Metrics 2: Total Items Cataloged */}
                     <Card className="relative overflow-hidden">
                         <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-                            <CardTitle className="text-sm font-medium text-muted-foreground">Supplies Catalog</CardTitle>
+                            <CardTitle className="text-sm font-medium text-muted-foreground">{stats.inventoryType} Catalog</CardTitle>
                             <Package className="h-4 w-4 text-sky-500" />
                         </CardHeader>
                         <CardContent>
@@ -134,42 +136,58 @@ export default function Dashboard({ stats, recentIssuances, recentReceiving, pen
                         </CardHeader>
                         <CardContent>
                             {pendingRequests.length === 0 ? (
-                                <div className="text-center py-6 text-sm text-muted-foreground">
-                                    No pending requisitions at the moment.
+                                <div className="overflow-x-auto">
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead>RIS Number</TableHead>
+                                                <TableHead>Requester</TableHead>
+                                                <TableHead className="text-center">Status</TableHead>
+                                                <TableHead className="text-right">Date</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            <TableRow>
+                                                <TableCell colSpan={4} className="text-center py-6 text-sm text-muted-foreground">
+                                                    No pending requisitions at the moment.
+                                                </TableCell>
+                                            </TableRow>
+                                        </TableBody>
+                                    </Table>
                                 </div>
                             ) : (
                                 <div className="overflow-x-auto">
-                                    <table className="w-full text-left text-sm">
-                                        <thead>
-                                            <tr className="border-b border-border pb-2 text-muted-foreground font-medium">
-                                                <th className="py-2">RIS Number</th>
-                                                <th className="py-2">Requester</th>
-                                                <th className="py-2">Status</th>
-                                                <th className="py-2 text-right">Date</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-border">
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead>RIS Number</TableHead>
+                                                <TableHead>Requester</TableHead>
+                                                <TableHead className="text-center">Status</TableHead>
+                                                <TableHead className="text-right">Date</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
                                             {pendingRequests.map((req) => (
-                                                <tr key={req.id} className="hover:bg-muted/50">
-                                                    <td className="py-3 font-mono font-medium text-primary">
+                                                <TableRow key={req.id}>
+                                                    <TableCell className="font-mono font-medium text-primary">
                                                         <Link href="/inventory/requisitions" className="hover:underline">{req.ris_number.split('-')[0] + '-...'}</Link>
-                                                    </td>
-                                                    <td className="py-3">
+                                                    </TableCell>
+                                                    <TableCell>
                                                         <div>{req.requester?.name}</div>
                                                         <div className="text-xs text-muted-foreground">{req.requester?.department?.name}</div>
-                                                    </td>
-                                                    <td className="py-3">
+                                                    </TableCell>
+                                                    <TableCell className="text-center">
                                                         <Badge variant="outline" className="capitalize">
                                                             {req.status.replace(/_/g, ' ')}
                                                         </Badge>
-                                                    </td>
-                                                    <td className="py-3 text-right text-muted-foreground">
+                                                    </TableCell>
+                                                    <TableCell className="text-right text-muted-foreground">
                                                         {new Date(req.created_at).toLocaleDateString()}
-                                                    </td>
-                                                </tr>
+                                                    </TableCell>
+                                                </TableRow>
                                             ))}
-                                        </tbody>
-                                    </table>
+                                        </TableBody>
+                                    </Table>
                                 </div>
                             )}
                         </CardContent>

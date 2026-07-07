@@ -15,7 +15,7 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
     'unit_cost',
     'reference_type',
     'reference_id',
-    'remarks'
+    'remarks',
 ])]
 class StockTransaction extends Model
 {

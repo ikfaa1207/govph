@@ -4,6 +4,8 @@ use Laravel\Fortify\Features;
 
 return [
 
+    'two_factor_enforced' => env('TWO_FACTOR_ENFORCED', false),
+
     /*
     |--------------------------------------------------------------------------
     | Fortify Guard

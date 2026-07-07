@@ -5,6 +5,8 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 interface ReportType {
     id: string;
@@ -87,16 +89,20 @@ export default function ReportsIndex({ reportTypes }: ReportsIndexProps) {
                         <div className="grid gap-4 md:grid-cols-3 items-end">
                             <div className="space-y-1">
                                 <Label>Report Template</Label>
-                                <select 
-                                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-hidden"
+                                <Select 
                                     value={selectedType}
-                                    onChange={e => {
-                                        setSelectedType(e.target.value);
+                                    onValueChange={val => {
+                                        setSelectedType(val);
                                         setReportData([]);
                                     }}
                                 >
-                                    {reportTypes.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
-                                </select>
+                                    <SelectTrigger className="w-full">
+                                        <SelectValue placeholder="Select Report Type" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {reportTypes.map(r => <SelectItem key={r.id} value={String(r.id)}>{r.name}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
                             </div>
 
                             {selectedType === 'stock_ledger' && (
@@ -141,130 +147,132 @@ export default function ReportsIndex({ reportTypes }: ReportsIndexProps) {
                             {/* Render Report 1: RPCI */}
                             {selectedType === 'rpci' && (
                                 <div className="overflow-x-auto">
-                                    <table className="w-full text-left text-xs border-collapse border border-muted-foreground/30">
-                                        <thead>
-                                            <tr className="bg-muted/50 border-b border-muted-foreground/30 font-bold">
-                                                <th className="p-2 border border-muted-foreground/30">Item Code</th>
-                                                <th className="p-2 border border-muted-foreground/30">Stock No.</th>
-                                                <th className="p-2 border border-muted-foreground/30">Item Name</th>
-                                                <th className="p-2 border border-muted-foreground/30">Category</th>
-                                                <th className="p-2 border border-muted-foreground/30">UOM</th>
-                                                <th className="p-2 border border-muted-foreground/30 text-right">Unit Cost</th>
-                                                <th className="p-2 border border-muted-foreground/30 text-right">Quantity on Hand</th>
-                                                <th className="p-2 border border-muted-foreground/30 text-right">Total Cost Balance</th>
-                                                <th className="p-2 border border-muted-foreground/30">Location</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-border">
+                                    <Table className="text-xs border-collapse border border-muted-foreground/30">
+                                        <TableHeader>
+                                            <TableRow className="bg-muted/50 border-b border-muted-foreground/30 font-bold">
+                                                <TableHead className="border border-muted-foreground/30">Item Code</TableHead>
+                                                <TableHead className="border border-muted-foreground/30">Stock No.</TableHead>
+                                                <TableHead className="border border-muted-foreground/30">Item Name</TableHead>
+                                                <TableHead className="border border-muted-foreground/30">Category</TableHead>
+                                                <TableHead className="border border-muted-foreground/30">UOM</TableHead>
+                                                <TableHead className="border border-muted-foreground/30 text-right">Unit Cost</TableHead>
+                                                <TableHead className="border border-muted-foreground/30 text-right">Quantity on Hand</TableHead>
+                                                <TableHead className="border border-muted-foreground/30 text-right">Total Cost Balance</TableHead>
+                                                <TableHead className="border border-muted-foreground/30">Location</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody className="divide-y divide-border">
                                             {reportData.map((row, idx) => (
-                                                <tr key={idx} className="hover:bg-muted/10 font-mono">
-                                                    <td className="p-2 border border-muted-foreground/20">{row.item_code}</td>
-                                                    <td className="p-2 border border-muted-foreground/20">{row.stock_number || 'N/A'}</td>
-                                                    <td className="p-2 border border-muted-foreground/20 font-sans font-semibold">{row.name}</td>
-                                                    <td className="p-2 border border-muted-foreground/20 font-sans">{row.category}</td>
-                                                    <td className="p-2 border border-muted-foreground/20 font-sans">{row.unit}</td>
-                                                    <td className="p-2 border border-muted-foreground/20 text-right">₱{parseFloat(row.unit_cost).toFixed(2)}</td>
-                                                    <td className="p-2 border border-muted-foreground/20 text-right font-bold">{row.on_hand}</td>
-                                                    <td className="p-2 border border-muted-foreground/20 text-right font-bold text-primary">₱{parseFloat(row.total_cost).toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
-                                                    <td className="p-2 border border-muted-foreground/20 font-sans">{row.location}</td>
-                                                </tr>
+                                                <TableRow key={idx} className="hover:bg-muted/10 font-mono">
+                                                    <TableCell className="border border-muted-foreground/20">{row.item_code}</TableCell>
+                                                    <TableCell className="border border-muted-foreground/20">{row.stock_number || 'N/A'}</TableCell>
+                                                    <TableCell className="border border-muted-foreground/20 font-sans font-semibold">{row.name}</TableCell>
+                                                    <TableCell className="border border-muted-foreground/20 font-sans">{row.category}</TableCell>
+                                                    <TableCell className="border border-muted-foreground/20 font-sans">{row.unit}</TableCell>
+                                                    <TableCell className="border border-muted-foreground/20 text-right">₱{parseFloat(row.unit_cost).toFixed(2)}</TableCell>
+                                                    <TableCell className="border border-muted-foreground/20 text-right font-bold">{row.on_hand}</TableCell>
+                                                    <TableCell className="border border-muted-foreground/20 text-right font-bold text-primary">₱{parseFloat(row.total_cost).toLocaleString('en-US', { minimumFractionDigits: 2 })}</TableCell>
+                                                    <TableCell className="border border-muted-foreground/20 font-sans">{row.location}</TableCell>
+                                                </TableRow>
                                             ))}
-                                        </tbody>
-                                    </table>
+                                        </TableBody>
+                                    </Table>
                                 </div>
                             )}
 
                             {/* Render Report 2: RPCPPE */}
                             {selectedType === 'rpcppe' && (
                                 <div className="overflow-x-auto">
-                                    <table className="w-full text-left text-xs border-collapse border border-muted-foreground/30">
-                                        <thead>
-                                            <tr className="bg-muted/50 border-b border-muted-foreground/30 font-bold">
-                                                <th className="p-2 border border-muted-foreground/30">Property No.</th>
-                                                <th className="p-2 border border-muted-foreground/30">Serial No.</th>
-                                                <th className="p-2 border border-muted-foreground/30">Description</th>
-                                                <th className="p-2 border border-muted-foreground/30">Category</th>
-                                                <th className="p-2 border border-muted-foreground/30 text-right">Acquisition Cost</th>
-                                                <th className="p-2 border border-muted-foreground/30">Officer Accountable</th>
-                                                <th className="p-2 border border-muted-foreground/30">Date Acquired</th>
-                                                <th className="p-2 border border-muted-foreground/30">Condition</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-border">
+                                    <Table className="text-xs border-collapse border border-muted-foreground/30">
+                                        <TableHeader>
+                                            <TableRow className="bg-muted/50 border-b border-muted-foreground/30 font-bold">
+                                                <TableHead className="border border-muted-foreground/30">Property No.</TableHead>
+                                                <TableHead className="border border-muted-foreground/30">Serial No.</TableHead>
+                                                <TableHead className="border border-muted-foreground/30">Description</TableHead>
+                                                <TableHead className="border border-muted-foreground/30">Category</TableHead>
+                                                <TableHead className="border border-muted-foreground/30 text-right">Acquisition Cost</TableHead>
+                                                <TableHead className="border border-muted-foreground/30">Officer Accountable</TableHead>
+                                                <TableHead className="border border-muted-foreground/30">Date Acquired</TableHead>
+                                                <TableHead className="border border-muted-foreground/30">Condition</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody className="divide-y divide-border">
                                             {reportData.map((row, idx) => (
-                                                <tr key={idx} className="hover:bg-muted/10 font-mono">
-                                                    <td className="p-2 border border-muted-foreground/20">{row.property_number}</td>
-                                                    <td className="p-2 border border-muted-foreground/20">{row.serial_number || 'N/A'}</td>
-                                                    <td className="p-2 border border-muted-foreground/20 font-sans font-semibold">{row.description}</td>
-                                                    <td className="p-2 border border-muted-foreground/20 font-sans">{row.category}</td>
-                                                    <td className="p-2 border border-muted-foreground/20 text-right font-bold">₱{parseFloat(row.unit_cost).toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
-                                                    <td className="p-2 border border-muted-foreground/20 font-sans">{row.accountable_officer}</td>
-                                                    <td className="p-2 border border-muted-foreground/20">{row.date_acquired}</td>
-                                                    <td className="p-2 border border-muted-foreground/20 font-sans">{row.condition}</td>
-                                                </tr>
+                                                <TableRow key={idx} className="hover:bg-muted/10 font-mono">
+                                                    <TableCell className="border border-muted-foreground/20">{row.property_number}</TableCell>
+                                                    <TableCell className="border border-muted-foreground/20">{row.serial_number || 'N/A'}</TableCell>
+                                                    <TableCell className="border border-muted-foreground/20 font-sans font-semibold">{row.description}</TableCell>
+                                                    <TableCell className="border border-muted-foreground/20 font-sans">{row.category}</TableCell>
+                                                    <TableCell className="border border-muted-foreground/20 text-right font-bold">₱{parseFloat(row.unit_cost).toLocaleString('en-US', { minimumFractionDigits: 2 })}</TableCell>
+                                                    <TableCell className="border border-muted-foreground/20 font-sans">{row.accountable_officer}</TableCell>
+                                                    <TableCell className="border border-muted-foreground/20">{row.date_acquired}</TableCell>
+                                                    <TableCell className="border border-muted-foreground/20 font-sans">{row.condition}</TableCell>
+                                                </TableRow>
                                             ))}
-                                        </tbody>
-                                    </table>
+                                        </TableBody>
+                                    </Table>
                                 </div>
                             )}
 
                             {/* Render Report 3: Stock Ledger */}
                             {selectedType === 'stock_ledger' && (
                                 <div className="overflow-x-auto">
-                                    <table className="w-full text-left text-xs border-collapse border border-muted-foreground/30">
-                                        <thead>
-                                            <tr className="bg-muted/50 border-b border-muted-foreground/30 font-bold">
-                                                <th className="p-2 border border-muted-foreground/30">Date / Time</th>
-                                                <th className="p-2 border border-muted-foreground/30">Transaction Type</th>
-                                                <th className="p-2 border border-muted-foreground/30 text-right">Quantity</th>
-                                                <th className="p-2 border border-muted-foreground/30 text-right">Transaction Unit Cost</th>
-                                                <th className="p-2 border border-muted-foreground/30">Remarks</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-border">
+                                    <Table className="text-xs border-collapse border border-muted-foreground/30">
+                                        <TableHeader>
+                                            <TableRow className="bg-muted/50 border-b border-muted-foreground/30 font-bold">
+                                                <TableHead className="border border-muted-foreground/30">Date / Time</TableHead>
+                                                <TableHead className="border border-muted-foreground/30">Transaction Type</TableHead>
+                                                <TableHead className="border border-muted-foreground/30 text-right">Quantity</TableHead>
+                                                <TableHead className="border border-muted-foreground/30 text-right">Transaction Unit Cost</TableHead>
+                                                <TableHead className="border border-muted-foreground/30">Remarks</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody className="divide-y divide-border">
                                             {reportData.map((row, idx) => (
-                                                <tr key={idx} className="hover:bg-muted/10 font-mono">
-                                                    <td className="p-2 border border-muted-foreground/20">{row.date}</td>
-                                                    <td className="p-2 border border-muted-foreground/20 font-sans font-semibold">{row.type}</td>
-                                                    <td className="p-2 border border-muted-foreground/20 text-right font-bold">{row.qty > 0 ? `+${row.qty}` : row.qty}</td>
-                                                    <td className="p-2 border border-muted-foreground/20 text-right">₱{parseFloat(row.cost).toFixed(2)}</td>
-                                                    <td className="p-2 border border-muted-foreground/20 font-sans text-muted-foreground">{row.remarks}</td>
-                                                </tr>
+                                                <TableRow key={idx} className="hover:bg-muted/10 font-mono">
+                                                    <TableCell className="border border-muted-foreground/20">{row.date}</TableCell>
+                                                    <TableCell className="border border-muted-foreground/20 font-sans font-semibold">{row.type}</TableCell>
+                                                    <TableCell className="border border-muted-foreground/20 text-right font-bold">{row.qty > 0 ? `+${row.qty}` : row.qty}</TableCell>
+                                                    <TableCell className="border border-muted-foreground/20 text-right">₱{parseFloat(row.cost).toFixed(2)}</TableCell>
+                                                    <TableCell className="border border-muted-foreground/20 font-sans text-muted-foreground">{row.remarks}</TableCell>
+                                                </TableRow>
                                             ))}
-                                        </tbody>
-                                    </table>
+                                        </TableBody>
+                                    </Table>
                                 </div>
                             )}
 
                             {/* Render Report 4: Audit Trails */}
                             {selectedType === 'audit_trail' && (
                                 <div className="overflow-x-auto">
-                                    <table className="w-full text-left text-[11px] border-collapse border border-muted-foreground/30">
-                                        <thead>
-                                            <tr className="bg-muted/50 border-b border-muted-foreground/30 font-bold">
-                                                <th className="p-2 border border-muted-foreground/30">ID</th>
-                                                <th className="p-2 border border-muted-foreground/30">Personnel</th>
-                                                <th className="p-2 border border-muted-foreground/30">Role</th>
-                                                <th className="p-2 border border-muted-foreground/30">Action Type</th>
-                                                <th className="p-2 border border-muted-foreground/30">Resource Ref</th>
-                                                <th className="p-2 border border-muted-foreground/30">IP Address</th>
-                                                <th className="p-2 border border-muted-foreground/30">Date / Time</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-border">
+                                    <Table className="text-[11px] border-collapse border border-muted-foreground/30">
+                                        <TableHeader>
+                                            <TableRow className="bg-muted/50 border-b border-muted-foreground/30 font-bold">
+                                                <TableHead className="border border-muted-foreground/30">ID</TableHead>
+                                                <TableHead className="border border-muted-foreground/30">Personnel</TableHead>
+                                                <TableHead className="border border-muted-foreground/30">Role</TableHead>
+                                                <TableHead className="border border-muted-foreground/30">Action Type</TableHead>
+                                                <TableHead className="border border-muted-foreground/30">Resource Ref</TableHead>
+                                                <TableHead className="border border-muted-foreground/30">IP Address</TableHead>
+                                                <TableHead className="border border-muted-foreground/30">Recorded At</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody className="divide-y divide-border">
                                             {reportData.map((row, idx) => (
-                                                <tr key={idx} className="hover:bg-muted/10 font-mono">
-                                                    <td className="p-2 border border-muted-foreground/20">{row.id}</td>
-                                                    <td className="p-2 border border-muted-foreground/20 font-sans font-semibold">{row.operator}</td>
-                                                    <td className="p-2 border border-muted-foreground/20 font-sans capitalize">{row.role}</td>
-                                                    <td className="p-2 border border-muted-foreground/20 text-indigo-500 font-bold">{row.action}</td>
-                                                    <td className="p-2 border border-muted-foreground/20">{row.target}</td>
-                                                    <td className="p-2 border border-muted-foreground/20">{row.ip}</td>
-                                                    <td className="p-2 border border-muted-foreground/20">{row.date}</td>
-                                                </tr>
+                                                <TableRow key={idx} className="hover:bg-muted/10 font-mono">
+                                                    <TableCell className="border border-muted-foreground/20">{row.id}</TableCell>
+                                                    <TableCell className="border border-muted-foreground/20 font-sans font-semibold">{row.user_name}</TableCell>
+                                                    <TableCell className="border border-muted-foreground/20 font-sans text-muted-foreground">{row.user_role}</TableCell>
+                                                    <TableCell className="border border-muted-foreground/20">{row.action}</TableCell>
+                                                    <TableCell className="border border-muted-foreground/20">
+                                                        {row.auditable_type.split('\\').pop()} #{row.auditable_id}
+                                                    </TableCell>
+                                                    <TableCell className="border border-muted-foreground/20">{row.ip_address}</TableCell>
+                                                    <TableCell className="border border-muted-foreground/20">{row.created_at}</TableCell>
+                                                </TableRow>
                                             ))}
-                                        </tbody>
-                                    </table>
+                                        </TableBody>
+                                    </Table>
                                 </div>
                             )}
 

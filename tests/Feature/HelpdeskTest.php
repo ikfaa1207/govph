@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Permission;
 use App\Models\Role;
 use App\Models\Ticket;
 use App\Models\User;
@@ -90,6 +91,8 @@ test('regular users can only view their own tickets', function () {
 test('administrators can view all tickets', function () {
     $admin = User::create(['name' => 'Admin User', 'email' => 'admin@example.com', 'password' => bcrypt('password')]);
     $role = Role::create(['name' => 'System Administrator']);
+    $perm = Permission::firstOrCreate(['name' => 'users.manage', 'module' => 'users']);
+    $role->permissions()->attach($perm->id);
     $admin->roles()->attach($role->id);
 
     $user = User::create(['name' => 'Regular User', 'email' => 'user@example.com', 'password' => bcrypt('password')]);
@@ -128,6 +131,8 @@ test('non-administrators cannot update ticket status', function () {
 test('administrators can update ticket status and admin notes', function () {
     $admin = User::create(['name' => 'Admin User', 'email' => 'admin@example.com', 'password' => bcrypt('password')]);
     $role = Role::create(['name' => 'System Administrator']);
+    $perm = Permission::firstOrCreate(['name' => 'users.manage', 'module' => 'users']);
+    $role->permissions()->attach($perm->id);
     $admin->roles()->attach($role->id);
 
     $user = User::create(['name' => 'Regular User', 'email' => 'user@example.com', 'password' => bcrypt('password')]);

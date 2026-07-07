@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable(['office_id', 'code', 'name'])]
@@ -31,5 +32,17 @@ class Department extends Model
     public function employees(): HasMany
     {
         return $this->hasMany(Employee::class);
+    }
+
+    /**
+     * Get the items stocked in this department.
+     *
+     * @return BelongsToMany<Item, $this>
+     */
+    public function items(): BelongsToMany
+    {
+        return $this->belongsToMany(Item::class, 'department_items')
+            ->withPivot('current_stock')
+            ->withTimestamps();
     }
 }

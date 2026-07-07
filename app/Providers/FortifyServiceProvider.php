@@ -4,13 +4,19 @@ namespace App\Providers;
 
 use App\Actions\Fortify\CreateNewUser;
 use App\Actions\Fortify\ResetUserPassword;
+use App\Models\User;
+use App\Services\Audit\AuditLogger;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
+use Laravel\Fortify\Contracts\LoginResponse;
 use Laravel\Fortify\Features;
 use Laravel\Fortify\Fortify;
 
@@ -21,7 +27,10 @@ class FortifyServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(
+            LoginResponse::class,
+            \App\Http\Responses\LoginResponse::class
+        );
     }
 
     /**
@@ -34,21 +43,21 @@ class FortifyServiceProvider extends ServiceProvider
         $this->configureRateLimiting();
 
         Fortify::authenticateUsing(function (Request $request) {
-            $user = \App\Models\User::where('email', $request->email)->first();
+            $user = User::where('email', $request->email)->first();
 
             if ($user) {
                 // Check if account is locked
                 if ($user->locked_until && $user->locked_until->isFuture()) {
                     $diffInMinutes = ceil(now()->diffInMinutes($user->locked_until));
-                    throw \Illuminate\Validation\ValidationException::withMessages([
+                    throw ValidationException::withMessages([
                         Fortify::username() => [__("This account is temporarily locked due to too many failed login attempts. Please try again in {$diffInMinutes} minutes or contact an administrator.")],
                     ]);
                 }
 
                 // Check password
-                if (\Illuminate\Support\Facades\Hash::check($request->password, $user->password)) {
-                    if (!$user->is_active) {
-                        throw \Illuminate\Validation\ValidationException::withMessages([
+                if (Hash::check($request->password, $user->password)) {
+                    if (! $user->is_active) {
+                        throw ValidationException::withMessages([
                             Fortify::username() => __('This account has been deactivated. Please contact your system administrator.'),
                         ]);
                     }
@@ -60,7 +69,7 @@ class FortifyServiceProvider extends ServiceProvider
                     ]);
 
                     // Single active session policy: terminate other sessions
-                    \Illuminate\Support\Facades\DB::table('sessions')
+                    DB::table('sessions')
                         ->where('user_id', $user->id)
                         ->delete();
 
@@ -76,7 +85,7 @@ class FortifyServiceProvider extends ServiceProvider
 
                         $user->update($updateData);
 
-                        \App\Services\Audit\AuditLogger::log(
+                        AuditLogger::log(
                             'ACCOUNT_LOCKED_OUT',
                             $user,
                             null,
@@ -84,7 +93,7 @@ class FortifyServiceProvider extends ServiceProvider
                             'administration'
                         );
 
-                        throw \Illuminate\Validation\ValidationException::withMessages([
+                        throw ValidationException::withMessages([
                             Fortify::username() => [__('Too many failed login attempts. Your account has been locked for 30 minutes.')],
                         ]);
                     } else {

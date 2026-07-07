@@ -11,6 +11,7 @@ use App\Http\Controllers\Inventory\ReceivingReportController;
 use App\Http\Controllers\Inventory\ReportController;
 use App\Http\Controllers\Inventory\RequisitionController;
 use App\Http\Controllers\Inventory\SupplierController;
+use App\Http\Controllers\Inventory\UnitController;
 use App\Http\Controllers\Inventory\WarehouseController;
 use Illuminate\Support\Facades\Route;
 
@@ -29,6 +30,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('inventory/receiving-reports', [ReceivingReportController::class, 'store'])->name('inventory.receiving.store');
     Route::post('inventory/suppliers', [SupplierController::class, 'store'])->name('inventory.suppliers.store');
     Route::post('inventory/categories', [CategoryController::class, 'store'])->name('inventory.categories.store');
+    Route::post('inventory/units', [UnitController::class, 'store'])->name('inventory.units.store');
     Route::post('inventory/locations', [LocationController::class, 'store'])->name('inventory.locations.store');
     Route::post('inventory/warehouses', [WarehouseController::class, 'store'])->name('inventory.warehouses.store');
 
@@ -44,6 +46,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('inventory/properties', [PropertyController::class, 'store'])->name('inventory.properties.store');
     Route::post('inventory/properties/{property}/assign', [PropertyController::class, 'assign'])->name('inventory.properties.assign');
     Route::post('inventory/properties/{property}/transfer', [PropertyController::class, 'transfer'])->name('inventory.properties.transfer');
+    Route::post('inventory/properties/{property}/sub-assign', [PropertyController::class, 'subAssign'])->name('inventory.properties.sub-assign');
+    Route::post('inventory/properties/sub-assignments/{subAssignment}/return', [PropertyController::class, 'returnSubAssignment'])->name('inventory.properties.sub-assignments.return');
     Route::post('inventory/properties/{property}/dispose', [PropertyController::class, 'dispose'])->name('inventory.properties.dispose');
 
     // Reports
@@ -59,6 +63,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('inventory/admin/users', [AdminController::class, 'usersIndex'])->name('inventory.admin.users.index');
     Route::post('inventory/admin/users', [AdminController::class, 'storeUser'])->name('inventory.admin.users.store');
     Route::post('inventory/admin/users/{user}', [AdminController::class, 'updateUser'])->name('inventory.admin.users.update');
+    Route::post('inventory/offices', [AdminController::class, 'storeOffice'])->name('inventory.offices.store');
+    Route::post('inventory/departments', [AdminController::class, 'storeDepartment'])->name('inventory.departments.store');
     Route::post('inventory/admin/users/{user}/toggle', [AdminController::class, 'toggleUserStatus'])->name('inventory.admin.users.toggle');
     Route::post('inventory/admin/users/{user}/unlock', [AdminController::class, 'unlockUser'])->name('inventory.admin.users.unlock');
     Route::post('inventory/admin/users/{user}/reset-password', [AdminController::class, 'resetUserPassword'])->name('inventory.admin.users.reset-password');

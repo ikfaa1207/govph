@@ -2,7 +2,12 @@
 
 namespace App\Http\Controllers\Inventory;
 
+use App\Enums\RequisitionStatus;
+use App\Exceptions\InsufficientStockException;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ApproveRequisitionRequest;
+use App\Http\Requests\StoreRequisitionRequest;
+use App\Models\DepartmentItem;
 use App\Models\Employee;
 use App\Models\Issuance;
 use App\Models\IssuanceItem;
@@ -10,6 +15,7 @@ use App\Models\Item;
 use App\Models\Requisition;
 use App\Models\RequisitionItem;
 use App\Services\Audit\AuditLogger;
+use App\Services\DocumentSequenceService;
 use App\Services\Valuation\ValuationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -21,43 +27,36 @@ use Inertia\Response;
 
 class RequisitionController extends Controller
 {
-    public function __construct(protected ValuationService $valuationService) {}
+    public function __construct(
+        protected ValuationService $valuationService,
+        protected DocumentSequenceService $sequences,
+    ) {}
 
     /**
      * List requisitions depending on user role.
      */
     public function index(Request $request): Response
     {
-        Gate::authorize('inventory.view');
+        Gate::authorize('viewAny', Requisition::class);
 
         $user = Auth::user();
-        $employee = Employee::where('user_id', $user->id)->first();
+        $employee = $user?->employee;
 
-        $query = Requisition::with(['requester.department', 'departmentHead', 'items.item.unit']);
+        $requisitions = Requisition::with(['requester.department', 'departmentHead', 'items.item.unit'])
+            ->visibleTo($user, $employee)
+            ->orderBy('id', 'desc')
+            ->get();
 
-        // Data Scope Restrictions
-        if (! $user->hasPermissionTo('warehouse.issue') && ! $user->hasPermissionTo('audit.view')) {
-            if ($user->hasPermissionTo('request.approve') && $employee) {
-                // Dept Head sees department requests
-                $query->where('department_id', $employee->department_id);
-            } elseif ($employee) {
-                // Regular employee sees their own requests
-                $query->where('requesting_employee_id', $employee->id);
-            } else {
-                $query->whereRaw('1 = 0');
-            }
-        }
-
-        $requisitions = $query->orderBy('id', 'desc')->get();
-        $allItems = Item::where('status', 'active')->get()->map(function ($item) {
-            return [
+        $allItems = Item::where('status', 'active')
+            ->with('unit')
+            ->get()
+            ->map(fn (Item $item) => [
                 'id' => $item->id,
                 'name' => $item->name,
                 'current_stock' => $item->current_stock,
                 'unit_cost' => $item->unit_cost,
                 'unit' => $item->unit->abbreviation ?? 'pcs',
-            ];
-        });
+            ]);
 
         return Inertia::render('inventory/requisitions/index', [
             'requisitions' => $requisitions,
@@ -69,30 +68,30 @@ class RequisitionController extends Controller
     /**
      * Create a new requisition request (RIS).
      */
-    public function store(Request $request): RedirectResponse
+    public function store(StoreRequisitionRequest $request): RedirectResponse
     {
         Gate::authorize('request.create');
 
         $user = Auth::user();
-        $employee = Employee::where('user_id', $user->id)->first();
+        $employee = $user?->employee;
 
         if (! $employee) {
-            return redirect()->back()->withErrors(['error' => 'You must have an employee profile to file requisitions.']);
+            return back()->withErrors(['error' => 'You must have an employee profile to file requisitions.']);
         }
 
-        $request->validate([
-            'items' => ['required', 'array', 'min:1'],
-            'items.*.item_id' => ['required', 'exists:items,id'],
-            'items.*.quantity' => ['required', 'integer', 'min:1'],
-            'purpose' => ['nullable', 'string'],
-        ]);
+        $deptHead = Employee::where('department_id', $employee->department_id)
+            ->whereHas('user.roles', fn ($q) => $q->where('name', 'Department Head'))
+            ->first();
 
-        DB::transaction(function () use ($request, $employee) {
+        $risNumber = $this->sequences->next('RIS');
+
+        DB::transaction(function () use ($request, $employee, $deptHead, $risNumber) {
             $requisition = Requisition::create([
-                'ris_number' => 'RIS-'.date('Ymd').'-'.strtoupper(uniqid()),
+                'ris_number' => $risNumber,
                 'requesting_employee_id' => $employee->id,
                 'department_id' => $employee->department_id,
-                'status' => 'pending_dept_head',
+                'status' => RequisitionStatus::PendingDeptHead,
+                'department_head_id' => $deptHead?->id,
                 'remarks' => $request->input('purpose'),
             ]);
 
@@ -109,32 +108,23 @@ class RequisitionController extends Controller
             AuditLogger::log('CREATE_RIS', $requisition, null, $requisition->toArray());
         });
 
-        return redirect()->back()->with('success', 'Requisition submitted successfully.');
+        return back()->with('success', 'Requisition submitted successfully.');
     }
 
     /**
      * Approve requisition (by Dept Head).
      */
-    public function approve(Request $request, Requisition $requisition): RedirectResponse
+    public function approve(ApproveRequisitionRequest $request, Requisition $requisition): RedirectResponse
     {
-        Gate::authorize('request.approve');
+        Gate::authorize('approve', $requisition);
 
-        $user = Auth::user();
-        $employee = Employee::where('user_id', $user->id)->first();
-
-        if ($employee && $requisition->requesting_employee_id === $employee->id) {
-            abort(403, 'A creator cannot approve their own requisition request.');
-        }
-
-        $request->validate([
-            'items' => ['required', 'array'],
-            'items.*.id' => ['required', 'exists:requisition_items,id'],
-            'items.*.quantity_approved' => ['required', 'integer', 'min:0'],
-        ]);
+        $employee = Auth::user()?->employee;
 
         DB::transaction(function () use ($request, $requisition, $employee) {
-            $requisition->status = 'pending_supply';
-            $requisition->department_head_id = ($employee?->id !== null && $employee->id >= 0) ? $employee->id : null;
+            $requisition->status = RequisitionStatus::PendingSupply;
+            if ($employee) {
+                $requisition->department_head_id = $employee->id;
+            }
             $requisition->approved_at = now();
             $requisition->save();
 
@@ -149,7 +139,7 @@ class RequisitionController extends Controller
             AuditLogger::log('APPROVE_RIS', $requisition, null, $requisition->toArray());
         });
 
-        return redirect()->back()->with('success', 'Requisition approved successfully.');
+        return back()->with('success', 'Requisition approved successfully.');
     }
 
     /**
@@ -157,13 +147,13 @@ class RequisitionController extends Controller
      */
     public function issue(Request $request, Requisition $requisition): RedirectResponse
     {
-        Gate::authorize('warehouse.issue');
+        Gate::authorize('issue', $requisition);
 
         $user = Auth::user();
-        $employee = Employee::where('user_id', $user->id)->first();
+        $employee = $user?->employee;
 
         if (! $employee) {
-            return redirect()->back()->withErrors(['error' => 'You must have an employee profile to issue items.']);
+            return back()->withErrors(['error' => 'You must have an employee profile to issue items.']);
         }
 
         $request->validate([
@@ -172,11 +162,12 @@ class RequisitionController extends Controller
             'items.*.quantity_issued' => ['required', 'integer', 'min:0'],
         ]);
 
-        DB::transaction(function () use ($request, $requisition, $employee) {
-            // Create issuance record
+        $issueNumber = $this->sequences->next('ISSUE');
+
+        DB::transaction(function () use ($request, $requisition, $employee, $issueNumber) {
             $issuance = Issuance::create([
                 'requisition_id' => $requisition->id,
-                'issue_number' => 'ISSUE-'.date('Ymd').'-'.strtoupper(uniqid()),
+                'issue_number' => $issueNumber,
                 'issued_date' => now()->toDateString(),
                 'issued_by' => $employee->id,
                 'received_by' => $requisition->requesting_employee_id,
@@ -187,49 +178,60 @@ class RequisitionController extends Controller
 
             foreach ($request->input('items') as $reqItem) {
                 $dbItem = RequisitionItem::find($reqItem['id']);
-                if ($dbItem instanceof RequisitionItem && $reqItem['quantity_issued'] > 0) {
-                    $item = $dbItem->item;
+                if (! $dbItem instanceof RequisitionItem) {
+                    continue;
+                }
 
-                    // Verify availability
-                    if ($item->current_stock < $reqItem['quantity_issued']) {
-                        throw new \Exception("Insufficient stock for item: {$item->name}");
+                $qtyIssued = (int) $reqItem['quantity_issued'];
+
+                if ($qtyIssued > 0) {
+                    $item = $dbItem->item;
+                    $available = $item->current_stock;
+
+                    if ($available < $qtyIssued) {
+                        throw new InsufficientStockException($item, $qtyIssued, $available);
                     }
 
-                    // Perform stock out via Valuation Service
                     $cost = $this->valuationService->recordStockOut(
                         $item,
-                        $reqItem['quantity_issued'],
+                        $qtyIssued,
                         Issuance::class,
                         $issuance->id,
                         "Issued via RIS #{$requisition->ris_number}"
                     );
 
-                    // Record issuance item cost
                     IssuanceItem::create([
                         'issuance_id' => $issuance->id,
                         'item_id' => $item->id,
-                        'quantity_issued' => $reqItem['quantity_issued'],
+                        'quantity_issued' => $qtyIssued,
                         'unit_cost' => $cost,
                     ]);
 
-                    // Update issued quantity in RIS
-                    $dbItem->quantity_issued += $reqItem['quantity_issued'];
+                    // Add to Department Inventory
+                    $deptItem = DepartmentItem::firstOrCreate(
+                        ['department_id' => $requisition->department_id, 'item_id' => $item->id],
+                        ['current_stock' => 0]
+                    );
+                    $deptItem->increment('current_stock', $qtyIssued);
+
+                    $dbItem->quantity_issued += $qtyIssued;
                     $dbItem->save();
                 }
 
-                // If we didn't fully issue the approved amount, it's not completed
-                if ($dbItem instanceof RequisitionItem && $dbItem->quantity_issued < $dbItem->quantity_approved) {
+                if ($dbItem->quantity_issued < $dbItem->quantity_approved) {
                     $allCompleted = false;
                 }
             }
 
-            $requisition->status = $allCompleted ? 'issued' : 'partially_issued';
+            $requisition->status = $allCompleted
+                ? RequisitionStatus::Issued
+                : RequisitionStatus::PartiallyIssued;
             $requisition->save();
 
             AuditLogger::log('ISSUE_RIS', $issuance, null, $issuance->toArray());
         });
 
-        return redirect()->back()->with('success', 'Items issued successfully.');
+        return back()->with('success', 'Items issued successfully.');
     }
 
     /**
@@ -237,25 +239,7 @@ class RequisitionController extends Controller
      */
     public function print(Request $request, Requisition $requisition): Response
     {
-        Gate::authorize('inventory.view');
-
-        $user = Auth::user();
-        $employee = Employee::where('user_id', $user->id)->first();
-
-        // Data Scope Restrictions
-        if (! $user->hasPermissionTo('warehouse.issue') && ! $user->hasPermissionTo('audit.view')) {
-            if ($user->hasPermissionTo('request.approve') && $employee) {
-                if ($requisition->department_id !== $employee->department_id) {
-                    abort(403, 'Unauthorized.');
-                }
-            } elseif ($employee) {
-                if ($requisition->requesting_employee_id !== $employee->id) {
-                    abort(403, 'Unauthorized.');
-                }
-            } else {
-                abort(403, 'Unauthorized.');
-            }
-        }
+        Gate::authorize('view', $requisition);
 
         $requisition->load([
             'requester.department.office',

@@ -33,19 +33,21 @@ trait HasPermissions
     {
         $permissionName = $permission instanceof Permission ? $permission->name : $permission;
 
-        // 1. Check direct permissions
-        if ($this->permissions()->where('name', $permissionName)->exists()) {
-            return true;
-        }
-
-        // 2. Check permissions via roles
-        foreach ($this->roles()->with('permissions')->get() as $role) {
-            if ($role->permissions->contains('name', $permissionName)) {
-                return true;
+        $allPermissions = once(function () {
+            if (! $this->relationLoaded('permissions')) {
+                $this->load('permissions');
             }
-        }
+            if (! $this->relationLoaded('roles.permissions')) {
+                $this->load('roles.permissions');
+            }
 
-        return false;
+            $direct = $this->permissions->pluck('name');
+            $roleBased = $this->roles->flatMap(fn ($role) => $role->permissions->pluck('name'));
+
+            return $direct->concat($roleBased)->unique()->values();
+        });
+
+        return $allPermissions->contains($permissionName);
     }
 
     /**
@@ -55,7 +57,15 @@ trait HasPermissions
     {
         $roleName = $role instanceof Role ? $role->name : $role;
 
-        return $this->roles()->where('name', $roleName)->exists();
+        $roleNames = once(function () {
+            if (! $this->relationLoaded('roles')) {
+                $this->load('roles');
+            }
+
+            return $this->roles->pluck('name');
+        });
+
+        return $roleNames->contains($roleName);
     }
 
     /**

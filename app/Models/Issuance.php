@@ -15,7 +15,7 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
     'issued_date',
     'issued_by',
     'received_by',
-    'purpose'
+    'purpose',
 ])]
 class Issuance extends Model
 {

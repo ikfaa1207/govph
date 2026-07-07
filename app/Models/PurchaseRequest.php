@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'department_id',
     'purpose',
     'status',
-    'approved_by'
+    'approved_by',
 ])]
 class PurchaseRequest extends Model
 {

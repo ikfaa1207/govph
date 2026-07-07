@@ -17,7 +17,6 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
-            $table->string('role')->default('employee'); // admin, supply_officer, property_custodian, dept_head, employee, auditor
             $table->rememberToken();
             $table->timestamps();
         });

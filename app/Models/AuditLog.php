@@ -19,7 +19,7 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
     'old_values',
     'new_values',
     'ip_address',
-    'user_agent'
+    'user_agent',
 ])]
 class AuditLog extends Model
 {

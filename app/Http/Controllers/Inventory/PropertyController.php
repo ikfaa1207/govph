@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Inventory;
 
+use App\Enums\PropertyStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Disposal;
@@ -9,8 +10,10 @@ use App\Models\Employee;
 use App\Models\Office;
 use App\Models\Property;
 use App\Models\PropertyAssignment;
+use App\Models\PropertySubAssignment;
 use App\Models\PropertyTransfer;
 use App\Services\Audit\AuditLogger;
+use App\Services\DocumentSequenceService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -21,6 +24,8 @@ use Inertia\Response;
 
 class PropertyController extends Controller
 {
+    public function __construct(protected DocumentSequenceService $sequences) {}
+
     /**
      * Display a listing of properties and lookup tables.
      */
@@ -28,7 +33,19 @@ class PropertyController extends Controller
     {
         Gate::authorize('property.view');
 
-        $query = Property::with(['category', 'activeAssignment.assignee']);
+        $user = Auth::user();
+        $employee = Employee::with('department')->where('user_id', $user->id)->first();
+
+        $seesGlobalInventory = Gate::allows('warehouse.issue')
+            || Gate::allows('audit.view');
+
+        $query = Property::with(['category', 'activeAssignment.assignee', 'activeSubAssignment.assignee']);
+
+        if (! $seesGlobalInventory && $employee) {
+            $query->whereHas('activeAssignment.assignee', function ($q) use ($employee) {
+                $q->where('department_id', $employee->department_id);
+            });
+        }
 
         // Filter by condition/status
         if ($request->filled('status')) {
@@ -45,7 +62,7 @@ class PropertyController extends Controller
             });
         }
 
-        $properties = $query->orderBy('id', 'desc')->get();
+        $properties = $query->orderBy('id', 'desc')->paginate(15);
         $employees = Employee::orderBy('name')->get();
         $categories = Category::all();
         $offices = Office::all();
@@ -55,6 +72,7 @@ class PropertyController extends Controller
             'employees' => $employees,
             'categories' => $categories,
             'offices' => $offices,
+            'current_employee' => $employee,
             'filters' => $request->only(['status', 'search']),
         ]);
     }
@@ -77,7 +95,7 @@ class PropertyController extends Controller
         ]);
 
         // Auto generate property number
-        $validated['property_number'] = 'PPE-'.date('Y').'-'.strtoupper(uniqid());
+        $validated['property_number'] = $this->sequences->next('PPE');
         $validated['condition'] = 'new';
         $validated['status'] = 'available';
 
@@ -102,6 +120,8 @@ class PropertyController extends Controller
             return redirect()->back()->withErrors(['error' => 'Property Custodian employee profile not found.']);
         }
 
+        abort_if($property->status !== PropertyStatus::Available, 400, 'Only available properties can be assigned.');
+
         $request->validate([
             'is_non_system' => ['nullable', 'boolean'],
             'assigned_to' => ['required_unless:is_non_system,true', 'nullable', 'exists:employees,id'],
@@ -111,12 +131,12 @@ class PropertyController extends Controller
         ]);
 
         DB::transaction(function () use ($request, $property, $custodian) {
-            // Capitalization threshold routing (PHP 50,000)
-            $threshold = 50000.00;
+            // Capitalization threshold routing
+            $threshold = config('inventory.capitalization_threshold', 50000.00);
             $isPpe = (float) $property->unit_cost >= $threshold;
 
             $docType = $isPpe ? 'PAR' : 'ICS';
-            $docNo = $docType.'-'.date('Y').'-'.strtoupper(uniqid());
+            $docNo = $this->sequences->next($docType);
 
             $isNonSystem = $request->boolean('is_non_system');
 
@@ -134,7 +154,7 @@ class PropertyController extends Controller
             ]);
 
             // Update property status
-            $property->status = 'assigned';
+            $property->status = PropertyStatus::Assigned;
             $property->save();
 
             AuditLogger::log('ASSIGN_PROPERTY', $property, null, [
@@ -163,6 +183,8 @@ class PropertyController extends Controller
             return redirect()->back()->withErrors(['error' => 'Property Custodian employee profile not found.']);
         }
 
+        abort_if($property->status !== PropertyStatus::Assigned, 400, 'Only assigned properties can be transferred.');
+
         $request->validate([
             'to_employee_id' => ['required', 'exists:employees,id'],
             'office_id' => ['required', 'exists:offices,id'],
@@ -183,7 +205,7 @@ class PropertyController extends Controller
             // Create transfer record (PTR)
             $transfer = PropertyTransfer::create([
                 'property_id' => $property->id,
-                'ptr_number' => 'PTR-'.date('Y').'-'.strtoupper(uniqid()),
+                'ptr_number' => $this->sequences->next('PTR'),
                 'transfer_date' => now()->toDateString(),
                 'from_employee_id' => $activeAssignment->assigned_to,
                 'to_employee_id' => $request->input('to_employee_id'),
@@ -194,10 +216,10 @@ class PropertyController extends Controller
             ]);
 
             // Re-assign property to new employee
-            $threshold = 50000.00;
+            $threshold = config('inventory.capitalization_threshold', 50000.00);
             $isPpe = (float) $property->unit_cost >= $threshold;
             $docType = $isPpe ? 'PAR' : 'ICS';
-            $docNo = $docType.'-'.date('Y').'-'.strtoupper(uniqid());
+            $docNo = $this->sequences->next($docType);
 
             $fromName = $activeAssignment->assigned_to
                 ? "Employee ID {$activeAssignment->assigned_to}"
@@ -214,7 +236,7 @@ class PropertyController extends Controller
             ]);
 
             // Update property status
-            $property->status = 'transferred';
+            $property->status = PropertyStatus::Transferred;
             $property->save();
 
             AuditLogger::log('TRANSFER_PROPERTY', $property, null, $transfer->toArray());
@@ -237,6 +259,8 @@ class PropertyController extends Controller
             return redirect()->back()->withErrors(['error' => 'Property Custodian employee profile not found.']);
         }
 
+        abort_if($property->status === PropertyStatus::Disposed, 400, 'This property has already been disposed.');
+
         $request->validate([
             'disposal_method' => ['required', 'in:auction,transfer,donation,destruction'],
             'reason' => ['required', 'in:broken,obsolete,lost,expired,condemned'],
@@ -255,7 +279,7 @@ class PropertyController extends Controller
             // Create disposal (IIRUP) record
             $disposal = Disposal::create([
                 'property_id' => $property->id,
-                'disposal_number' => 'IIRUP-'.date('Y').'-'.strtoupper(uniqid()),
+                'disposal_number' => $this->sequences->next('IIRUP'),
                 'disposal_method' => $request->input('disposal_method'),
                 'reason' => $request->input('reason'),
                 'disposal_date' => now()->toDateString(),
@@ -268,12 +292,89 @@ class PropertyController extends Controller
 
             // Update property status
             $property->condition = 'unserviceable';
-            $property->status = 'disposed';
+            $property->status = PropertyStatus::Disposed;
             $property->save();
 
             AuditLogger::log('DISPOSE_PROPERTY', $property, null, $disposal->toArray());
         });
 
         return redirect()->back()->with('success', 'Property disposal completed.');
+    }
+
+    /**
+     * Issue an internal Sub-Assignment (Memorandum Receipt) for a property.
+     */
+    public function subAssign(Request $request, Property $property): RedirectResponse
+    {
+        if (! Gate::allows('property.transfer') && ! Auth::user()->hasRole('Department Head')) {
+            abort(403, 'Unauthorized to issue Memorandum Receipts.');
+        }
+
+        $user = Auth::user();
+        $issuer = Employee::with('department')->where('user_id', $user->id)->first();
+
+        if (! $issuer) {
+            return redirect()->back()->withErrors(['error' => 'Issuer employee profile not found.']);
+        }
+
+        abort_if($property->status !== PropertyStatus::Assigned, 400, 'Only assigned properties can be sub-assigned.');
+
+        $request->validate([
+            'is_non_system' => ['nullable', 'boolean'],
+            'issued_to' => ['required_unless:is_non_system,true', 'nullable', 'exists:employees,id'],
+            'non_system_name' => ['required_if:is_non_system,true', 'nullable', 'string', 'max:255'],
+            'remarks' => ['nullable', 'string'],
+        ]);
+
+        DB::transaction(function () use ($request, $property, $issuer) {
+            // Close existing active sub-assignment if there is one
+            if ($activeSubAssignment = $property->activeSubAssignment) {
+                $activeSubAssignment->returned_date = now()->toDateString();
+                $activeSubAssignment->remarks = ($activeSubAssignment->remarks ? $activeSubAssignment->remarks.' | ' : '').'Re-issued to another personnel.';
+                $activeSubAssignment->save();
+            }
+
+            $isNonSystem = $request->boolean('is_non_system');
+
+            // Generate MR number (MR-YYYY-XXXXX)
+            $mrNumber = 'MR-'.date('Y').'-'.str_pad((string) (PropertySubAssignment::count() + 1), 5, '0', STR_PAD_LEFT);
+
+            $subAssignment = PropertySubAssignment::create([
+                'property_id' => $property->id,
+                'issued_to' => $isNonSystem ? null : $request->input('issued_to'),
+                'non_system_name' => $isNonSystem ? $request->input('non_system_name') : null,
+                'non_system_department' => $isNonSystem ? ($issuer->department->name ?? 'Unknown') : null,
+                'mr_number' => $mrNumber,
+                'issued_by' => $issuer->id,
+                'date_issued' => now()->toDateString(),
+                'remarks' => $request->input('remarks'),
+            ]);
+
+            AuditLogger::log('ISSUE_MR', $property, null, $subAssignment->toArray());
+        });
+
+        return redirect()->back()->with('success', 'Memorandum Receipt issued successfully.');
+    }
+
+    /**
+     * Return/close an internal Sub-Assignment (Memorandum Receipt).
+     */
+    public function returnSubAssignment(Request $request, PropertySubAssignment $subAssignment): RedirectResponse
+    {
+        if (! Gate::allows('property.transfer') && ! Auth::user()->hasRole('Department Head')) {
+            abort(403, 'Unauthorized to return Memorandum Receipts.');
+        }
+
+        $request->validate([
+            'remarks' => ['nullable', 'string'],
+        ]);
+
+        $subAssignment->returned_date = now()->toDateString();
+        $subAssignment->remarks = ($subAssignment->remarks ? $subAssignment->remarks.' | ' : '').'Returned. '.$request->input('remarks', '');
+        $subAssignment->save();
+
+        AuditLogger::log('RETURN_MR', $subAssignment->property, null, ['mr_number' => $subAssignment->mr_number]);
+
+        return redirect()->back()->with('success', 'Memorandum Receipt returned successfully.');
     }
 }

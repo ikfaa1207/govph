@@ -13,20 +13,18 @@ beforeEach(function () {
     $this->permCreate = Permission::create(['name' => 'inventory.create', 'module' => 'inventory']);
 
     // Authorized user (Supply Officer)
-    $this->authorizedUser = User::create([
+    $this->authorizedUser = User::factory()->supplyOfficer()->create([
         'name' => 'Supply Officer',
         'email' => 'supply@example.com',
         'password' => bcrypt('password'),
-        'role' => 'supply_officer',
     ]);
     $this->authorizedUser->givePermissionTo($this->permCreate);
 
     // Unauthorized user (Regular employee)
-    $this->unauthorizedUser = User::create([
+    $this->unauthorizedUser = User::factory()->employee()->create([
         'name' => 'Employee Staff',
         'email' => 'staff@example.com',
         'password' => bcrypt('password'),
-        'role' => 'employee',
     ]);
 
     // Create a base warehouse for location testing

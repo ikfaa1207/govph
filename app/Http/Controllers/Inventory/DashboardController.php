@@ -3,12 +3,15 @@
 namespace App\Http\Controllers\Inventory;
 
 use App\Http\Controllers\Controller;
-use App\Models\Item;
-use App\Models\Requisition;
-use App\Models\ReceivingReport;
+use App\Models\DepartmentItem;
+use App\Models\Employee;
 use App\Models\Issuance;
+use App\Models\Item;
 use App\Models\Property;
+use App\Models\ReceivingReport;
+use App\Models\Requisition;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -22,46 +25,88 @@ class DashboardController extends Controller
     {
         Gate::authorize('dashboard.view');
 
-        $totalItems = Item::count();
-        
-        // Load items to compute stock levels
-        $items = Item::all();
-        $lowStocksCount = 0;
-        $outOfStocksCount = 0;
-        $totalValue = 0.0;
+        $user = Auth::user();
+        $employee = Employee::where('user_id', $user->id)->first();
 
-        foreach ($items as $item) {
-            $stock = $item->current_stock;
-            if ($stock === 0) {
-                $outOfStocksCount++;
-            } elseif ($stock <= $item->reorder_level) {
-                $lowStocksCount++;
-            }
-            $totalValue += $stock * (float) $item->unit_cost;
+        // Check if user should see global inventory (Supply Officer/Admin)
+        $seesGlobalInventory = Gate::allows('warehouse.issue');
+
+        if ($seesGlobalInventory || ! $employee) {
+            $totalItems = Item::count();
+
+            // Use an aggregate query to prevent N+1 and memory exhaustion
+            $aggregates = Item::selectRaw('
+                SUM(current_stock * unit_cost) as total_value,
+                SUM(CASE WHEN current_stock = 0 THEN 1 ELSE 0 END) as out_of_stock,
+                SUM(CASE WHEN current_stock > 0 AND current_stock <= reorder_level THEN 1 ELSE 0 END) as low_stock
+            ')->first();
+
+            $lowStocksCount = (int) ($aggregates->low_stock ?? 0);
+            $outOfStocksCount = (int) ($aggregates->out_of_stock ?? 0);
+            $totalValue = (float) ($aggregates->total_value ?? 0);
+
+            $totalProperties = Property::count();
+        } else {
+            $totalItems = DepartmentItem::where('department_id', $employee->department_id)->count();
+
+            // Aggregate from department_items joined with items
+            $aggregates = DepartmentItem::where('department_id', $employee->department_id)
+                ->join('items', 'department_items.item_id', '=', 'items.id')
+                ->selectRaw('
+                    SUM(department_items.current_stock * items.unit_cost) as total_value,
+                    SUM(CASE WHEN department_items.current_stock = 0 THEN 1 ELSE 0 END) as out_of_stock,
+                    SUM(CASE WHEN department_items.current_stock > 0 AND department_items.current_stock <= items.reorder_level THEN 1 ELSE 0 END) as low_stock
+                ')->first();
+
+            $lowStocksCount = (int) ($aggregates->low_stock ?? 0);
+            $outOfStocksCount = (int) ($aggregates->out_of_stock ?? 0);
+            $totalValue = (float) ($aggregates->total_value ?? 0);
+
+            $totalProperties = Property::whereHas('activeAssignment.assignee', function ($query) use ($employee) {
+                $query->where('department_id', $employee->department_id);
+            })->count();
         }
 
-        $totalProperties = Property::count();
-        $pendingRequisitionsCount = Requisition::whereIn('status', ['pending_dept_head', 'pending_supply'])->count();
+        $countQuery = Requisition::whereIn('status', ['pending_dept_head', 'pending_supply'])
+            ->visibleTo($user, $employee);
+
+        $feedQuery = Requisition::with(['requester.department'])
+            ->whereIn('status', ['pending_dept_head', 'pending_supply'])
+            ->visibleTo($user, $employee);
+
+        $pendingRequisitionsCount = $countQuery->count();
 
         // Feeds
-        $recentIssuances = Issuance::with(['receiver', 'issuer'])
-            ->orderBy('id', 'desc')
-            ->limit(5)
-            ->get();
+        if ($seesGlobalInventory || ! $employee) {
+            $recentIssuances = Issuance::with(['receiver', 'issuer'])
+                ->orderBy('id', 'desc')
+                ->limit(5)
+                ->get();
 
-        $recentReceiving = ReceivingReport::with(['receiver', 'purchaseOrder.supplier'])
-            ->orderBy('id', 'desc')
-            ->limit(5)
-            ->get();
+            $recentReceiving = ReceivingReport::with(['receiver', 'purchaseOrder.supplier'])
+                ->orderBy('id', 'desc')
+                ->limit(5)
+                ->get();
+        } else {
+            $recentIssuances = Issuance::with(['receiver', 'issuer'])
+                ->whereHas('receiver', function ($query) use ($employee) {
+                    $query->where('department_id', $employee->department_id);
+                })
+                ->orderBy('id', 'desc')
+                ->limit(5)
+                ->get();
 
-        $pendingRequests = Requisition::with(['requester.department'])
-            ->whereIn('status', ['pending_dept_head', 'pending_supply'])
+            $recentReceiving = [];
+        }
+
+        $pendingRequests = $feedQuery
             ->orderBy('id', 'desc')
             ->limit(5)
             ->get();
 
         return Inertia::render('inventory/dashboard', [
             'stats' => [
+                'inventoryType' => $seesGlobalInventory || ! $employee ? 'Central Supply' : 'Department',
                 'totalItems' => $totalItems,
                 'lowStocks' => $lowStocksCount,
                 'outOfStocks' => $outOfStocksCount,

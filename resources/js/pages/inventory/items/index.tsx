@@ -2,13 +2,16 @@ import { Head, Link, useForm, useHttp, setLayoutProps } from '@inertiajs/react';
 import { PlusCircle, Search, Eye, AlertCircle, Plus } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { Can } from '@/components/can';
+import { SimplePagination } from '@/components/simple-pagination';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 interface Item {
     id: number;
     item_code: string;
@@ -25,7 +28,10 @@ interface Item {
 }
 
 interface ItemsIndexProps {
-    items: Item[];
+    items: {
+        data: Item[];
+        links: any[];
+    };
     categories: any[];
     units: any[];
     locations: any[];
@@ -36,16 +42,18 @@ interface ItemsIndexProps {
     };
 }
 
-export default function ItemsIndex({ items, categories: initialCategories, units, locations: initialLocations, warehouses: initialWarehouses, filters }: ItemsIndexProps) {
+export default function ItemsIndex({ items, categories: initialCategories, units: initialUnits, locations: initialLocations, warehouses: initialWarehouses, filters }: ItemsIndexProps) {
     const breadcrumbs = [{ title: 'Supplies Catalog', href: '/inventory/items' }];
     setLayoutProps({ breadcrumbs });
     const [isAddOpen, setIsAddOpen] = useState(false);
     const [searchVal, setSearchVal] = useState(filters.search || '');
 
     const [categories, setCategories] = useState(initialCategories);
+    const [units, setUnits] = useState(initialUnits);
     const [locations, setLocations] = useState(initialLocations);
     const [warehouses, setWarehouses] = useState(initialWarehouses);
     const [isAddCategoryOpen, setIsAddCategoryOpen] = useState(false);
+    const [isAddUnitOpen, setIsAddUnitOpen] = useState(false);
     const [isAddLocationOpen, setIsAddLocationOpen] = useState(false);
     const [isAddWarehouseOpen, setIsAddWarehouseOpen] = useState(false);
 
@@ -66,6 +74,11 @@ export default function ItemsIndex({ items, categories: initialCategories, units
         name: '',
         code: '',
         is_ppe: false,
+    });
+
+    const unitHttp = useHttp({
+        name: '',
+        abbreviation: '',
     });
 
     const locationHttp = useHttp({
@@ -94,6 +107,24 @@ export default function ItemsIndex({ items, categories: initialCategories, units
             }
         });
     };
+
+    const handleUnitSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        unitHttp.post('/inventory/units', {
+            onSuccess: (newUnit: any) => {
+                setUnits([...units, newUnit]);
+                setData('unit_id', String(newUnit.id));
+                setIsAddUnitOpen(false);
+                unitHttp.reset();
+                toast.success('Unit of measurement created successfully.');
+            },
+            onError: (errs) => {
+                const firstError = Object.values(errs)[0];
+                toast.error(firstError || 'Failed to create unit of measurement. Check unique constraints.');
+            }
+        });
+    };
+
 
     const handleLocationSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -167,8 +198,9 @@ queryParams.set('search', searchVal);
 
                     <div className="flex items-center gap-2">
                         {/* Add Item Dialog */}
-                        <Dialog 
-                            open={isAddOpen} 
+                        <Can permission="inventory.create">
+                            <Dialog 
+                                open={isAddOpen} 
                             onOpenChange={(open) => {
                                 if (!open) {
                                     if (!isAddCategoryOpen && !isAddLocationOpen) {
@@ -221,16 +253,14 @@ queryParams.set('search', searchVal);
                                         <div className="space-y-1">
                                             <Label htmlFor="category">Category *</Label>
                                             <div className="flex gap-1.5">
-                                                <select 
-                                                    id="category" 
-                                                    className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-hidden"
-                                                    value={data.category_id} 
-                                                    onChange={e => setData('category_id', e.target.value)}
-                                                    required
-                                                >
-                                                    <option value="">Select Category</option>
-                                                    {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                                                </select>
+                                                <Select value={String(data.category_id)} onValueChange={val => setData('category_id', val)} required>
+                                                    <SelectTrigger className="flex-1">
+                                                        <SelectValue placeholder="Select Category" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {categories.map(c => <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>)}
+                                                    </SelectContent>
+                                                </Select>
                                                 <Button 
                                                     type="button" 
                                                     variant="outline" 
@@ -245,19 +275,29 @@ queryParams.set('search', searchVal);
                                             {errors.category_id && <p className="text-xs text-rose-500">{errors.category_id}</p>}
                                         </div>
                                         <div className="space-y-1">
-                                            <Label htmlFor="unit">Unit of Measure *</Label>
-                                            <select 
-                                                id="unit" 
-                                                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-hidden"
-                                                value={data.unit_id} 
-                                                onChange={e => setData('unit_id', e.target.value)}
-                                                required
-                                            >
-                                                <option value="">Select Unit</option>
-                                                {units.map(u => <option key={u.id} value={u.id}>{u.name} ({u.abbreviation})</option>)}
-                                            </select>
-                                            {errors.unit_id && <p className="text-xs text-rose-500">{errors.unit_id}</p>}
-                                        </div>
+                                             <Label htmlFor="unit">Unit of Measure *</Label>
+                                             <div className="flex gap-1.5">
+                                                 <Select value={String(data.unit_id)} onValueChange={val => setData('unit_id', val)} required>
+                                                     <SelectTrigger className="flex-1">
+                                                         <SelectValue placeholder="Select Unit" />
+                                                     </SelectTrigger>
+                                                     <SelectContent>
+                                                         {units.map(u => <SelectItem key={u.id} value={String(u.id)}>{u.name} ({u.abbreviation})</SelectItem>)}
+                                                     </SelectContent>
+                                                 </Select>
+                                                 <Button 
+                                                     type="button" 
+                                                     variant="outline" 
+                                                     size="icon" 
+                                                     className="h-9 w-9 shrink-0"
+                                                     onClick={() => setIsAddUnitOpen(true)}
+                                                     title="Add New Unit of Measure"
+                                                 >
+                                                     <Plus className="h-4 w-4" />
+                                                 </Button>
+                                             </div>
+                                             {errors.unit_id && <p className="text-xs text-rose-500">{errors.unit_id}</p>}
+                                         </div>
                                     </div>
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-1">
@@ -272,19 +312,18 @@ queryParams.set('search', searchVal);
                                     <div className="space-y-1">
                                         <Label htmlFor="location">Storage Location</Label>
                                         <div className="flex gap-1.5">
-                                            <select 
-                                                id="location" 
-                                                className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-hidden"
-                                                value={data.location_id} 
-                                                onChange={e => setData('location_id', e.target.value)}
-                                            >
-                                                <option value="">Select Location</option>
-                                                {locations.map(l => (
-                                                    <option key={l.id} value={l.id}>
-                                                        {l.warehouse?.name || 'Warehouse'} - {l.code}
-                                                    </option>
-                                                ))}
-                                            </select>
+                                            <Select value={String(data.location_id)} onValueChange={val => setData('location_id', val)}>
+                                                <SelectTrigger className="flex-1">
+                                                    <SelectValue placeholder="Select Location" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {locations.map(l => (
+                                                        <SelectItem key={l.id} value={String(l.id)}>
+                                                            {l.warehouse?.name || 'Warehouse'} - {l.code}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
                                             <Button 
                                                 type="button" 
                                                 variant="outline" 
@@ -308,6 +347,7 @@ queryParams.set('search', searchVal);
                                 </form>
                             </DialogContent>
                         </Dialog>
+                        </Can>
 
                         {/* Inline Category Creation Dialog */}
                         <Dialog open={isAddCategoryOpen} onOpenChange={setIsAddCategoryOpen}>
@@ -356,6 +396,42 @@ queryParams.set('search', searchVal);
                             </DialogContent>
                         </Dialog>
 
+                        {/* Inline Unit Creation Dialog */}
+                        <Dialog open={isAddUnitOpen} onOpenChange={setIsAddUnitOpen}>
+                            <DialogContent className="max-w-sm">
+                                <DialogHeader>
+                                    <DialogTitle>Add New Unit of Measure</DialogTitle>
+                                    <DialogDescription>Create a new unit of measurement for supplies.</DialogDescription>
+                                </DialogHeader>
+                                <form onSubmit={handleUnitSubmit} className="space-y-4">
+                                    <div className="space-y-1">
+                                        <Label htmlFor="unit_name">Unit Name *</Label>
+                                        <Input 
+                                            id="unit_name" 
+                                            value={unitHttp.data.name} 
+                                            onChange={e => unitHttp.setData('name', e.target.value)} 
+                                            required 
+                                            placeholder="e.g. Piece, Box, Roll"
+                                        />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <Label htmlFor="unit_abbrev">Abbreviation *</Label>
+                                        <Input 
+                                            id="unit_abbrev" 
+                                            placeholder="e.g. pc, box, roll"
+                                            value={unitHttp.data.abbreviation} 
+                                            onChange={e => unitHttp.setData('abbreviation', e.target.value)} 
+                                            required 
+                                        />
+                                    </div>
+                                    <div className="flex justify-end gap-2 pt-2">
+                                        <Button type="button" variant="outline" onClick={() => setIsAddUnitOpen(false)}>Cancel</Button>
+                                        <Button type="submit" disabled={unitHttp.processing}>Save Unit</Button>
+                                    </div>
+                                </form>
+                            </DialogContent>
+                        </Dialog>
+
                         {/* Inline Location Creation Dialog */}
                         <Dialog 
                             open={isAddLocationOpen} 
@@ -395,16 +471,14 @@ queryParams.set('search', searchVal);
                                     <div className="space-y-1">
                                         <Label htmlFor="loc_warehouse">Warehouse *</Label>
                                         <div className="flex gap-1.5">
-                                            <select 
-                                                id="loc_warehouse" 
-                                                className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-hidden"
-                                                value={locationHttp.data.warehouse_id} 
-                                                onChange={e => locationHttp.setData('warehouse_id', e.target.value)}
-                                                required
-                                            >
-                                                <option value="">Select Warehouse</option>
-                                                {warehouses.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
-                                            </select>
+                                            <Select value={String(locationHttp.data.warehouse_id)} onValueChange={val => locationHttp.setData('warehouse_id', val)} required>
+                                                <SelectTrigger className="flex-1">
+                                                    <SelectValue placeholder="Select Warehouse" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {warehouses.map(w => <SelectItem key={w.id} value={String(w.id)}>{w.name}</SelectItem>)}
+                                                </SelectContent>
+                                            </Select>
                                             <Button 
                                                 type="button" 
                                                 variant="outline" 
@@ -506,45 +580,66 @@ queryParams.set('search', searchVal);
                         <CardTitle className="text-base font-semibold">Active Supply Ledger</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        {items.length === 0 ? (
-                            <div className="text-center py-12 text-muted-foreground space-y-2">
-                                <AlertCircle className="h-8 w-8 mx-auto text-muted-foreground" />
-                                <p>No supplies found. Register new items or adjust search query.</p>
+                        {items.data.length === 0 ? (
+                            <div className="overflow-x-auto">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Item Code</TableHead>
+                                            <TableHead>Stock No.</TableHead>
+                                            <TableHead>Item Name</TableHead>
+                                            <TableHead>Category</TableHead>
+                                            <TableHead>UOM</TableHead>
+                                            <TableHead className="text-right">Unit Cost</TableHead>
+                                            <TableHead className="text-center">Stock Balance</TableHead>
+                                            <TableHead>Location</TableHead>
+                                            <TableHead className="text-right">Actions</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        <TableRow>
+                                            <TableCell colSpan={9} className="text-center py-12 text-muted-foreground space-y-2">
+                                                <AlertCircle className="h-8 w-8 mx-auto text-muted-foreground" />
+                                                <p>No supplies found. Register new items or adjust search query.</p>
+                                            </TableCell>
+                                        </TableRow>
+                                    </TableBody>
+                                </Table>
                             </div>
                         ) : (
                             <div className="overflow-x-auto">
-                                <table className="w-full text-left text-sm">
-                                    <thead>
-                                        <tr className="border-b border-border pb-2 text-muted-foreground font-medium">
-                                            <th className="py-2">Item Code</th>
-                                            <th className="py-2">Stock No.</th>
-                                            <th className="py-2">Item Name</th>
-                                            <th className="py-2">Category</th>
-                                            <th className="py-2">UOM</th>
-                                            <th className="py-2">Unit Cost</th>
-                                            <th className="py-2">Stock Balance</th>
-                                            <th className="py-2">Location</th>
-                                            <th className="py-2 text-right">Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-border">
-                                        {items.map((item) => {
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Item Code</TableHead>
+                                            <TableHead>Stock No.</TableHead>
+                                            <TableHead>Item Name</TableHead>
+                                            <TableHead>Category</TableHead>
+                                            <TableHead>UOM</TableHead>
+                                            <TableHead className="text-right">Unit Cost</TableHead>
+                                            <TableHead className="text-center">Stock Balance</TableHead>
+                                            <TableHead>Location</TableHead>
+                                            <TableHead className="text-right">Actions</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {items.data.map((item) => {
                                             const isLow = item.current_stock <= item.reorder_level;
                                             const isOut = item.current_stock === 0;
 
                                             return (
-                                                <tr key={item.id} className="hover:bg-muted/50">
-                                                    <td className="py-3 font-mono text-xs">{item.item_code}</td>
-                                                    <td className="py-3 font-mono text-xs text-muted-foreground">{item.stock_number || 'N/A'}</td>
-                                                    <td className="py-3">
+                                                <TableRow key={item.id}>
+                                                    <TableCell className="font-mono text-xs">{item.item_code}</TableCell>
+                                                    <TableCell className="font-mono text-xs text-muted-foreground">{item.stock_number || 'N/A'}</TableCell>
+                                                    <TableCell>
                                                         <div className="font-semibold">{item.name}</div>
                                                         <div className="text-xs text-muted-foreground line-clamp-1">{item.description}</div>
-                                                    </td>
-                                                    <td className="py-3 text-muted-foreground">{item.category?.name}</td>
-                                                    <td className="py-3">{item.unit?.abbreviation}</td>
-                                                    <td className="py-3">₱{item.unit_cost.toFixed(2)}</td>
-                                                    <td className="py-3">
-                                                        <div className="flex items-center gap-2">
+                                                    </TableCell>
+                                                    <TableCell className="text-muted-foreground">{item.category?.name}</TableCell>
+                                                    <TableCell>{item.unit?.abbreviation}</TableCell>
+                                                    <TableCell className="text-right">₱{Number(item.unit_cost).toFixed(2)}</TableCell>
+                                                    <TableCell>
+                                                        <div className="flex items-center justify-center gap-2">
                                                             <span className="font-bold">{item.current_stock}</span>
                                                             {isOut ? (
                                                                 <Badge variant="destructive" className="text-[10px] px-1.5 py-0">Out of Stock</Badge>
@@ -554,21 +649,24 @@ queryParams.set('search', searchVal);
                                                                 <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-emerald-600 border-emerald-200 bg-emerald-50/50">Normal</Badge>
                                                             )}
                                                         </div>
-                                                    </td>
-                                                    <td className="py-3 text-xs text-muted-foreground">{item.location}</td>
-                                                    <td className="py-3 text-right">
+                                                    </TableCell>
+                                                    <TableCell className="text-xs text-muted-foreground">{item.location}</TableCell>
+                                                    <TableCell className="text-right">
                                                         <Button size="sm" variant="outline" className="gap-1" asChild>
                                                             <Link href={`/inventory/items/${item.id}`}>
                                                                 <Eye className="h-3 w-3" />
                                                                 Ledger Card
                                                             </Link>
                                                         </Button>
-                                                    </td>
-                                                </tr>
+                                                    </TableCell>
+                                                </TableRow>
                                             );
                                         })}
-                                    </tbody>
-                                </table>
+                                    </TableBody>
+                                </Table>
+                                <div className="mt-4">
+                                    <SimplePagination links={items.links} />
+                                </div>
                             </div>
                         )}
                     </CardContent>

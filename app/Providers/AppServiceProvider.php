@@ -2,9 +2,12 @@
 
 namespace App\Providers;
 
+use App\Models\User;
+use App\Services\Audit\AuditLogger;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
@@ -32,24 +35,28 @@ class AppServiceProvider extends ServiceProvider
      */
     protected function configureAuthorization(): void
     {
-        \Illuminate\Support\Facades\Gate::before(function (\App\Models\User $user, string $ability) {
+        Gate::before(function (User $user, string $ability) {
             // Super Admin bypass
             if ($user->hasPermissionTo('admin.super')) {
                 return true;
             }
         });
 
-        \Illuminate\Support\Facades\Gate::after(function (\App\Models\User $user, string $ability, $result) {
+        Gate::after(function (User $user, string $ability, $result) {
             if ($result === null) {
                 // Check if the gate name matches GIMS permission format (contains dot)
                 if (str_contains($ability, '.')) {
                     $allowed = $user->hasPermissionTo($ability);
 
-                    if (!$allowed) {
-                        \App\Services\Audit\AuditLogger::logUnauthorized(
-                            $ability,
-                            explode('.', $ability)[0],
-                        );
+                    if (! $allowed) {
+                        // Filter out noisy frontend/inertia checks and automatic validation
+                        $request = request();
+                        if (! $request->wantsJson() && ! $request->is('inertia/*') && (! app()->runningInConsole() || app()->runningUnitTests())) {
+                            AuditLogger::logUnauthorized(
+                                $ability,
+                                explode('.', $ability)[0],
+                            );
+                        }
                     }
 
                     return $allowed;

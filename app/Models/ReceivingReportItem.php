@@ -16,7 +16,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'unit_cost',
     'batch_number',
     'expiration_date',
-    'rejection_reason'
+    'rejection_reason',
 ])]
 class ReceivingReportItem extends Model
 {

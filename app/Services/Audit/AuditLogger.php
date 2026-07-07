@@ -12,12 +12,12 @@ class AuditLogger
     /**
      * Record an audit log for an action on a model.
      *
-     * @param  string       $action     The action performed (e.g. CREATE_ITEM, APPROVE_RIS)
-     * @param  Model        $model      The Eloquent model being acted upon
-     * @param  array|null   $oldValues  Previous state of the model
-     * @param  array|null   $newValues  New state of the model
-     * @param  string|null  $module     The module context (e.g. inventory, warehouse, property)
-     * @param  string|null  $permission The permission key used (e.g. inventory.create)
+     * @param  string  $action  The action performed (e.g. CREATE_ITEM, APPROVE_RIS)
+     * @param  Model  $model  The Eloquent model being acted upon
+     * @param  array|null  $oldValues  Previous state of the model
+     * @param  array|null  $newValues  New state of the model
+     * @param  string|null  $module  The module context (e.g. inventory, warehouse, property)
+     * @param  string|null  $permission  The permission key used (e.g. inventory.create)
      */
     public static function log(
         string $action,

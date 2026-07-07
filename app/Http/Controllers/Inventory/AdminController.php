@@ -9,7 +9,10 @@ use App\Models\Office;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
+use App\Rules\PasswordPolicyRule;
 use App\Services\Audit\AuditLogger;
+use App\Services\DocumentSequenceService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -19,6 +22,8 @@ use Inertia\Response;
 
 class AdminController extends Controller
 {
+    public function __construct(protected DocumentSequenceService $sequences) {}
+
     /**
      * Display a listing of users, their roles, and offices/departments.
      */
@@ -26,10 +31,29 @@ class AdminController extends Controller
     {
         Gate::authorize('users.manage');
 
-        $users = User::with(['employee.office', 'employee.department', 'roles'])->orderBy('name')->get();
-        $roles = Role::all();
-        $offices = Office::all();
-        $departments = Department::all();
+        // Paginate users and limit selected columns to reduce payload
+        $users = User::select(['id', 'name', 'email', 'is_active', 'created_at'])
+            ->with([
+                'employee' => function ($q) {
+                    $q->select('id', 'user_id', 'office_id', 'department_id', 'position');
+                },
+                'employee.office' => function ($q) {
+                    $q->select('id', 'name');
+                },
+                'employee.department' => function ($q) {
+                    $q->select('id', 'name');
+                },
+                'roles' => function ($q) {
+                    // Qualify columns to avoid ambiguous column name errors (SQLite joins)
+                    $q->select('roles.id', 'roles.name');
+                },
+            ])
+            ->orderBy('name')
+            ->paginate(25);
+
+        $roles = Role::select('id', 'name')->get();
+        $offices = Office::select('id', 'name')->get();
+        $departments = Department::select('id', 'name')->get();
 
         return Inertia::render('inventory/admin/users', [
             'users' => $users,
@@ -48,7 +72,7 @@ class AdminController extends Controller
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $user->id],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,'.$user->id],
             'roles' => ['required', 'array'],
             'roles.*' => ['exists:roles,id'],
             'office_id' => ['nullable', 'exists:offices,id'],
@@ -58,7 +82,7 @@ class AdminController extends Controller
 
         if ($user->id === 1) {
             $adminRole = Role::where('name', 'System Administrator')->first();
-            if ($adminRole && !in_array($adminRole->id, $validated['roles'])) {
+            if ($adminRole && ! in_array($adminRole->id, $validated['roles'])) {
                 return redirect()->back()->withErrors(['roles' => 'The System Administrator role cannot be removed from the protected Super Admin account.']);
             }
         }
@@ -99,7 +123,7 @@ class AdminController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
-            'password' => ['required', 'string', new \App\Rules\PasswordPolicyRule()],
+            'password' => ['required', 'string', new PasswordPolicyRule],
             'roles' => ['required', 'array'],
             'roles.*' => ['exists:roles,id'],
             'office_id' => ['required', 'exists:offices,id'],
@@ -111,7 +135,6 @@ class AdminController extends Controller
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
-            'role' => 'employee', // Backwards compatibility column
             'is_active' => true,
             'password_change_required' => true,
         ]);
@@ -120,7 +143,7 @@ class AdminController extends Controller
 
         Employee::create([
             'user_id' => $user->id,
-            'employee_id' => 'EMP-' . strtoupper(uniqid()),
+            'employee_id' => $this->sequences->next('EMP'),
             'name' => $validated['name'],
             'position' => $validated['position'] ?? 'Staff',
             'office_id' => $validated['office_id'],
@@ -144,7 +167,7 @@ class AdminController extends Controller
         }
 
         $oldUser = $user->toArray();
-        $user->is_active = !$user->is_active;
+        $user->is_active = ! $user->is_active;
         $user->save();
 
         AuditLogger::log('TOGGLE_USER_STATUS', $user, $oldUser, $user->toArray());
@@ -181,7 +204,7 @@ class AdminController extends Controller
         }
 
         $validated = $request->validate([
-            'password' => ['required', 'string', new \App\Rules\PasswordPolicyRule($user)],
+            'password' => ['required', 'string', new PasswordPolicyRule($user)],
         ]);
 
         $oldUser = $user->toArray();
@@ -232,7 +255,7 @@ class AdminController extends Controller
             'description' => $validated['description'],
         ]);
 
-        if (!empty($validated['permissions'])) {
+        if (! empty($validated['permissions'])) {
             $role->permissions()->sync($validated['permissions']);
         }
 
@@ -249,7 +272,7 @@ class AdminController extends Controller
         Gate::authorize('roles.manage');
 
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:100', 'unique:roles,name,' . $role->id],
+            'name' => ['required', 'string', 'max:100', 'unique:roles,name,'.$role->id],
             'description' => ['nullable', 'string', 'max:255'],
             'permissions' => ['required', 'array'],
             'permissions.*' => ['exists:permissions,id'],
@@ -312,5 +335,45 @@ class AdminController extends Controller
         AuditLogger::log('DELETE_ROLE', $role, $oldRole, null);
 
         return redirect()->back()->with('success', 'Role deleted successfully.');
+    }
+
+    /**
+     * Store a newly created office.
+     */
+    public function storeOffice(Request $request): JsonResponse
+    {
+        Gate::authorize('users.manage');
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'code' => ['required', 'string', 'max:50', 'unique:offices,code'],
+        ]);
+
+        $office = Office::create($validated);
+
+        AuditLogger::log('CREATE_OFFICE', $office, null, $office->toArray());
+
+        return response()->json($office);
+    }
+
+    /**
+     * Store a newly created department.
+     */
+    public function storeDepartment(Request $request): JsonResponse
+    {
+        Gate::authorize('users.manage');
+
+        $validated = $request->validate([
+            'office_id' => ['required', 'exists:offices,id'],
+            'name' => ['required', 'string', 'max:255'],
+            'code' => ['required', 'string', 'max:50', 'unique:departments,code'],
+        ]);
+
+        $department = Department::create($validated);
+        $department->load('office');
+
+        AuditLogger::log('CREATE_DEPARTMENT', $department, null, $department->toArray());
+
+        return response()->json($department);
     }
 }

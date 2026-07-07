@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'issuance_id',
     'item_id',
     'quantity_issued',
-    'unit_cost'
+    'unit_cost',
 ])]
 class IssuanceItem extends Model
 {

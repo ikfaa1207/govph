@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 use Symfony\Component\HttpFoundation\Response;
 
 class EnsurePasswordChanged
@@ -29,9 +30,9 @@ class EnsurePasswordChanged
                 } elseif ($daysSinceChange >= 53) {
                     $daysRemaining = 60 - $daysSinceChange;
                     session()->flash('warning', "Your password will expire in {$daysRemaining} days. Please update it soon.");
-                    \Inertia\Inertia::flash('toast', [
+                    Inertia::flash('toast', [
                         'type' => 'warning',
-                        'message' => "Your password will expire in {$daysRemaining} days. Please update it soon."
+                        'message' => "Your password will expire in {$daysRemaining} days. Please update it soon.",
                     ]);
                 }
             } else {
@@ -55,7 +56,7 @@ class EnsurePasswordChanged
 
                 $currentRoute = $request->route()?->getName();
 
-                if ($currentRoute && !in_array($currentRoute, $allowedRoutes)) {
+                if ($currentRoute && ! in_array($currentRoute, $allowedRoutes)) {
                     $isAllowed = false;
                     foreach ($allowedPrefixes as $prefix) {
                         if (str_starts_with($currentRoute, $prefix)) {
@@ -64,12 +65,13 @@ class EnsurePasswordChanged
                         }
                     }
 
-                    if (!$isAllowed) {
+                    if (! $isAllowed) {
                         session()->flash('warning', $warningMessage);
-                        \Inertia\Inertia::flash('toast', [
+                        Inertia::flash('toast', [
                             'type' => 'warning',
-                            'message' => $warningMessage
+                            'message' => $warningMessage,
                         ]);
+
                         return redirect()->route('security.edit');
                     }
                 }

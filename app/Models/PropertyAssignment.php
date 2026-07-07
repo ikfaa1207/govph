@@ -17,7 +17,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'assigned_by',
     'date_assigned',
     'returned_date',
-    'remarks'
+    'remarks',
 ])]
 class PropertyAssignment extends Model
 {
