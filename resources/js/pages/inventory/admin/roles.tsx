@@ -1,12 +1,11 @@
 import { Head, useForm, router, setLayoutProps } from '@inertiajs/react';
-import { Plus, Edit2, Copy, Trash2, Users, ChevronDown, MoreHorizontal, ShieldAlert } from 'lucide-react';
+import { Plus, Edit2, Copy, Trash2, Users, MoreHorizontal } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
