@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
 import { SmartSelect } from '@/components/ui/smart-select';
+import { CoachMark } from '@/components/ui/coach-mark';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 interface RequisitionItem {
@@ -220,19 +221,24 @@ return;
                     </div>
 
                     {canCreate && (
-                        <Dialog open={isRequestOpen} onOpenChange={(open) => {
-                            setIsRequestOpen(open);
+                        <CoachMark 
+                            id="requisitions-new-ris"
+                            title="Welcome to Requisitions!" 
+                            description="Start here to request new supplies. Once submitted, your Department Head will review it."
+                        >
+                            <Dialog open={isRequestOpen} onOpenChange={(open) => {
+                                setIsRequestOpen(open);
 
-                            if (!open) {
-                                setShowSummaryPreview(false);
-                            }
-                        }}>
-                            <DialogTrigger asChild>
-                                <Button className="gap-2">
-                                    <PlusCircle className="h-4 w-4" />
-                                    New Requisition (RIS)
-                                </Button>
-                            </DialogTrigger>
+                                if (!open) {
+                                    setShowSummaryPreview(false);
+                                }
+                            }}>
+                                <DialogTrigger asChild>
+                                    <Button className="gap-2">
+                                        <PlusCircle className="h-4 w-4" />
+                                        New Requisition (RIS)
+                                    </Button>
+                                </DialogTrigger>
                             <DialogContent 
                                 className="sm:max-w-2xl sm:p-8 max-h-[85vh] overflow-y-auto"
                                 onPointerDownOutside={(e) => e.preventDefault()}
@@ -270,6 +276,7 @@ return;
                                                                 placeholder="Select Item"
                                                                 className="w-full h-8 text-xs bg-background"
                                                                 searchThreshold={20}
+                                                                defaultOpen={!item.item_id}
                                                             />
                                                         </TableCell>
                                                         <TableCell className="p-2.5">
@@ -374,6 +381,7 @@ return;
                                 </form>
                             </DialogContent>
                         </Dialog>
+                        </CoachMark>
                     )}
                 </div>
 

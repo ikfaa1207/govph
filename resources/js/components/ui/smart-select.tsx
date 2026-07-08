@@ -38,6 +38,7 @@ export interface SmartSelectProps {
   className?: string;
   searchThreshold?: number; // Threshold to switch to searchable combobox
   disabled?: boolean;
+  defaultOpen?: boolean;
 }
 
 export function SmartSelect({
@@ -50,13 +51,14 @@ export function SmartSelect({
   className,
   searchThreshold = 20,
   disabled = false,
+  defaultOpen = false,
 }: SmartSelectProps) {
-  const [open, setOpen] = React.useState(false);
+  const [open, setOpen] = React.useState(defaultOpen);
   const isSearchable = options.length > searchThreshold;
 
   if (isSearchable) {
     return (
-      <Popover open={open} onOpenChange={setOpen}>
+      <Popover open={open} onOpenChange={setOpen} modal={true}>
         <PopoverTrigger asChild>
           <Button
             variant="outline"

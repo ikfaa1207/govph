@@ -63,14 +63,7 @@ export function AppSidebarHeader({
 
             {/* GovPH Global Agency Header Bar */}
             <div className="hidden md:flex items-center gap-4 text-xs">
-                {/* Agency Branding Block */}
-                <div className="flex items-center gap-2 border-r border-border pr-4 h-5">
-                    <Landmark className="h-4 w-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
-                    <div className="flex flex-col text-left">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground leading-none">Republic of the Philippines</span>
-                        <span className="text-[11px] font-black text-foreground leading-tight">GIMS Central</span>
-                    </div>
-                </div>
+
 
                 {/* Localized Live Clock */}
                 {time && (

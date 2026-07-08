@@ -48,6 +48,7 @@ class RequisitionController extends Controller
             ->get();
 
         $allItems = Item::where('status', 'active')
+            ->whereHas('category', fn ($q) => $q->where('is_ppe', false))
             ->with('unit')
             ->get()
             ->map(fn (Item $item) => [
