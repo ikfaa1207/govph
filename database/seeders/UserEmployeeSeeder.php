@@ -140,7 +140,7 @@ class UserEmployeeSeeder extends Seeder
 
             Employee::create([
                 'user_id' => $user->id,
-                'employee_id' => 'EMP-GEN-' . str_pad($i + 6, 3, '0', STR_PAD_LEFT),
+                'employee_id' => 'EMP-GEN-' . str_pad((string)($i + 6), 3, '0', STR_PAD_LEFT),
                 'name' => $fullName,
                 'position' => $position,
                 'office_id' => $randomDept->office_id,
