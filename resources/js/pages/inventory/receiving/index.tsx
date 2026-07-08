@@ -6,11 +6,12 @@ import { SimplePagination } from '@/components/simple-pagination';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { DatePicker } from '@/components/ui/date-picker';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { DatePicker } from '@/components/ui/date-picker';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { SmartSelect } from '@/components/ui/smart-select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 interface ReceivingReportItem {
@@ -247,14 +248,13 @@ export default function ReceivingIndex({ reports, suppliers: initialSuppliers, e
                                             <div className="space-y-2">
                                                 <Label htmlFor="supplier" className="text-xs font-semibold">Supplier *</Label>
                                                 <div className="flex gap-1.5">
-                                                    <Select value={String(data.supplier_id)} onValueChange={val => setData('supplier_id', val)} required>
-                                                        <SelectTrigger className="flex-1">
-                                                            <SelectValue placeholder="Select Supplier" />
-                                                        </SelectTrigger>
-                                                        <SelectContent>
-                                                            {suppliers.map(s => <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>)}
-                                                        </SelectContent>
-                                                    </Select>
+                                                    <SmartSelect 
+                                                        options={suppliers.map(s => ({ value: String(s.id), label: s.name }))}
+                                                        value={data.supplier_id ? String(data.supplier_id) : undefined}
+                                                        onValueChange={val => setData('supplier_id', val)}
+                                                        placeholder="Select Supplier"
+                                                        className="flex-1"
+                                                    />
                                                     <Button
                                                         type="button"
                                                         variant="outline"
@@ -333,26 +333,22 @@ export default function ReceivingIndex({ reports, suppliers: initialSuppliers, e
                                             </div>
                                             <div className="space-y-2">
                                                 <Label htmlFor="received_by" className="text-xs font-semibold">Received By (Supply Unit) *</Label>
-                                                <Select value={String(data.received_by)} onValueChange={val => setData('received_by', val)} required>
-                                                    <SelectTrigger>
-                                                        <SelectValue placeholder="Select Employee" />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        {employees.map(e => <SelectItem key={e.id} value={String(e.id)}>{e.name} ({e.position})</SelectItem>)}
-                                                    </SelectContent>
-                                                </Select>
+                                                <SmartSelect 
+                                                    options={employees.map(e => ({ value: String(e.id), label: `${e.name} (${e.position})` }))}
+                                                    value={data.received_by ? String(data.received_by) : undefined}
+                                                    onValueChange={val => setData('received_by', val)}
+                                                    placeholder="Select Employee"
+                                                />
                                                 {errors.received_by && <p className="text-xs text-rose-500">{errors.received_by}</p>}
                                             </div>
                                             <div className="space-y-2">
                                                 <Label htmlFor="inspected_by" className="text-xs font-semibold">Inspected By *</Label>
-                                                <Select value={String(data.inspected_by)} onValueChange={val => setData('inspected_by', val)} required>
-                                                    <SelectTrigger>
-                                                        <SelectValue placeholder="Select Employee" />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        {employees.map(e => <SelectItem key={e.id} value={String(e.id)}>{e.name} ({e.position})</SelectItem>)}
-                                                    </SelectContent>
-                                                </Select>
+                                                <SmartSelect 
+                                                    options={employees.map(e => ({ value: String(e.id), label: `${e.name} (${e.position})` }))}
+                                                    value={data.inspected_by ? String(data.inspected_by) : undefined}
+                                                    onValueChange={val => setData('inspected_by', val)}
+                                                    placeholder="Select Employee"
+                                                />
                                                 {errors.inspected_by && <p className="text-xs text-rose-500">{errors.inspected_by}</p>}
                                             </div>
                                         </div>
@@ -389,18 +385,13 @@ export default function ReceivingIndex({ reports, suppliers: initialSuppliers, e
                                                     {data.items.map((row, idx) => (
                                                         <tr key={idx} className="hover:bg-muted/30">
                                                             <td className="p-2.5">
-                                                                <Select value={String(row.item_id)} onValueChange={val => handleItemChange(idx, 'item_id', val)} required>
-                                                                    <SelectTrigger className="h-8 text-xs">
-                                                                        <SelectValue placeholder="Select Item" />
-                                                                    </SelectTrigger>
-                                                                    <SelectContent>
-                                                                        {items.map(it => (
-                                                                            <SelectItem key={it.id} value={String(it.id)}>
-                                                                                {it.name} ({it.unit?.abbreviation || 'unit'})
-                                                                            </SelectItem>
-                                                                        ))}
-                                                                    </SelectContent>
-                                                                </Select>
+                                                                <SmartSelect 
+                                                                    options={items.map(it => ({ value: String(it.id), label: `${it.name} (${it.unit?.abbreviation || 'unit'})` }))}
+                                                                    value={row.item_id ? String(row.item_id) : undefined}
+                                                                    onValueChange={val => handleItemChange(idx, 'item_id', val)}
+                                                                    placeholder="Select Item"
+                                                                    className="h-8 text-xs bg-background"
+                                                                />
                                                             </td>
                                                             <td className="p-2.5">
                                                                 <Input 

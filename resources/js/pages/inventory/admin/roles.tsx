@@ -213,6 +213,7 @@ return;
                                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 pb-4">
                                                         {permList.map((perm) => {
                                                             const isChecked = addForm.data.permissions.includes(perm.id);
+
                                                             return (
                                                                 <div key={perm.id} className="flex items-start space-x-3 rounded-md border p-3 bg-background">
                                                                     <Switch 
@@ -350,6 +351,7 @@ return;
                                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 pb-4">
                                                         {permList.map((perm) => {
                                                             const isChecked = editForm.data.permissions.includes(perm.id);
+
                                                             return (
                                                                 <div key={perm.id} className="flex items-start space-x-3 rounded-md border p-3 bg-background">
                                                                     <Switch 

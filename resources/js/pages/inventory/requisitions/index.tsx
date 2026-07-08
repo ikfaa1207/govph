@@ -1,5 +1,5 @@
 import { Head, useForm, setLayoutProps } from '@inertiajs/react';
-import { PlusCircle, X, ClipboardCheck, Package2, ShieldAlert, Printer, Eye, ClipboardList, ChevronDown } from 'lucide-react';
+import { PlusCircle, X, ClipboardCheck, Package2, ShieldAlert, Printer, Eye, ClipboardList, ChevronDown, Plus, Minus } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
@@ -9,7 +9,9 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { SmartSelect } from '@/components/ui/smart-select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 interface RequisitionItem {
@@ -255,26 +257,21 @@ return;
                                                 {requestForm.data.items.map((item, idx) => (
                                                     <TableRow key={idx}>
                                                         <TableCell className="p-2.5">
-                                                            <Select
-                                                                value={String(item.item_id)}
+                                                            <SmartSelect
+                                                                options={items.map(i => ({
+                                                                    value: String(i.id),
+                                                                    label: `${i.name} (Qty Available: ${i.current_stock} ${i.unit})`
+                                                                }))}
+                                                                value={item.item_id ? String(item.item_id) : undefined}
                                                                 onValueChange={val => {
                                                                     const newItems = [...requestForm.data.items];
                                                                     newItems[idx].item_id = val;
                                                                     requestForm.setData('items', newItems);
                                                                 }}
-                                                                required
-                                                            >
-                                                                <SelectTrigger className="w-full h-8 text-xs">
-                                                                    <SelectValue placeholder="Select Item" />
-                                                                </SelectTrigger>
-                                                                <SelectContent>
-                                                                    {items.map(i => (
-                                                                        <SelectItem key={i.id} value={String(i.id)}>
-                                                                            {i.name} (Qty Available: {i.current_stock} {i.unit})
-                                                                        </SelectItem>
-                                                                    ))}
-                                                                </SelectContent>
-                                                            </Select>
+                                                                placeholder="Select Item"
+                                                                className="w-full h-8 text-xs bg-background"
+                                                                searchThreshold={20}
+                                                            />
                                                         </TableCell>
                                                         <TableCell className="p-2.5">
                                                             <Input
@@ -481,45 +478,76 @@ return;
 
                 {/* Dialog: Dept Head Approval Forms */}
                 <Dialog open={isApproveOpen} onOpenChange={setIsApproveOpen}>
-                    <DialogContent>
+                    <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col">
                         <DialogHeader>
                             <DialogTitle>Authorize Requisition Slip (RIS)</DialogTitle>
                             <DialogDescription>Review the requested quantities and authorize the department approval.</DialogDescription>
                         </DialogHeader>
                         {selectedReq && (
                             <form onSubmit={handleApproveSubmit} className="space-y-4">
-                                <div className="space-y-3">
-                                    {selectedReq.items.map((item) => {
-                                        const formItem = approveForm.data.items.find(i => i.id === item.id);
+                                <div className="max-h-[60vh] overflow-y-auto pr-2">
+                                    <div className="space-y-3">
+                                        {selectedReq.items.map((item) => {
+                                            const formItem = approveForm.data.items.find(i => i.id === item.id);
+                                            const maxQty = item.quantity_requested;
+                                            const currentQty = formItem?.quantity_approved ?? 0;
 
-                                        return (
-                                            <div key={item.id} className="flex justify-between items-center gap-4">
-                                                <div className="flex-1 text-sm font-semibold">{item.item.name}</div>
-                                                <div className="text-xs text-muted-foreground">Requested: {item.quantity_requested}</div>
-                                                <div className="w-24">
-                                                    <Label className="text-xs">Approve Qty</Label>
-                                                    <Input
-                                                        type="number"
-                                                        min="0"
-                                                        max={item.quantity_requested}
-                                                        value={formItem?.quantity_approved ?? 0}
-                                                        onChange={e => {
-                                                            const newItems = [...approveForm.data.items];
-                                                            const target = newItems.find(i => i.id === item.id);
+                                            return (
+                                                <div key={item.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 border rounded-lg bg-card shadow-sm">
+                                                    <div className="flex-1">
+                                                        <div className="text-sm font-semibold">{item.item.name}</div>
+                                                        <div className="text-xs text-muted-foreground mt-1">Requested: <span className="font-medium text-foreground">{item.quantity_requested}</span> {item.item.unit?.abbreviation || 'pcs'}</div>
+                                                    </div>
+                                                    <div className="flex items-center gap-3">
+                                                        <Label className="text-xs font-medium text-muted-foreground hidden sm:block">Approve Qty:</Label>
+                                                        <div className="flex items-center border rounded-md shadow-sm bg-background">
+                                                            <Button 
+                                                                type="button" 
+                                                                variant="ghost" 
+                                                                size="icon"
+                                                                className="h-8 w-8 rounded-none border-r hover:bg-muted"
+                                                                onClick={() => {
+                                                                    const newItems = [...approveForm.data.items];
+                                                                    const target = newItems.find(i => i.id === item.id);
 
-                                                            if (target) {
-                                                                target.quantity_approved = parseInt(e.target.value);
-                                                            }
+                                                                    if (target && target.quantity_approved > 0) {
+                                                                        target.quantity_approved--;
+                                                                        approveForm.setData('items', newItems);
+                                                                    }
+                                                                }}
+                                                                disabled={currentQty <= 0}
+                                                            >
+                                                                <Minus className="h-3 w-3" />
+                                                            </Button>
+                                                            <div className="w-12 text-center text-sm font-medium">
+                                                                {currentQty}
+                                                            </div>
+                                                            <Button 
+                                                                type="button" 
+                                                                variant="ghost" 
+                                                                size="icon"
+                                                                className="h-8 w-8 rounded-none border-l hover:bg-muted"
+                                                                onClick={() => {
+                                                                    const newItems = [...approveForm.data.items];
+                                                                    const target = newItems.find(i => i.id === item.id);
 
-                                                            approveForm.setData('items', newItems);
-                                                        }}
-                                                    />
+                                                                    if (target && target.quantity_approved < maxQty) {
+                                                                        target.quantity_approved++;
+                                                                        approveForm.setData('items', newItems);
+                                                                    }
+                                                                }}
+                                                                disabled={currentQty >= maxQty}
+                                                            >
+                                                                <Plus className="h-3 w-3" />
+                                                            </Button>
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        );
-                                    })}
+                                            );
+                                        })}
+                                    </div>
                                 </div>
-                                <div className="flex justify-end gap-2 pt-2">
+                                <div className="flex justify-end gap-2 pt-2 border-t pt-4">
                                     <Button type="button" variant="outline" onClick={() => setIsApproveOpen(false)}>Cancel</Button>
                                     <Button type="submit" disabled={approveForm.processing} className="bg-indigo-600 hover:bg-indigo-700 text-white">Approve & Sign</Button>
                                 </div>
@@ -530,60 +558,89 @@ return;
 
                 {/* Dialog: Supply Officer Issuance Forms */}
                 <Dialog open={isIssueOpen} onOpenChange={setIsIssueOpen}>
-                    <DialogContent>
+                    <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col">
                         <DialogHeader>
                             <DialogTitle>Issue Supplies to Employee</DialogTitle>
                             <DialogDescription>Validate quantities and process stock-out cards.</DialogDescription>
                         </DialogHeader>
                         {selectedReq && (
                             <form onSubmit={handleIssueSubmit} className="space-y-4">
-                                <div className="space-y-3">
-                                    {selectedReq.items.map((item) => {
-                                        const formItem = issueForm.data.items.find(i => i.id === item.id);
-                                        const maxToIssue = item.quantity_approved - item.quantity_issued;
-                                        const currentStock = item.item.current_stock;
-                                        const isInsufficient = currentStock < (formItem?.quantity_issued ?? 0);
+                                <div className="max-h-[60vh] overflow-y-auto pr-2">
+                                    <div className="space-y-3">
+                                        {selectedReq.items.map((item) => {
+                                            const formItem = issueForm.data.items.find(i => i.id === item.id);
+                                            const maxToIssue = item.quantity_approved - item.quantity_issued;
+                                            const currentStock = item.item.current_stock;
+                                            const currentQty = formItem?.quantity_issued ?? 0;
+                                            const isInsufficient = currentStock < currentQty;
 
-                                        return (
-                                            <div key={item.id} className="border-b border-border pb-3 last:border-0 last:pb-0 space-y-1">
-                                                <div className="flex justify-between items-center">
-                                                    <div className="text-sm font-semibold">{item.item.name}</div>
-                                                    <div className="text-xs text-muted-foreground">Approved: {item.quantity_approved} (Already Issued: {item.quantity_issued})</div>
-                                                </div>
-                                                <div className="flex items-center gap-4">
-                                                    <div className="text-xs text-muted-foreground flex-1">
-                                                        Warehouse Stock: <span className="font-bold">{currentStock}</span>
+                                            return (
+                                                <div key={item.id} className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 border rounded-lg shadow-sm ${isInsufficient ? 'bg-destructive/10 border-destructive' : 'bg-card'}`}>
+                                                    <div className="flex-1">
+                                                        <div className="text-sm font-semibold">{item.item.name}</div>
+                                                        <div className="text-xs text-muted-foreground mt-1">
+                                                            Approved: <span className="font-medium text-foreground">{item.quantity_approved}</span> {item.item.unit?.abbreviation || 'pcs'} 
+                                                            <span className="text-muted-foreground/80 ml-1">(Issued: {item.quantity_issued})</span>
+                                                        </div>
+                                                        <div className={`text-xs mt-1 flex flex-col ${isInsufficient ? 'text-destructive font-medium' : 'text-muted-foreground'}`}>
+                                                            <span>Warehouse Stock: <span className="font-bold">{currentStock}</span></span>
+                                                            {isInsufficient && (
+                                                                <span className="text-[10px] flex items-center gap-1 mt-1">
+                                                                    <ShieldAlert className="h-3 w-3" /> Insufficient stock in warehouse!
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                     </div>
-                                                    <div className="w-24">
-                                                        <Label className="text-xs">Issue Qty</Label>
-                                                        <Input
-                                                            type="number"
-                                                            min="0"
-                                                            max={maxToIssue}
-                                                            value={formItem?.quantity_issued ?? 0}
-                                                            onChange={e => {
-                                                                const newItems = [...issueForm.data.items];
-                                                                const target = newItems.find(i => i.id === item.id);
+                                                    <div className="flex items-center gap-3">
+                                                        <Label className={`text-xs font-medium hidden sm:block ${isInsufficient ? 'text-destructive' : 'text-muted-foreground'}`}>Issue Qty:</Label>
+                                                        <div className={`flex items-center border rounded-md shadow-sm bg-background ${isInsufficient ? 'border-destructive' : ''}`}>
+                                                            <Button 
+                                                                type="button" 
+                                                                variant="ghost" 
+                                                                size="icon"
+                                                                className={`h-8 w-8 rounded-none border-r hover:bg-muted ${isInsufficient ? 'border-destructive' : ''}`}
+                                                                onClick={() => {
+                                                                    const newItems = [...issueForm.data.items];
+                                                                    const target = newItems.find(i => i.id === item.id);
 
-                                                                if (target) {
-                                                                    target.quantity_issued = parseInt(e.target.value);
-                                                                }
+                                                                    if (target && target.quantity_issued > 0) {
+                                                                        target.quantity_issued--;
+                                                                        issueForm.setData('items', newItems);
+                                                                    }
+                                                                }}
+                                                                disabled={currentQty <= 0}
+                                                            >
+                                                                <Minus className="h-3 w-3" />
+                                                            </Button>
+                                                            <div className={`w-12 text-center text-sm font-medium ${isInsufficient ? 'text-destructive' : ''}`}>
+                                                                {currentQty}
+                                                            </div>
+                                                            <Button 
+                                                                type="button" 
+                                                                variant="ghost" 
+                                                                size="icon"
+                                                                className={`h-8 w-8 rounded-none border-l hover:bg-muted ${isInsufficient ? 'border-destructive' : ''}`}
+                                                                onClick={() => {
+                                                                    const newItems = [...issueForm.data.items];
+                                                                    const target = newItems.find(i => i.id === item.id);
 
-                                                                issueForm.setData('items', newItems);
-                                                            }}
-                                                        />
+                                                                    if (target && target.quantity_issued < maxToIssue) {
+                                                                        target.quantity_issued++;
+                                                                        issueForm.setData('items', newItems);
+                                                                    }
+                                                                }}
+                                                                disabled={currentQty >= maxToIssue}
+                                                            >
+                                                                <Plus className="h-3 w-3" />
+                                                            </Button>
+                                                        </div>
                                                     </div>
                                                 </div>
-                                                {isInsufficient && (
-                                                    <p className="text-[10px] text-rose-500 flex items-center gap-1">
-                                                        <ShieldAlert className="h-3 w-3" /> Insufficient stock in warehouse!
-                                                    </p>
-                                                )}
-                                            </div>
-                                        );
-                                    })}
+                                            );
+                                        })}
+                                    </div>
                                 </div>
-                                <div className="flex justify-end gap-2 pt-2">
+                                <div className="flex justify-end gap-2 pt-2 border-t pt-4">
                                     <Button type="button" variant="outline" onClick={() => setIsIssueOpen(false)}>Cancel</Button>
                                     <Button type="submit" disabled={issueForm.processing} className="bg-emerald-600 hover:bg-emerald-700 text-white">Confirm Issuance</Button>
                                 </div>

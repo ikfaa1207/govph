@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { SmartSelect } from '@/components/ui/smart-select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 interface ReportType {
@@ -89,20 +90,16 @@ export default function ReportsIndex({ reportTypes }: ReportsIndexProps) {
                         <div className="grid gap-4 md:grid-cols-3 items-end">
                             <div className="space-y-1">
                                 <Label>Report Template</Label>
-                                <Select 
+                                <SmartSelect 
+                                    options={reportTypes.map(r => ({ value: String(r.id), label: r.name }))}
                                     value={selectedType}
                                     onValueChange={val => {
                                         setSelectedType(val);
                                         setReportData([]);
                                     }}
-                                >
-                                    <SelectTrigger className="w-full">
-                                        <SelectValue placeholder="Select Report Type" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {reportTypes.map(r => <SelectItem key={r.id} value={String(r.id)}>{r.name}</SelectItem>)}
-                                    </SelectContent>
-                                </Select>
+                                    placeholder="Select Report Type"
+                                    className="w-full"
+                                />
                             </div>
 
                             {selectedType === 'stock_ledger' && (

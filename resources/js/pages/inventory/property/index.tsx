@@ -7,12 +7,13 @@ import { SimplePagination } from '@/components/simple-pagination';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { DatePicker } from '@/components/ui/date-picker';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { DatePicker } from '@/components/ui/date-picker';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { SmartSelect } from '@/components/ui/smart-select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { usePermissions } from '@/hooks/use-permissions';
 
@@ -304,14 +305,13 @@ return;
                                         </div>
                                         <div className="space-y-1">
                                             <Label htmlFor="cat">Category *</Label>
-                                            <Select value={String(addForm.data.category_id)} onValueChange={val => addForm.setData('category_id', val)} required>
-                                                <SelectTrigger className="w-full">
-                                                    <SelectValue placeholder="Select Category" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {categories.map(c => <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>)}
-                                                </SelectContent>
-                                            </Select>
+                                            <SmartSelect 
+                                                options={categories.map(c => ({ value: String(c.id), label: c.name }))}
+                                                value={addForm.data.category_id ? String(addForm.data.category_id) : undefined}
+                                                onValueChange={val => addForm.setData('category_id', val)}
+                                                placeholder="Select Category"
+                                                className="w-full"
+                                            />
                                         </div>
                                     </div>
                                     <div className="grid grid-cols-2 gap-4">
@@ -566,14 +566,14 @@ return;
                                 {!assignForm.data.is_non_system ? (
                                     <div className="space-y-1">
                                         <Label htmlFor="assignee">Employee *</Label>
-                                        <Select value={String(assignForm.data.assigned_to)} onValueChange={val => assignForm.setData('assigned_to', val)} required={!assignForm.data.is_non_system}>
-                                            <SelectTrigger className="w-full">
-                                                <SelectValue placeholder="Select Employee" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {employees.map(e => <SelectItem key={e.id} value={String(e.id)}>{e.name} ({e.position})</SelectItem>)}
-                                            </SelectContent>
-                                        </Select>
+                                        <SmartSelect 
+                                            options={employees.map(e => ({ value: String(e.id), label: `${e.name} (${e.position})` }))}
+                                            value={assignForm.data.assigned_to ? String(assignForm.data.assigned_to) : undefined}
+                                            onValueChange={val => assignForm.setData('assigned_to', val)}
+                                            placeholder="Select Employee"
+                                            className="w-full"
+                                            disabled={assignForm.data.is_non_system}
+                                        />
                                         {assignForm.errors.assigned_to && (
                                             <p className="text-xs text-destructive">{assignForm.errors.assigned_to}</p>
                                         )}
@@ -636,26 +636,24 @@ return;
                             <form onSubmit={handleTransferSubmit} className="space-y-4">
                                 <div className="space-y-1">
                                     <Label htmlFor="new_assignee">Recipient Employee *</Label>
-                                    <Select value={String(transferForm.data.to_employee_id)} onValueChange={val => transferForm.setData('to_employee_id', val)} required>
-                                        <SelectTrigger className="w-full">
-                                            <SelectValue placeholder="Select Recipient" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {employees.map(e => <SelectItem key={e.id} value={String(e.id)}>{e.name} ({e.position})</SelectItem>)}
-                                        </SelectContent>
-                                    </Select>
+                                    <SmartSelect 
+                                        options={employees.map(e => ({ value: String(e.id), label: `${e.name} (${e.position})` }))}
+                                        value={transferForm.data.to_employee_id ? String(transferForm.data.to_employee_id) : undefined}
+                                        onValueChange={val => transferForm.setData('to_employee_id', val)}
+                                        placeholder="Select Recipient"
+                                        className="w-full"
+                                    />
                                 </div>
 
                                 <div className="space-y-1">
                                     <Label htmlFor="office">Target Office *</Label>
-                                    <Select value={String(transferForm.data.office_id)} onValueChange={val => transferForm.setData('office_id', val)} required>
-                                        <SelectTrigger className="w-full">
-                                            <SelectValue placeholder="Select Office" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {offices.map(o => <SelectItem key={o.id} value={String(o.id)}>{o.name}</SelectItem>)}
-                                        </SelectContent>
-                                    </Select>
+                                    <SmartSelect 
+                                        options={offices.map(o => ({ value: String(o.id), label: o.name }))}
+                                        value={transferForm.data.office_id ? String(transferForm.data.office_id) : undefined}
+                                        onValueChange={val => transferForm.setData('office_id', val)}
+                                        placeholder="Select Office"
+                                        className="w-full"
+                                    />
                                 </div>
 
                                 <div className="space-y-1">
