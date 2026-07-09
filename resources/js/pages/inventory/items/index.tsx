@@ -196,7 +196,10 @@ export default function ItemsIndex({ items, categories: initialCategories, units
 
     const handleEditSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!selectedItem) return;
+
+        if (!selectedItem) {
+return;
+}
 
         editForm.put(`/inventory/items/${selectedItem.id}`, {
             onSuccess: () => {
@@ -812,7 +815,7 @@ queryParams.set('search', searchVal);
                                                             </DropdownMenuTrigger>
                                                             <DropdownMenuContent align="end">
                                                                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                                                <Can I="inventory.update">
+                                                                <Can permission="inventory.update">
                                                                     <DropdownMenuItem onClick={() => handleEditItem(item)} className="cursor-pointer">
                                                                         <Eye className="mr-2 h-4 w-4 text-emerald-500" /> Edit Details
                                                                     </DropdownMenuItem>
@@ -822,7 +825,7 @@ queryParams.set('search', searchVal);
                                                                         <Eye className="mr-2 h-4 w-4 text-sky-500" /> View Ledger Card
                                                                     </Link>
                                                                 </DropdownMenuItem>
-                                                                <Can I="inventory.delete">
+                                                                <Can permission="inventory.delete">
                                                                     <DropdownMenuItem onClick={() => handleArchiveItem(item)} className="cursor-pointer text-destructive focus:bg-destructive/10 focus:text-destructive">
                                                                         <Eye className="mr-2 h-4 w-4" /> Archive Item
                                                                     </DropdownMenuItem>

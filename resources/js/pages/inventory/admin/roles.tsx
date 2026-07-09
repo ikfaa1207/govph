@@ -13,6 +13,19 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
+const formatPermissionName = (name: string) => {
+    const map: Record<string, string> = {
+        'inventory.create': 'Manage Catalogue: Add Items',
+        'inventory.update': 'Manage Catalogue: Edit Items',
+        'inventory.delete': 'Manage Catalogue: Archive Items',
+        'inventory.view': 'View Catalogue',
+    };
+    if (map[name]) return map[name];
+    
+    // Fallback: capitalize and replace dots with spaces
+    return name.split('.').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+};
+
 interface Permission {
     id: number;
     name: string;
@@ -226,7 +239,7 @@ return;
                                                                             htmlFor={`add-perm-${perm.id}`}
                                                                             className="font-semibold cursor-pointer"
                                                                         >
-                                                                            {perm.name}
+                                                                            {formatPermissionName(perm.name)}
                                                                         </Label>
                                                                         <p className="text-[11px] text-muted-foreground mt-1 leading-snug">{perm.description}</p>
                                                                     </div>
@@ -364,7 +377,7 @@ return;
                                                                             htmlFor={`edit-perm-${perm.id}`}
                                                                             className="font-semibold cursor-pointer"
                                                                         >
-                                                                            {perm.name}
+                                                                            {formatPermissionName(perm.name)}
                                                                         </Label>
                                                                         <p className="text-[11px] text-muted-foreground mt-1 leading-snug">{perm.description}</p>
                                                                     </div>
