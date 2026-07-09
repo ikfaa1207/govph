@@ -209,11 +209,11 @@ return;
                             </DialogHeader>
                             <form onSubmit={handleAddSubmit} className="space-y-4">
                                 <div className="space-y-1">
-                                    <Label htmlFor="rname">Role Name *</Label>
+                                    <Label htmlFor="rname" required>Role Name</Label>
                                     <Input id="rname" value={addForm.data.name} onChange={e => addForm.setData('name', e.target.value)} required />
                                 </div>
                                 <div className="space-y-1">
-                                    <Label htmlFor="rdesc">Description</Label>
+                                    <Label htmlFor="rdesc" required>Description</Label>
                                     <Input id="rdesc" value={addForm.data.description} onChange={e => addForm.setData('description', e.target.value)} />
                                 </div>
 
@@ -346,11 +346,11 @@ return;
                             <form onSubmit={handleEditSubmit} className="space-y-4">
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-1">
-                                        <Label htmlFor="ename">Role Name *</Label>
+                                        <Label htmlFor="ename">Role Name</Label>
                                         <Input id="ename" value={editForm.data.name} onChange={e => editForm.setData('name', e.target.value)} required />
                                     </div>
                                     <div className="space-y-1">
-                                        <Label htmlFor="edesc">Description</Label>
+                                        <Label htmlFor="edesc" required>Description</Label>
                                         <Input id="edesc" value={editForm.data.description} onChange={e => editForm.setData('description', e.target.value)} />
                                     </div>
                                 </div>
@@ -413,7 +413,7 @@ return;
                         {selectedRole && (
                             <form onSubmit={handleCloneSubmit} className="space-y-4">
                                 <div className="space-y-1">
-                                    <Label htmlFor="cname">New Role Name *</Label>
+                                    <Label htmlFor="cname">New Role Name</Label>
                                     <Input id="cname" value={cloneForm.data.name} onChange={e => cloneForm.setData('name', e.target.value)} required />
                                 </div>
                                 <div className="space-y-1">

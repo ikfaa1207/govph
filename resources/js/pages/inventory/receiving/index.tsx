@@ -235,7 +235,7 @@ export default function ReceivingIndex({ reports, suppliers: initialSuppliers, e
                                         </div>
                                         <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
                                             <div className="space-y-2">
-                                                <Label htmlFor="po_number" className="text-xs font-semibold">Purchase Order No. *</Label>
+                                                <Label htmlFor="po_number" className="text-xs font-semibold" required>Purchase Order No.</Label>
                                                 <Input 
                                                     id="po_number" 
                                                     placeholder="e.g. PO-2026-0032" 
@@ -246,7 +246,7 @@ export default function ReceivingIndex({ reports, suppliers: initialSuppliers, e
                                                 {errors.po_number && <p className="text-xs text-rose-500">{errors.po_number}</p>}
                                             </div>
                                             <div className="space-y-2">
-                                                <Label htmlFor="supplier" className="text-xs font-semibold">Supplier *</Label>
+                                                <Label htmlFor="supplier" className="text-xs font-semibold" required>Supplier</Label>
                                                 <div className="flex gap-1.5">
                                                     <SmartSelect 
                                                         options={suppliers.map(s => ({ value: String(s.id), label: s.name }))}
@@ -269,7 +269,7 @@ export default function ReceivingIndex({ reports, suppliers: initialSuppliers, e
                                                 {errors.supplier_id && <p className="text-xs text-rose-500">{errors.supplier_id}</p>}
                                             </div>
                                             <div className="space-y-2">
-                                                <Label htmlFor="po_date" className="text-xs font-semibold">Purchase Order Date *</Label>
+                                                <Label htmlFor="po_date" className="text-xs font-semibold" required>Purchase Order Date</Label>
                                                 <DatePicker
                                                     value={data.po_date}
                                                     onChange={val => setData('po_date', val)}
@@ -290,7 +290,7 @@ export default function ReceivingIndex({ reports, suppliers: initialSuppliers, e
                                         </div>
                                         <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
                                             <div className="space-y-2">
-                                                <Label htmlFor="iar_number" className="text-xs font-semibold">IAR Number *</Label>
+                                                <Label htmlFor="iar_number" className="text-xs font-semibold" required>IAR Number</Label>
                                                 <Input 
                                                     id="iar_number" 
                                                     value={data.iar_number}
@@ -300,7 +300,7 @@ export default function ReceivingIndex({ reports, suppliers: initialSuppliers, e
                                                 {errors.iar_number && <p className="text-xs text-rose-500">{errors.iar_number}</p>}
                                             </div>
                                             <div className="space-y-2">
-                                                <Label htmlFor="delivery_receipt" className="text-xs font-semibold">Delivery Receipt No. *</Label>
+                                                <Label htmlFor="delivery_receipt" className="text-xs font-semibold" required>Delivery Receipt No.</Label>
                                                 <Input 
                                                     id="delivery_receipt" 
                                                     placeholder="e.g. DR-88219" 
@@ -311,7 +311,7 @@ export default function ReceivingIndex({ reports, suppliers: initialSuppliers, e
                                                 {errors.delivery_receipt_number && <p className="text-xs text-rose-500">{errors.delivery_receipt_number}</p>}
                                             </div>
                                             <div className="space-y-2">
-                                                <Label htmlFor="invoice_number" className="text-xs font-semibold">Invoice Number</Label>
+                                                <Label htmlFor="invoice_number" className="text-xs font-semibold" required>Invoice Number</Label>
                                                 <Input 
                                                     id="invoice_number" 
                                                     placeholder="e.g. INV-9902" 
@@ -323,7 +323,7 @@ export default function ReceivingIndex({ reports, suppliers: initialSuppliers, e
                                         </div>
                                         <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
                                             <div className="space-y-2">
-                                                <Label htmlFor="received_date" className="text-xs font-semibold">Received Date *</Label>
+                                                <Label htmlFor="received_date" className="text-xs font-semibold">Received Date</Label>
                                                 <DatePicker
                                                     value={data.received_date}
                                                     onChange={val => setData('received_date', val)}
@@ -332,7 +332,7 @@ export default function ReceivingIndex({ reports, suppliers: initialSuppliers, e
                                                 {errors.received_date && <p className="text-xs text-rose-500">{errors.received_date}</p>}
                                             </div>
                                             <div className="space-y-2">
-                                                <Label htmlFor="received_by" className="text-xs font-semibold">Received By (Supply Unit) *</Label>
+                                                <Label htmlFor="received_by" className="text-xs font-semibold" required>Received By (Supply Unit)</Label>
                                                 <SmartSelect 
                                                     options={employees.map(e => ({ value: String(e.id), label: `${e.name} (${e.position})` }))}
                                                     value={data.received_by ? String(data.received_by) : undefined}
@@ -342,7 +342,7 @@ export default function ReceivingIndex({ reports, suppliers: initialSuppliers, e
                                                 {errors.received_by && <p className="text-xs text-rose-500">{errors.received_by}</p>}
                                             </div>
                                             <div className="space-y-2">
-                                                <Label htmlFor="inspected_by" className="text-xs font-semibold">Inspected By *</Label>
+                                                <Label htmlFor="inspected_by" className="text-xs font-semibold" required>Inspected By</Label>
                                                 <SmartSelect 
                                                     options={employees.map(e => ({ value: String(e.id), label: `${e.name} (${e.position})` }))}
                                                     value={data.inspected_by ? String(data.inspected_by) : undefined}
@@ -460,7 +460,7 @@ export default function ReceivingIndex({ reports, suppliers: initialSuppliers, e
 
                                     {/* Remarks */}
                                     <div className="space-y-2">
-                                        <Label htmlFor="remarks" className="text-xs font-semibold">Remarks / Delivery Notes</Label>
+                                        <Label htmlFor="remarks" className="text-xs font-semibold" required>Remarks / Delivery Notes</Label>
                                         <textarea 
                                             id="remarks" 
                                             className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-hidden min-h-[80px]"
@@ -643,7 +643,7 @@ export default function ReceivingIndex({ reports, suppliers: initialSuppliers, e
                         </DialogHeader>
                         <form onSubmit={handleSupplierSubmit} className="space-y-4">
                             <div className="space-y-1">
-                                <Label htmlFor="sup_name">Supplier Name *</Label>
+                                <Label htmlFor="sup_name">Supplier Name</Label>
                                 <Input 
                                     id="sup_name" 
                                     value={supplierHttp.data.name} 
@@ -653,7 +653,7 @@ export default function ReceivingIndex({ reports, suppliers: initialSuppliers, e
                                 {supplierHttp.errors.name && <p className="text-xs text-rose-500">{supplierHttp.errors.name}</p>}
                             </div>
                             <div className="space-y-1">
-                                <Label htmlFor="sup_tin">TIN (Taxpayer Identification No.) *</Label>
+                                <Label htmlFor="sup_tin" required>TIN (Taxpayer Identification No.)</Label>
                                 <Input 
                                     id="sup_tin" 
                                     placeholder="e.g. 123-456-789-000"
@@ -664,7 +664,7 @@ export default function ReceivingIndex({ reports, suppliers: initialSuppliers, e
                                 {supplierHttp.errors.tin && <p className="text-xs text-rose-500">{supplierHttp.errors.tin}</p>}
                             </div>
                             <div className="space-y-1">
-                                <Label htmlFor="sup_contact_person">Contact Person *</Label>
+                                <Label htmlFor="sup_contact_person" required>Contact Person</Label>
                                 <Input 
                                     id="sup_contact_person" 
                                     value={supplierHttp.data.contact_person} 
@@ -673,7 +673,7 @@ export default function ReceivingIndex({ reports, suppliers: initialSuppliers, e
                                 />
                             </div>
                             <div className="space-y-1">
-                                <Label htmlFor="sup_contact_number">Contact Number</Label>
+                                <Label htmlFor="sup_contact_number" required>Contact Number</Label>
                                 <Input 
                                     id="sup_contact_number" 
                                     value={supplierHttp.data.contact_number} 
@@ -681,7 +681,7 @@ export default function ReceivingIndex({ reports, suppliers: initialSuppliers, e
                                 />
                             </div>
                             <div className="space-y-1">
-                                <Label htmlFor="sup_address">Office Address *</Label>
+                                <Label htmlFor="sup_address">Office Address</Label>
                                 <textarea 
                                     id="sup_address" 
                                     className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-hidden"

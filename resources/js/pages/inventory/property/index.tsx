@@ -286,25 +286,25 @@ return;
                                 <form onSubmit={handleAddSubmit} className="space-y-4">
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-1">
-                                            <Label htmlFor="brand">Brand *</Label>
+                                            <Label htmlFor="brand" required>Brand</Label>
                                             <Input id="brand" value={addForm.data.brand} onChange={e => addForm.setData('brand', e.target.value)} required />
                                         </div>
                                         <div className="space-y-1">
-                                            <Label htmlFor="model">Model *</Label>
+                                            <Label htmlFor="model" required>Model</Label>
                                             <Input id="model" value={addForm.data.model} onChange={e => addForm.setData('model', e.target.value)} required />
                                         </div>
                                     </div>
                                     <div className="space-y-1">
-                                        <Label htmlFor="serial">Serial Number *</Label>
+                                        <Label htmlFor="serial" required>Serial Number</Label>
                                         <Input id="serial" value={addForm.data.serial_number} onChange={e => addForm.setData('serial_number', e.target.value)} required />
                                     </div>
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-1">
-                                            <Label htmlFor="cost">Unit Cost (PHP) *</Label>
+                                            <Label htmlFor="cost" required>Unit Cost (PHP)</Label>
                                             <Input id="cost" type="number" value={addForm.data.unit_cost} onChange={e => addForm.setData('unit_cost', parseFloat(e.target.value))} required />
                                         </div>
                                         <div className="space-y-1">
-                                            <Label htmlFor="cat">Category *</Label>
+                                            <Label htmlFor="cat" required>Category</Label>
                                             <SmartSelect 
                                                 options={categories.map(c => ({ value: String(c.id), label: c.name }))}
                                                 value={addForm.data.category_id ? String(addForm.data.category_id) : undefined}
@@ -316,7 +316,7 @@ return;
                                     </div>
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-1">
-                                            <Label htmlFor="acq">Acquisition Date *</Label>
+                                            <Label htmlFor="acq" required>Acquisition Date</Label>
                                             <DatePicker 
                                                 value={addForm.data.date_acquired} 
                                                 onChange={val => addForm.setData('date_acquired', val)} 
@@ -324,7 +324,7 @@ return;
                                             />
                                         </div>
                                         <div className="space-y-1">
-                                            <Label htmlFor="war">Warranty Expiration</Label>
+                                            <Label htmlFor="war" required>Warranty Expiration</Label>
                                             <DatePicker 
                                                 value={addForm.data.warranty_expiration} 
                                                 onChange={val => addForm.setData('warranty_expiration', val)} 
@@ -565,7 +565,7 @@ return;
 
                                 {!assignForm.data.is_non_system ? (
                                     <div className="space-y-1">
-                                        <Label htmlFor="assignee">Employee *</Label>
+                                        <Label htmlFor="assignee">Employee</Label>
                                         <SmartSelect 
                                             options={employees.map(e => ({ value: String(e.id), label: `${e.name} (${e.position})` }))}
                                             value={assignForm.data.assigned_to ? String(assignForm.data.assigned_to) : undefined}
@@ -581,7 +581,7 @@ return;
                                 ) : (
                                     <div className="space-y-3">
                                         <div className="space-y-1">
-                                            <Label htmlFor="non_system_name">Full Name *</Label>
+                                            <Label htmlFor="non_system_name" required>Full Name</Label>
                                             <Input
                                                 id="non_system_name"
                                                 type="text"
@@ -595,7 +595,7 @@ return;
                                             )}
                                         </div>
                                         <div className="space-y-1">
-                                            <Label htmlFor="non_system_department">Department / Office / Agency *</Label>
+                                            <Label htmlFor="non_system_department" required>Department / Office / Agency</Label>
                                             <Input
                                                 id="non_system_department"
                                                 type="text"
@@ -612,7 +612,7 @@ return;
                                 )}
 
                                 <div className="space-y-1">
-                                    <Label htmlFor="rem">Remarks</Label>
+                                    <Label htmlFor="rem" required>Remarks</Label>
                                     <textarea id="rem" className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-hidden" value={assignForm.data.remarks} onChange={e => assignForm.setData('remarks', e.target.value)} />
                                 </div>
 
@@ -635,7 +635,7 @@ return;
                         {selectedProp && (
                             <form onSubmit={handleTransferSubmit} className="space-y-4">
                                 <div className="space-y-1">
-                                    <Label htmlFor="new_assignee">Recipient Employee *</Label>
+                                    <Label htmlFor="new_assignee">Recipient Employee</Label>
                                     <SmartSelect 
                                         options={employees.map(e => ({ value: String(e.id), label: `${e.name} (${e.position})` }))}
                                         value={transferForm.data.to_employee_id ? String(transferForm.data.to_employee_id) : undefined}
@@ -646,7 +646,7 @@ return;
                                 </div>
 
                                 <div className="space-y-1">
-                                    <Label htmlFor="office">Target Office *</Label>
+                                    <Label htmlFor="office" required>Target Office</Label>
                                     <SmartSelect 
                                         options={offices.map(o => ({ value: String(o.id), label: o.name }))}
                                         value={transferForm.data.office_id ? String(transferForm.data.office_id) : undefined}
@@ -657,7 +657,7 @@ return;
                                 </div>
 
                                 <div className="space-y-1">
-                                    <Label htmlFor="reason">Reason for Transfer *</Label>
+                                    <Label htmlFor="reason" required>Reason for Transfer</Label>
                                     <textarea id="reason" className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-hidden" value={transferForm.data.reason} onChange={e => transferForm.setData('reason', e.target.value)} required />
                                 </div>
 
@@ -681,7 +681,7 @@ return;
                             <form onSubmit={handleDisposeSubmit} className="space-y-4">
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-1">
-                                        <Label htmlFor="method">Disposal Method *</Label>
+                                        <Label htmlFor="method" required>Disposal Method</Label>
                                         <Select value={String(disposeForm.data.disposal_method)} onValueChange={val => disposeForm.setData('disposal_method', val as any)} required>
                                             <SelectTrigger className="w-full">
                                                 <SelectValue placeholder="Select Method" />
@@ -695,7 +695,7 @@ return;
                                         </Select>
                                     </div>
                                     <div className="space-y-1">
-                                        <Label htmlFor="disp_reason">Reason *</Label>
+                                        <Label htmlFor="disp_reason" required>Reason</Label>
                                         <Select value={String(disposeForm.data.reason)} onValueChange={val => disposeForm.setData('reason', val as any)} required>
                                             <SelectTrigger className="w-full">
                                                 <SelectValue placeholder="Select Reason" />
@@ -712,7 +712,7 @@ return;
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-1">
-                                        <Label htmlFor="appraise">Appraised Value</Label>
+                                        <Label htmlFor="appraise" required>Appraised Value</Label>
                                         <Input id="appraise" type="number" value={disposeForm.data.appraised_value} onChange={e => disposeForm.setData('appraised_value', parseFloat(e.target.value))} />
                                     </div>
                                     <div className="space-y-1">
@@ -782,7 +782,7 @@ return;
 
                                 {!subAssignForm.data.is_non_system ? (
                                     <div className="space-y-1">
-                                        <Label htmlFor="mr_assignee">Employee *</Label>
+                                        <Label htmlFor="mr_assignee">Employee</Label>
                                         <Select value={String(subAssignForm.data.issued_to)} onValueChange={val => subAssignForm.setData('issued_to', val)} required={!subAssignForm.data.is_non_system}>
                                             <SelectTrigger className="w-full">
                                                 <SelectValue placeholder="Select Employee" />
@@ -798,7 +798,7 @@ return;
                                 ) : (
                                     <div className="space-y-3">
                                         <div className="space-y-1">
-                                            <Label htmlFor="mr_non_system_name">Full Name *</Label>
+                                            <Label htmlFor="mr_non_system_name" required>Full Name</Label>
                                             <Input
                                                 id="mr_non_system_name"
                                                 type="text"

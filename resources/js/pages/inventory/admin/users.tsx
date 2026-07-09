@@ -470,25 +470,25 @@ export default function UsersIndex({ users, roles, offices: initialOffices, depa
                             {/* Personal & Job Details */}
                             <div className="space-y-4">
                                 <div className="space-y-1">
-                                    <Label htmlFor="cname" className="text-xs font-semibold text-muted-foreground">Full Name <span className="text-rose-500 font-bold ml-0.5">*</span></Label>
+                                    <Label htmlFor="cname" className="text-xs font-semibold text-muted-foreground" required>Full Name </Label>
                                     <Input id="cname" value={createForm.data.name} onChange={e => createForm.setData('name', e.target.value)} required placeholder="Juan dela Cruz" className="h-9" />
                                     {createForm.errors.name && <p className="text-xs text-rose-500">{createForm.errors.name}</p>}
                                 </div>
 
                                 <div className="space-y-1">
-                                    <Label htmlFor="cemail" className="text-xs font-semibold text-muted-foreground">Email Address <span className="text-rose-500 font-bold ml-0.5">*</span></Label>
+                                    <Label htmlFor="cemail" className="text-xs font-semibold text-muted-foreground" required>Email Address </Label>
                                     <Input id="cemail" type="email" value={createForm.data.email} onChange={e => createForm.setData('email', e.target.value)} required placeholder="email@example.gov.ph" className="h-9" />
                                     {createForm.errors.email && <p className="text-xs text-rose-500">{createForm.errors.email}</p>}
                                 </div>
 
                                 <div className="space-y-1">
-                                    <Label htmlFor="cpassword" className="text-xs font-semibold text-muted-foreground">Temp Password <span className="text-rose-500 font-bold ml-0.5">*</span></Label>
+                                    <Label htmlFor="cpassword" className="text-xs font-semibold text-muted-foreground" required>Temp Password </Label>
                                     <Input id="cpassword" type="password" value={createForm.data.password} onChange={e => createForm.setData('password', e.target.value)} required placeholder="At least 12 characters" className="h-9" />
                                     {createForm.errors.password && <p className="text-xs text-rose-500">{createForm.errors.password}</p>}
                                 </div>
 
                                 <div className="space-y-1">
-                                    <Label htmlFor="coffice" className="text-xs font-semibold text-muted-foreground">Office <span className="text-rose-500 font-bold ml-0.5">*</span></Label>
+                                    <Label htmlFor="coffice" className="text-xs font-semibold text-muted-foreground" required>Office </Label>
                                     <div className="flex gap-1.5">
                                         <Select value={String(createForm.data.office_id)} onValueChange={val => createForm.setData('office_id', val)} required>
                                             <SelectTrigger className="flex-1 min-w-0 h-9">
@@ -515,7 +515,7 @@ export default function UsersIndex({ users, roles, offices: initialOffices, depa
                                 </div>
 
                                 <div className="space-y-1">
-                                    <Label htmlFor="cdept" className="text-xs font-semibold text-muted-foreground">Department <span className="text-rose-500 font-bold ml-0.5">*</span></Label>
+                                    <Label htmlFor="cdept" className="text-xs font-semibold text-muted-foreground" required>Department </Label>
                                     <div className="flex gap-1.5">
                                         <Select value={String(createForm.data.department_id)} onValueChange={val => createForm.setData('department_id', val)} required>
                                             <SelectTrigger className="flex-1 min-w-0 h-9">
@@ -539,7 +539,7 @@ export default function UsersIndex({ users, roles, offices: initialOffices, depa
                                 </div>
 
                                 <div className="space-y-1">
-                                    <Label htmlFor="cpos" className="text-xs font-semibold text-muted-foreground">Position / Title</Label>
+                                    <Label htmlFor="cpos" className="text-xs font-semibold text-muted-foreground" required>Position / Title</Label>
                                     <Input id="cpos" value={createForm.data.position} onChange={e => createForm.setData('position', e.target.value)} placeholder="e.g. Supply Officer II" className="h-9" />
                                 </div>
                             </div>
@@ -602,16 +602,16 @@ export default function UsersIndex({ users, roles, offices: initialOffices, depa
                                 <form onSubmit={handleEditSubmit} id="edit-user-form" className="space-y-4">
                                     {/* Personal Info & Job Details */}
                                     <div className="space-y-1">
-                                        <Label htmlFor="uname" className="text-xs font-semibold text-muted-foreground">Full Name <span className="text-rose-500 font-bold ml-0.5">*</span></Label>
+                                        <Label htmlFor="uname" className="text-xs font-semibold text-muted-foreground">Full Name </Label>
                                         <Input id="uname" value={editForm.data.name} onChange={e => editForm.setData('name', e.target.value)} required className="h-9" />
                                     </div>
                                     <div className="space-y-1">
-                                        <Label htmlFor="uemail" className="text-xs font-semibold text-muted-foreground">Email Address <span className="text-rose-500 font-bold ml-0.5">*</span></Label>
+                                        <Label htmlFor="uemail" className="text-xs font-semibold text-muted-foreground" required>Email Address </Label>
                                         <Input id="uemail" type="email" value={editForm.data.email} onChange={e => editForm.setData('email', e.target.value)} required className="h-9" />
                                     </div>
 
                                     <div className="space-y-1">
-                                        <Label htmlFor="uoffice" className="text-xs font-semibold text-muted-foreground">Office</Label>
+                                        <Label htmlFor="uoffice" className="text-xs font-semibold text-muted-foreground" required>Office</Label>
                                         <div className="flex gap-1.5">
                                             <Select value={String(editForm.data.office_id)} onValueChange={val => editForm.setData('office_id', val)}>
                                                 <SelectTrigger className="flex-1 min-w-0 h-9">
@@ -778,7 +778,7 @@ export default function UsersIndex({ users, roles, offices: initialOffices, depa
                         </DialogHeader>
                         <form onSubmit={handleOfficeSubmit} className="space-y-4">
                             <div className="space-y-1">
-                                <Label htmlFor="office_name">Office Name *</Label>
+                                <Label htmlFor="office_name">Office Name</Label>
                                 <Input
                                     id="office_name"
                                     value={officeHttp.data.name}
@@ -788,7 +788,7 @@ export default function UsersIndex({ users, roles, offices: initialOffices, depa
                                 />
                             </div>
                             <div className="space-y-1">
-                                <Label htmlFor="office_code">Office Code *</Label>
+                                <Label htmlFor="office_code" required>Office Code</Label>
                                 <Input
                                     id="office_code"
                                     placeholder="e.g. ORD"
@@ -814,7 +814,7 @@ export default function UsersIndex({ users, roles, offices: initialOffices, depa
                         </DialogHeader>
                         <form onSubmit={handleDepartmentSubmit} className="space-y-4">
                             <div className="space-y-1">
-                                <Label htmlFor="dept_office">Parent Office *</Label>
+                                <Label htmlFor="dept_office" required>Parent Office</Label>
                                 <Select 
                                     value={String(departmentHttp.data.office_id)} 
                                     onValueChange={val => departmentHttp.setData('office_id', val)} 
@@ -829,7 +829,7 @@ export default function UsersIndex({ users, roles, offices: initialOffices, depa
                                 </Select>
                             </div>
                             <div className="space-y-1">
-                                <Label htmlFor="dept_name">Department Name *</Label>
+                                <Label htmlFor="dept_name" required>Department Name</Label>
                                 <Input
                                     id="dept_name"
                                     value={departmentHttp.data.name}
@@ -839,7 +839,7 @@ export default function UsersIndex({ users, roles, offices: initialOffices, depa
                                 />
                             </div>
                             <div className="space-y-1">
-                                <Label htmlFor="dept_code">Department Code *</Label>
+                                <Label htmlFor="dept_code" required>Department Code</Label>
                                 <Input
                                     id="dept_code"
                                     placeholder="e.g. FAD"

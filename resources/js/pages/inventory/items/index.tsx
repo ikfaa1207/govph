@@ -310,18 +310,18 @@ queryParams.set('search', searchVal);
                                 </DialogHeader>
                                 <form onSubmit={handleAddSubmit} className="space-y-4">
                                     <div className="space-y-1">
-                                        <Label htmlFor="name">Item Name *</Label>
+                                        <Label htmlFor="name" required>Item Name</Label>
                                         <Input id="name" value={data.name} onChange={e => setData('name', e.target.value)} required />
                                         {errors.name && <p className="text-xs text-rose-500">{errors.name}</p>}
                                     </div>
                                     <div className="space-y-1">
-                                        <Label htmlFor="stock_number">COA Stock Number</Label>
+                                        <Label htmlFor="stock_number" required>COA Stock Number</Label>
                                         <Input id="stock_number" placeholder="e.g. 501-02-01" value={data.stock_number} onChange={e => setData('stock_number', e.target.value)} />
                                         {errors.stock_number && <p className="text-xs text-rose-500">{errors.stock_number}</p>}
                                     </div>
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-1">
-                                            <Label htmlFor="category">Category *</Label>
+                                            <Label htmlFor="category">Category</Label>
                                             <div className="flex gap-1.5">
                                                 <Select value={String(data.category_id)} onValueChange={val => setData('category_id', val)} required>
                                                     <SelectTrigger className="flex-1">
@@ -345,7 +345,7 @@ queryParams.set('search', searchVal);
                                             {errors.category_id && <p className="text-xs text-rose-500">{errors.category_id}</p>}
                                         </div>
                                         <div className="space-y-1">
-                                             <Label htmlFor="unit">Unit of Measure *</Label>
+                                             <Label htmlFor="unit" required>Unit of Measure</Label>
                                              <div className="flex gap-1.5">
                                                  <Select value={String(data.unit_id)} onValueChange={val => setData('unit_id', val)} required>
                                                      <SelectTrigger className="flex-1">
@@ -371,16 +371,16 @@ queryParams.set('search', searchVal);
                                     </div>
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-1">
-                                            <Label htmlFor="reorder_level">Reorder Level *</Label>
+                                            <Label htmlFor="reorder_level" required>Reorder Level</Label>
                                             <Input id="reorder_level" type="number" value={data.reorder_level} onChange={e => setData('reorder_level', parseInt(e.target.value))} required />
                                         </div>
                                         <div className="space-y-1">
-                                            <Label htmlFor="maximum_stock">Max Stock Level *</Label>
+                                            <Label htmlFor="maximum_stock" required>Max Stock Level</Label>
                                             <Input id="maximum_stock" type="number" value={data.maximum_stock} onChange={e => setData('maximum_stock', parseInt(e.target.value))} required />
                                         </div>
                                     </div>
                                     <div className="space-y-1">
-                                        <Label htmlFor="location">Storage Location</Label>
+                                        <Label htmlFor="location" required>Storage Location</Label>
                                         <div className="flex gap-1.5">
                                             <Select value={String(data.location_id)} onValueChange={val => setData('location_id', val)}>
                                                 <SelectTrigger className="flex-1">
@@ -428,17 +428,17 @@ queryParams.set('search', searchVal);
                                 <form onSubmit={handleEditSubmit} className="space-y-4">
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-1">
-                                            <Label htmlFor="edit_name">Item Name *</Label>
+                                            <Label htmlFor="edit_name">Item Name</Label>
                                             <Input id="edit_name" value={editForm.data.name} onChange={e => editForm.setData('name', e.target.value)} required />
                                         </div>
                                         <div className="space-y-1">
-                                            <Label htmlFor="edit_stock_number">Stock Number (Optional)</Label>
+                                            <Label htmlFor="edit_stock_number" required>Stock Number (Optional)</Label>
                                             <Input id="edit_stock_number" value={editForm.data.stock_number} onChange={e => editForm.setData('stock_number', e.target.value)} />
                                         </div>
                                     </div>
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-1">
-                                            <Label>Category *</Label>
+                                            <Label>Category</Label>
                                             <div className="flex gap-2">
                                                 <div className="flex-1">
                                                     <Select value={editForm.data.category_id} onValueChange={val => editForm.setData('category_id', val)} required>
@@ -453,7 +453,7 @@ queryParams.set('search', searchVal);
                                             </div>
                                         </div>
                                         <div className="space-y-1">
-                                            <Label>Unit of Measurement *</Label>
+                                            <Label required>Unit of Measurement</Label>
                                             <div className="flex gap-2">
                                                 <div className="flex-1">
                                                     <Select value={editForm.data.unit_id} onValueChange={val => editForm.setData('unit_id', val)} required>
@@ -470,7 +470,7 @@ queryParams.set('search', searchVal);
                                     </div>
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-1">
-                                            <Label>Primary Storage Location</Label>
+                                            <Label required>Primary Storage Location</Label>
                                             <div className="flex gap-2">
                                                 <div className="flex-1">
                                                     <Select value={editForm.data.location_id} onValueChange={val => editForm.setData('location_id', val)}>
@@ -487,12 +487,12 @@ queryParams.set('search', searchVal);
                                             </div>
                                         </div>
                                         <div className="space-y-1">
-                                            <Label htmlFor="edit_reorder_level">Reorder Level *</Label>
+                                            <Label htmlFor="edit_reorder_level">Reorder Level</Label>
                                             <Input id="edit_reorder_level" type="number" min="0" value={editForm.data.reorder_level} onChange={e => editForm.setData('reorder_level', parseInt(e.target.value) || 0)} required />
                                         </div>
                                     </div>
                                     <div className="space-y-1">
-                                        <Label htmlFor="edit_description">Description</Label>
+                                        <Label htmlFor="edit_description" required>Description</Label>
                                         <textarea id="edit_description" className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-hidden" value={editForm.data.description} onChange={e => editForm.setData('description', e.target.value)} />
                                     </div>
                                     <div className="flex justify-end gap-2 pt-2">
@@ -512,7 +512,7 @@ queryParams.set('search', searchVal);
                                 </DialogHeader>
                                 <form onSubmit={handleCategorySubmit} className="space-y-4">
                                     <div className="space-y-1">
-                                        <Label htmlFor="cat_name">Category Name *</Label>
+                                        <Label htmlFor="cat_name">Category Name</Label>
                                         <Input 
                                             id="cat_name" 
                                             value={categoryHttp.data.name} 
@@ -521,7 +521,7 @@ queryParams.set('search', searchVal);
                                         />
                                     </div>
                                     <div className="space-y-1">
-                                        <Label htmlFor="cat_code">Category Code *</Label>
+                                        <Label htmlFor="cat_code" required>Category Code</Label>
                                         <Input 
                                             id="cat_code" 
                                             placeholder="e.g. OFF-SUPP"
@@ -538,7 +538,7 @@ queryParams.set('search', searchVal);
                                             checked={categoryHttp.data.is_ppe}
                                             onChange={e => categoryHttp.setData('is_ppe', e.target.checked)}
                                         />
-                                        <Label htmlFor="cat_is_ppe" className="cursor-pointer select-none">
+                                        <Label htmlFor="cat_is_ppe" className="cursor-pointer select-none" required>
                                             Is PPE (Capitalized Asset)
                                         </Label>
                                     </div>
@@ -559,7 +559,7 @@ queryParams.set('search', searchVal);
                                 </DialogHeader>
                                 <form onSubmit={handleUnitSubmit} className="space-y-4">
                                     <div className="space-y-1">
-                                        <Label htmlFor="unit_name">Unit Name *</Label>
+                                        <Label htmlFor="unit_name">Unit Name</Label>
                                         <Input 
                                             id="unit_name" 
                                             value={unitHttp.data.name} 
@@ -569,7 +569,7 @@ queryParams.set('search', searchVal);
                                         />
                                     </div>
                                     <div className="space-y-1">
-                                        <Label htmlFor="unit_abbrev">Abbreviation *</Label>
+                                        <Label htmlFor="unit_abbrev" required>Abbreviation</Label>
                                         <Input 
                                             id="unit_abbrev" 
                                             placeholder="e.g. pc, box, roll"
@@ -623,7 +623,7 @@ queryParams.set('search', searchVal);
                                 </DialogHeader>
                                 <form onSubmit={handleLocationSubmit} className="space-y-4">
                                     <div className="space-y-1">
-                                        <Label htmlFor="loc_warehouse">Warehouse *</Label>
+                                        <Label htmlFor="loc_warehouse" required>Warehouse</Label>
                                         <div className="flex gap-1.5">
                                             <Select value={String(locationHttp.data.warehouse_id)} onValueChange={val => locationHttp.setData('warehouse_id', val)} required>
                                                 <SelectTrigger className="flex-1">
@@ -646,7 +646,7 @@ queryParams.set('search', searchVal);
                                         </div>
                                     </div>
                                     <div className="space-y-1">
-                                        <Label htmlFor="loc_code">Shelf/Location Code *</Label>
+                                        <Label htmlFor="loc_code" required>Shelf/Location Code</Label>
                                         <Input 
                                             id="loc_code" 
                                             placeholder="e.g. SHELF-C-03"
@@ -656,7 +656,7 @@ queryParams.set('search', searchVal);
                                         />
                                     </div>
                                     <div className="space-y-1">
-                                        <Label htmlFor="loc_description">Description</Label>
+                                        <Label htmlFor="loc_description" required>Description</Label>
                                         <textarea 
                                             id="loc_description" 
                                             className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-hidden"
@@ -682,7 +682,7 @@ queryParams.set('search', searchVal);
                                 </DialogHeader>
                                 <form onSubmit={handleWarehouseSubmit} className="space-y-4">
                                     <div className="space-y-1">
-                                        <Label htmlFor="wh_name">Warehouse Name *</Label>
+                                        <Label htmlFor="wh_name">Warehouse Name</Label>
                                         <Input 
                                             id="wh_name" 
                                             value={warehouseHttp.data.name} 
