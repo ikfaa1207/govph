@@ -13,6 +13,7 @@ import { Label } from '@/components/ui/label';
 
 import { SmartSelect } from '@/components/ui/smart-select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { formatDateTime } from '@/lib/utils';
 
 interface RequisitionItem {
     id: number;
@@ -406,7 +407,7 @@ return;
                                                 </Badge>
                                             </div>
                                             <CardDescription>
-                                                Submitted by <strong>{req.requester?.name}</strong> ({req.requester?.department?.name || 'Staff'}) on {new Date(req.created_at).toLocaleDateString()}
+                                                Submitted by <strong>{req.requester?.name}</strong> ({req.requester?.department?.name || 'Staff'}) on {formatDateTime(req.created_at)}
                                             </CardDescription>
                                         </div>
 

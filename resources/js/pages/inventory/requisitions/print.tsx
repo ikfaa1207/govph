@@ -2,6 +2,7 @@ import { Head } from '@inertiajs/react';
 import { ArrowLeft, Printer } from 'lucide-react';
 import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import { formatDateTime } from '@/lib/utils';
 
 interface ItemUnit {
     abbreviation: string;
@@ -89,11 +90,7 @@ return '';
 }
 
         try {
-            return new Date(dateString).toLocaleDateString('en-PH', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-            });
+            return formatDateTime(dateString);
         } catch {
             return dateString;
         }

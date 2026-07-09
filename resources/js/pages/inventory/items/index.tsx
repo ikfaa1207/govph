@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { formatCurrency } from '@/lib/utils';
 interface Item {
     id: number;
     item_code: string;
@@ -791,7 +792,7 @@ queryParams.set('search', searchVal);
                                                     </TableCell>
                                                     <TableCell className="text-muted-foreground text-[11px] leading-tight">{item.category?.name}</TableCell>
                                                     <TableCell className="text-[11px]">{item.unit?.abbreviation}</TableCell>
-                                                    <TableCell className="text-right whitespace-nowrap">₱{Number(item.unit_cost).toFixed(2)}</TableCell>
+                                                    <TableCell className="text-right whitespace-nowrap">{formatCurrency(item.unit_cost)}</TableCell>
                                                     <TableCell className="whitespace-nowrap">
                                                         <div className="flex items-center justify-center gap-2">
                                                             <span className="font-bold">{item.current_stock}</span>

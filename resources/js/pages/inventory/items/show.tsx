@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { formatCurrency } from '@/lib/utils';
 
 interface Transaction {
     id: number;
@@ -79,7 +80,7 @@ export default function ItemShow({ item, transactions }: ItemShowProps) {
                             </div>
                             <div>
                                 <span className="text-muted-foreground block text-xs">Moving Average Cost</span>
-                                <span className="font-semibold text-primary">₱{Number(item.unit_cost).toFixed(2)}</span>
+                                <span className="font-semibold text-primary">{formatCurrency(item.unit_cost)}</span>
                             </div>
                             <div>
                                 <span className="text-muted-foreground block text-xs">Storage Location</span>
@@ -187,7 +188,7 @@ export default function ItemShow({ item, transactions }: ItemShowProps) {
                                                 <TableCell className="text-right font-bold">
                                                     {tx.quantity > 0 ? `+${tx.quantity}` : tx.quantity}
                                                 </TableCell>
-                                                <TableCell className="text-right">₱{Number(tx.unit_cost).toFixed(2)}</TableCell>
+                                                <TableCell className="text-right">{formatCurrency(tx.unit_cost)}</TableCell>
                                                 <TableCell className="text-muted-foreground font-medium">{tx.reference}</TableCell>
                                                 <TableCell className="text-xs text-muted-foreground max-w-xs truncate" title={tx.remarks}>
                                                     {tx.remarks || '-'}

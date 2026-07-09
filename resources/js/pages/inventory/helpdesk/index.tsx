@@ -12,6 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { store as helpdeskStore, update as helpdeskUpdate } from '@/routes/helpdesk';
+import { formatDateTime } from '@/lib/utils';
 
 // FAQ list
 const faqs = [
@@ -461,7 +462,7 @@ return;
                                                                     <span>•</span>
                                                                     <span className="capitalize">{ticket.category}</span>
                                                                     <span>•</span>
-                                                                    <span>{new Date(ticket.created_at).toLocaleDateString()}</span>
+                                                                    <span>{formatDateTime(ticket.created_at)}</span>
                                                                 </CardDescription>
                                                             </div>
                                                             <div>
@@ -553,7 +554,7 @@ return;
                                                                 <span>•</span>
                                                                 <span>Category: <span className="capitalize font-medium">{ticket.category}</span></span>
                                                                 <span>•</span>
-                                                                <span>{new Date(ticket.created_at).toLocaleDateString()}</span>
+                                                                <span>{formatDateTime(ticket.created_at)}</span>
                                                             </CardDescription>
                                                         </div>
                                                         <div>

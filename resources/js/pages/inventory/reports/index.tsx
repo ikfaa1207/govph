@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 
 import { SmartSelect } from '@/components/ui/smart-select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { formatCurrency, formatDateTime } from '@/lib/utils';
 
 interface ReportType {
     id: string;
@@ -136,7 +137,7 @@ export default function ReportsIndex({ reportTypes }: ReportsIndexProps) {
                             <h4 className="text-lg font-bold tracking-tight text-primary mt-4 underline">
                                 {reportTypes.find(r => r.id === selectedType)?.name}
                             </h4>
-                            <p className="text-xs text-muted-foreground font-mono">Compiled on: {new Date().toLocaleDateString()} at {new Date().toLocaleTimeString()}</p>
+                            <p className="text-xs text-muted-foreground font-mono">Compiled on: {formatDateTime(new Date())} at {new Date().toLocaleTimeString()}</p>
                         </div>
 
                         <CardContent className="p-6">
@@ -166,9 +167,9 @@ export default function ReportsIndex({ reportTypes }: ReportsIndexProps) {
                                                     <TableCell className="border border-muted-foreground/20 font-sans font-semibold">{row.name}</TableCell>
                                                     <TableCell className="border border-muted-foreground/20 font-sans">{row.category}</TableCell>
                                                     <TableCell className="border border-muted-foreground/20 font-sans">{row.unit}</TableCell>
-                                                    <TableCell className="border border-muted-foreground/20 text-right">₱{parseFloat(row.unit_cost).toFixed(2)}</TableCell>
+                                                    <TableCell className="border border-muted-foreground/20 text-right">{formatCurrency(row.unit_cost)}</TableCell>
                                                     <TableCell className="border border-muted-foreground/20 text-right font-bold">{row.on_hand}</TableCell>
-                                                    <TableCell className="border border-muted-foreground/20 text-right font-bold text-primary">₱{parseFloat(row.total_cost).toLocaleString('en-US', { minimumFractionDigits: 2 })}</TableCell>
+                                                    <TableCell className="border border-muted-foreground/20 text-right font-bold text-primary">{formatCurrency(row.total_cost)}</TableCell>
                                                     <TableCell className="border border-muted-foreground/20 font-sans">{row.location}</TableCell>
                                                 </TableRow>
                                             ))}
@@ -200,7 +201,7 @@ export default function ReportsIndex({ reportTypes }: ReportsIndexProps) {
                                                     <TableCell className="border border-muted-foreground/20">{row.serial_number || 'N/A'}</TableCell>
                                                     <TableCell className="border border-muted-foreground/20 font-sans font-semibold">{row.description}</TableCell>
                                                     <TableCell className="border border-muted-foreground/20 font-sans">{row.category}</TableCell>
-                                                    <TableCell className="border border-muted-foreground/20 text-right font-bold">₱{parseFloat(row.unit_cost).toLocaleString('en-US', { minimumFractionDigits: 2 })}</TableCell>
+                                                    <TableCell className="border border-muted-foreground/20 text-right font-bold">{formatCurrency(row.unit_cost)}</TableCell>
                                                     <TableCell className="border border-muted-foreground/20 font-sans">{row.accountable_officer}</TableCell>
                                                     <TableCell className="border border-muted-foreground/20">{row.date_acquired}</TableCell>
                                                     <TableCell className="border border-muted-foreground/20 font-sans">{row.condition}</TableCell>
@@ -230,7 +231,7 @@ export default function ReportsIndex({ reportTypes }: ReportsIndexProps) {
                                                     <TableCell className="border border-muted-foreground/20">{row.date}</TableCell>
                                                     <TableCell className="border border-muted-foreground/20 font-sans font-semibold">{row.type}</TableCell>
                                                     <TableCell className="border border-muted-foreground/20 text-right font-bold">{row.qty > 0 ? `+${row.qty}` : row.qty}</TableCell>
-                                                    <TableCell className="border border-muted-foreground/20 text-right">₱{parseFloat(row.cost).toFixed(2)}</TableCell>
+                                                    <TableCell className="border border-muted-foreground/20 text-right">{formatCurrency(row.cost)}</TableCell>
                                                     <TableCell className="border border-muted-foreground/20 font-sans text-muted-foreground">{row.remarks}</TableCell>
                                                 </TableRow>
                                             ))}

@@ -11,6 +11,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { formatCurrency, formatDateTime } from '@/lib/utils';
 
 interface DashboardProps {
     stats: {
@@ -58,7 +59,7 @@ export default function Dashboard({ stats, recentIssuances, recentReceiving, pen
                             <TrendingDown className="h-4 w-4 text-indigo-500" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold text-foreground">₱{stats.totalValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}</div>
+                            <div className="text-2xl font-bold text-foreground">{formatCurrency(stats.totalValue)}</div>
                             <p className="text-xs text-muted-foreground mt-1">Consolidated Moving Avg Cost</p>
                         </CardContent>
                     </Card>
@@ -182,7 +183,7 @@ export default function Dashboard({ stats, recentIssuances, recentReceiving, pen
                                                         </Badge>
                                                     </TableCell>
                                                     <TableCell className="text-right text-muted-foreground">
-                                                        {new Date(req.created_at).toLocaleDateString()}
+                                                        {formatDateTime(req.created_at)}
                                                     </TableCell>
                                                 </TableRow>
                                             ))}

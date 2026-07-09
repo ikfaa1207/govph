@@ -13,6 +13,7 @@ import { Label } from '@/components/ui/label';
 
 import { SmartSelect } from '@/components/ui/smart-select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { formatCurrency } from '@/lib/utils';
 
 interface ReceivingReportItem {
     id: number;
@@ -606,7 +607,7 @@ export default function ReceivingIndex({ reports, suppliers: initialSuppliers, e
                                                 <div className="space-y-1.5 flex-1">
                                                     <div className="font-semibold text-base leading-tight">{line.name}</div>
                                                     <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                                                        <span><strong>Cost:</strong> ₱{line.unit_cost.toFixed(2)}</span>
+                                                        <span><strong>Cost:</strong> {formatCurrency(line.unit_cost)}</span>
                                                         {line.batch_number && <span><strong>Batch:</strong> {line.batch_number}</span>}
                                                         {line.expiration_date && <span><strong>Expiry:</strong> {line.expiration_date}</span>}
                                                     </div>

@@ -16,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { SmartSelect } from '@/components/ui/smart-select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { usePermissions } from '@/hooks/use-permissions';
+import { formatCurrency } from '@/lib/utils';
 
 interface Property {
     id: number;
@@ -376,7 +377,7 @@ return;
                                                     <div className="font-semibold truncate" title={`${prop.brand} - ${prop.model}`}>{prop.brand} - {prop.model}</div>
                                                     <div className="text-[11px] text-muted-foreground font-mono truncate" title={`S/N: ${prop.serial_number}`}>S/N: {prop.serial_number}</div>
                                                 </TableCell>
-                                                <TableCell className="text-right font-medium whitespace-nowrap">₱{prop.unit_cost.toLocaleString('en-US', { minimumFractionDigits: 2 })}</TableCell>
+                                                <TableCell className="text-right font-medium whitespace-nowrap">{formatCurrency(prop.unit_cost)}</TableCell>
                                                 <TableCell className="font-medium text-[11px] leading-tight">
                                                     {prop.active_assignment ? (
                                                         <div className="flex flex-col gap-0.5">
@@ -508,7 +509,7 @@ return;
                                     <div>
                                         <strong>Automatic Document Determination:</strong>
                                         <p className="mt-0.5">
-                                            Cost: <strong>₱{selectedProp.unit_cost.toLocaleString()}</strong>.
+                                            Cost: <strong>{formatCurrency(selectedProp.unit_cost)}</strong>.
                                             {selectedProp.unit_cost >= 50000 ? (
                                                 <span className="text-emerald-600 font-semibold block mt-0.5">
                                                     Cost is ≥ ₱50k. System will generate a Property Acknowledgment Receipt (PAR) for PPE.
