@@ -23,6 +23,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Items/Stock Management
     Route::get('inventory/items', [ItemController::class, 'index'])->name('inventory.items.index');
     Route::post('inventory/items', [ItemController::class, 'store'])->name('inventory.items.store');
+    Route::put('inventory/items/{item}', [ItemController::class, 'update'])->name('inventory.items.update');
+    Route::patch('inventory/items/{item}/archive', [ItemController::class, 'archive'])->name('inventory.items.archive');
     Route::get('inventory/items/{item}', [ItemController::class, 'show'])->name('inventory.items.show');
 
     // Receiving Reports (Stock In)

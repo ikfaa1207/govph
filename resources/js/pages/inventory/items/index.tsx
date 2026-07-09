@@ -58,6 +58,24 @@ export default function ItemsIndex({ items, categories: initialCategories, units
     const [isAddLocationOpen, setIsAddLocationOpen] = useState(false);
     const [isAddWarehouseOpen, setIsAddWarehouseOpen] = useState(false);
 
+    const [isEditOpen, setIsEditOpen] = useState(false);
+    const [selectedItem, setSelectedItem] = useState<Item | null>(null);
+
+    const editForm = useForm({
+        name: '',
+        description: '',
+        category_id: '',
+        unit_id: '',
+        reorder_level: 10,
+        maximum_stock: 100,
+        location_id: '',
+        stock_number: '',
+        barcode: '',
+        expiration_date: '',
+    });
+
+    const archiveHttp = useHttp({});
+
     const { data, setData, post, processing, errors, reset } = useForm({
         name: '',
         description: '',
@@ -155,6 +173,54 @@ export default function ItemsIndex({ items, categories: initialCategories, units
             },
             onError: () => {
                 toast.error('Failed to create warehouse. Check unique constraints.');
+            }
+        });
+    };
+
+    const handleEditItem = (item: Item) => {
+        setSelectedItem(item);
+        editForm.setData({
+            name: item.name,
+            description: item.description || '',
+            category_id: String(item.category?.id || ''),
+            unit_id: String(item.unit?.id || ''),
+            reorder_level: item.reorder_level,
+            maximum_stock: 100, // Or extract if available
+            location_id: String((item as any).location_id || ''),
+            stock_number: item.stock_number || '',
+            barcode: '', // Or extract if available
+            expiration_date: '', // Or extract if available
+        });
+        setIsEditOpen(true);
+    };
+
+    const handleEditSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!selectedItem) return;
+
+        editForm.put(`/inventory/items/${selectedItem.id}`, {
+            onSuccess: () => {
+                setIsEditOpen(false);
+                editForm.reset();
+                toast.success('Item updated successfully.');
+            },
+            onError: () => {
+                toast.error('Failed to update item. Please check your inputs.');
+            }
+        });
+    };
+
+    const handleArchiveItem = (item: Item) => {
+        if (!confirm(`Are you sure you want to archive "${item.name}"? It will no longer appear in active dropdowns.`)) {
+            return;
+        }
+
+        archiveHttp.patch(`/inventory/items/${item.id}/archive`, {
+            onSuccess: () => {
+                toast.success('Item archived successfully.');
+            },
+            onError: () => {
+                toast.error('Failed to archive item.');
             }
         });
     };
@@ -349,6 +415,90 @@ queryParams.set('search', searchVal);
                             </DialogContent>
                         </Dialog>
                         </Can>
+
+                        <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+                            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                                <DialogHeader>
+                                    <DialogTitle>Edit Supply Item</DialogTitle>
+                                    <DialogDescription>Update the details of the selected item in the catalog.</DialogDescription>
+                                </DialogHeader>
+                                <form onSubmit={handleEditSubmit} className="space-y-4">
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-1">
+                                            <Label htmlFor="edit_name">Item Name *</Label>
+                                            <Input id="edit_name" value={editForm.data.name} onChange={e => editForm.setData('name', e.target.value)} required />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <Label htmlFor="edit_stock_number">Stock Number (Optional)</Label>
+                                            <Input id="edit_stock_number" value={editForm.data.stock_number} onChange={e => editForm.setData('stock_number', e.target.value)} />
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-1">
+                                            <Label>Category *</Label>
+                                            <div className="flex gap-2">
+                                                <div className="flex-1">
+                                                    <Select value={editForm.data.category_id} onValueChange={val => editForm.setData('category_id', val)} required>
+                                                        <SelectTrigger><SelectValue placeholder="Select Category" /></SelectTrigger>
+                                                        <SelectContent>
+                                                            {categories.map((cat: any) => (
+                                                                <SelectItem key={cat.id} value={String(cat.id)}>{cat.name}</SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="space-y-1">
+                                            <Label>Unit of Measurement *</Label>
+                                            <div className="flex gap-2">
+                                                <div className="flex-1">
+                                                    <Select value={editForm.data.unit_id} onValueChange={val => editForm.setData('unit_id', val)} required>
+                                                        <SelectTrigger><SelectValue placeholder="Select Unit" /></SelectTrigger>
+                                                        <SelectContent>
+                                                            {units.map((u: any) => (
+                                                                <SelectItem key={u.id} value={String(u.id)}>{u.name} ({u.abbreviation})</SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-1">
+                                            <Label>Primary Storage Location</Label>
+                                            <div className="flex gap-2">
+                                                <div className="flex-1">
+                                                    <Select value={editForm.data.location_id} onValueChange={val => editForm.setData('location_id', val)}>
+                                                        <SelectTrigger><SelectValue placeholder="Select Location" /></SelectTrigger>
+                                                        <SelectContent>
+                                                            {locations.map((loc: any) => (
+                                                                <SelectItem key={loc.id} value={String(loc.id)}>
+                                                                    {loc.warehouse?.name} - {loc.code}
+                                                                </SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="space-y-1">
+                                            <Label htmlFor="edit_reorder_level">Reorder Level *</Label>
+                                            <Input id="edit_reorder_level" type="number" min="0" value={editForm.data.reorder_level} onChange={e => editForm.setData('reorder_level', parseInt(e.target.value) || 0)} required />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <Label htmlFor="edit_description">Description</Label>
+                                        <textarea id="edit_description" className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-hidden" value={editForm.data.description} onChange={e => editForm.setData('description', e.target.value)} />
+                                    </div>
+                                    <div className="flex justify-end gap-2 pt-2">
+                                        <Button type="button" variant="outline" onClick={() => setIsEditOpen(false)}>Cancel</Button>
+                                        <Button type="submit" disabled={editForm.processing}>Update Item</Button>
+                                    </div>
+                                </form>
+                            </DialogContent>
+                        </Dialog>
 
                         {/* Inline Category Creation Dialog */}
                         <Dialog open={isAddCategoryOpen} onOpenChange={setIsAddCategoryOpen}>
@@ -662,11 +812,21 @@ queryParams.set('search', searchVal);
                                                             </DropdownMenuTrigger>
                                                             <DropdownMenuContent align="end">
                                                                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                                                <Can I="inventory.update">
+                                                                    <DropdownMenuItem onClick={() => handleEditItem(item)} className="cursor-pointer">
+                                                                        <Eye className="mr-2 h-4 w-4 text-emerald-500" /> Edit Details
+                                                                    </DropdownMenuItem>
+                                                                </Can>
                                                                 <DropdownMenuItem asChild>
                                                                     <Link href={`/inventory/items/${item.id}`} className="cursor-pointer">
                                                                         <Eye className="mr-2 h-4 w-4 text-sky-500" /> View Ledger Card
                                                                     </Link>
                                                                 </DropdownMenuItem>
+                                                                <Can I="inventory.delete">
+                                                                    <DropdownMenuItem onClick={() => handleArchiveItem(item)} className="cursor-pointer text-destructive focus:bg-destructive/10 focus:text-destructive">
+                                                                        <Eye className="mr-2 h-4 w-4" /> Archive Item
+                                                                    </DropdownMenuItem>
+                                                                </Can>
                                                             </DropdownMenuContent>
                                                         </DropdownMenu>
                                                     </TableCell>

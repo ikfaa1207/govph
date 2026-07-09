@@ -164,8 +164,51 @@ class ItemController extends Controller
                 'reorder_level' => $item->reorder_level,
                 'status' => $item->status,
                 'location' => $item->location ? $item->location->warehouse->name.' - '.$item->location->code : 'None',
+                'location_id' => $item->location_id,
             ],
             'transactions' => $transactions,
         ]);
+    }
+
+    /**
+     * Update the specified item in storage.
+     */
+    public function update(Request $request, Item $item): RedirectResponse
+    {
+        Gate::authorize('inventory.update');
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string'],
+            'category_id' => ['required', 'exists:categories,id'],
+            'unit_id' => ['required', 'exists:units,id'],
+            'reorder_level' => ['required', 'integer', 'min:0'],
+            'maximum_stock' => ['required', 'integer', 'min:0'],
+            'location_id' => ['nullable', 'exists:locations,id'],
+            'stock_number' => ['nullable', 'string', 'unique:items,stock_number,' . $item->id],
+            'barcode' => ['nullable', 'string', 'unique:items,barcode,' . $item->id],
+            'expiration_date' => ['nullable', 'date'],
+        ]);
+
+        $item->update($validated);
+
+        AuditLogger::log('UPDATE_ITEM', $item, null, $item->toArray());
+
+        return redirect()->back()->with('success', 'Item updated successfully.');
+    }
+
+    /**
+     * Archive the specified item.
+     */
+    public function archive(Item $item): RedirectResponse
+    {
+        Gate::authorize('inventory.delete'); // using delete permission for archiving
+
+        $item->status = \App\Enums\ItemStatus::Inactive;
+        $item->save();
+
+        AuditLogger::log('ARCHIVE_ITEM', $item, null, $item->toArray());
+
+        return redirect()->back()->with('success', 'Item archived successfully.');
     }
 }

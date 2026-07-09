@@ -105,13 +105,17 @@ export function AppSidebar() {
         });
     }
 
+    const defaultHomeUrl = permissions.includes('dashboard.view') 
+        ? dashboard.url() 
+        : (filteredNavItems.length > 0 ? filteredNavItems[0].href : '/profile');
+
     return (
         <Sidebar collapsible="icon" variant="inset">
             <SidebarHeader>
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton size="lg" asChild>
-                            <Link href={dashboard.url()} prefetch>
+                            <Link href={defaultHomeUrl} prefetch>
                                 <AppLogo />
                             </Link>
                         </SidebarMenuButton>
