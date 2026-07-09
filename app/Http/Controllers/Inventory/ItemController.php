@@ -204,7 +204,7 @@ class ItemController extends Controller
     {
         Gate::authorize('inventory.delete'); // using delete permission for archiving
 
-        $item->status = \App\Enums\ItemStatus::Inactive;
+        $item->status = \App\Enums\ItemStatus::Inactive->value;
         $item->save();
 
         AuditLogger::log('ARCHIVE_ITEM', $item, null, $item->toArray());
