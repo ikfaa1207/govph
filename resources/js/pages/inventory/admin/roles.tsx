@@ -20,7 +20,10 @@ const formatPermissionName = (name: string) => {
         'inventory.delete': 'Manage Catalogue: Archive Items',
         'inventory.view': 'View Catalogue',
     };
-    if (map[name]) return map[name];
+
+    if (map[name]) {
+return map[name];
+}
     
     // Fallback: capitalize and replace dots with spaces
     return name.split('.').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
