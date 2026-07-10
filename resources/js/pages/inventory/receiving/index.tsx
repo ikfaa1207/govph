@@ -189,6 +189,7 @@ export default function ReceivingIndex({ reports, stats, suppliers: initialSuppl
 
         if (data.received_by === data.inspected_by) {
             toast.error('The Receiver and Inspector cannot be the same person. This violates segregation of duties.');
+
             return;
         }
 
@@ -898,6 +899,7 @@ export default function ReceivingIndex({ reports, stats, suppliers: initialSuppl
                                                             {Object.keys(log.new_values).map(key => {
                                                                 const oldVal = JSON.stringify(log.old_values[key]);
                                                                 const newVal = JSON.stringify(log.new_values[key]);
+
                                                                 if (oldVal !== newVal && key !== 'updated_at') {
                                                                     return (
                                                                         <tr key={key} className="border-b border-border/30 last:border-0">
@@ -907,6 +909,7 @@ export default function ReceivingIndex({ reports, stats, suppliers: initialSuppl
                                                                         </tr>
                                                                     );
                                                                 }
+
                                                                 return null;
                                                             })}
                                                         </tbody>

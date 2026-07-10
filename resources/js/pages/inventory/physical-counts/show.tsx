@@ -1,10 +1,9 @@
-import { BreadcrumbItem } from '@/types';
 import { Head, useForm } from '@inertiajs/react';
-import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Input } from '@/components/ui/input';
 import { Save, CheckCircle, FileSpreadsheet } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 interface PhysicalCountItem {
     id: number;
@@ -47,12 +46,6 @@ export default function PhysicalCountShow({ physicalCount }: Props) {
     const isRPCPPE = physicalCount.type === 'RPCPPE';
     const isFinalized = physicalCount.status === 'finalized';
 
-    const breadcrumbs: BreadcrumbItem[] = [
-        { title: 'Inventory', href: '/inventory/properties' },
-        { title: 'Physical Counts', href: '/inventory/physical-counts' },
-        { title: `${physicalCount.type} - ${new Date(physicalCount.as_of_date).toLocaleDateString()}`, href: `/inventory/physical-counts/${physicalCount.id}` },
-    ];
-
     const form = useForm({
         action: 'save',
         items: physicalCount.items.map(item => ({
@@ -73,6 +66,7 @@ export default function PhysicalCountShow({ physicalCount }: Props) {
             if (item.id === id) {
                 return { ...item, form_actual_qty: value };
             }
+
             return item;
         }));
     };
@@ -82,6 +76,7 @@ export default function PhysicalCountShow({ physicalCount }: Props) {
             if (item.id === id) {
                 return { ...item, form_remarks: value };
             }
+
             return item;
         }));
     };
@@ -92,15 +87,18 @@ export default function PhysicalCountShow({ physicalCount }: Props) {
             actual_qty: item.form_actual_qty,
             remarks: item.form_remarks,
         })));
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [localItems]);
 
     const submit = (e: React.FormEvent, action: 'save' | 'finalize') => {
         e.preventDefault();
+
         if (action === 'finalize') {
             if (!confirm('Are you sure you want to finalize this count? This will lock it from further edits.')) {
                 return;
             }
         }
+
         form.transform((data) => ({
             ...data,
             action,
@@ -108,11 +106,21 @@ export default function PhysicalCountShow({ physicalCount }: Props) {
     };
 
     const calcDiscrepancy = (recorded: string, actual: string | null) => {
-        if (actual === null || actual === '') return { s: null, o: null };
+        if (actual === null || actual === '') {
+return { s: null, o: null };
+}
+
         const rec = parseFloat(recorded);
         const act = parseFloat(actual);
-        if (act < rec) return { s: rec - act, o: 0 };
-        if (act > rec) return { s: 0, o: act - rec };
+
+        if (act < rec) {
+return { s: rec - act, o: 0 };
+}
+
+        if (act > rec) {
+return { s: 0, o: act - rec };
+}
+
         return { s: 0, o: 0 };
     };
 

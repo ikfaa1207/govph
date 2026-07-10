@@ -1,5 +1,5 @@
 import { DicebearAvatar } from '@/components/dicebear-avatar';
-import { useInitials } from '@/hooks/use-initials';
+
 import type { User } from '@/types';
 
 function formatRole(role: string): string {

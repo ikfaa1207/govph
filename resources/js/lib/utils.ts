@@ -1,6 +1,7 @@
 import type { InertiaLinkProps } from '@inertiajs/react';
 import { clsx } from 'clsx';
 import type { ClassValue } from 'clsx';
+import { format } from "date-fns";
 import { twMerge } from 'tailwind-merge';
 
 export function cn(...inputs: ClassValue[]) {
@@ -25,7 +26,7 @@ return '₱ 0.00';
     return '₱ ' + new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num);
 }
 
-import { format } from "date-fns";
+
 
 export function formatDateTime(date: string | Date | null | undefined): string {
     if (!date) {
@@ -34,7 +35,7 @@ return '-';
 
     try {
         return format(new Date(date), 'MMM dd, yyyy hh:mm a');
-    } catch (e) {
+    } catch {
         return '-';
     }
 }
