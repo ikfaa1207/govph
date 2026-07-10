@@ -59,8 +59,16 @@ class RequisitionController extends Controller
                 'unit' => $item->unit->abbreviation ?? 'pcs',
             ]);
 
+        $stats = [
+            'total_ris' => $requisitions->count(),
+            'pending_approval' => $requisitions->where('status', 'pending_dept_head')->count(),
+            'pending_issuance' => $requisitions->whereIn('status', ['pending_supply', 'partially_issued'])->count(),
+            'completed' => $requisitions->where('status', 'issued')->count(),
+        ];
+
         return Inertia::render('inventory/requisitions/index', [
-            'requisitions' => $requisitions,
+            'requisitions' => $requisitions->values(),
+            'stats' => $stats,
             'items' => $allItems,
             'currentEmployee' => $employee,
         ]);

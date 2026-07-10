@@ -88,4 +88,51 @@ class ValuationService
             return $issuedUnitCost;
         });
     }
+
+    /**
+     * Reverse a previous stock-in transaction.
+     * Reduces the stock by the given quantity, and subtracts the exact total value of that transaction 
+     * from the moving average calculation to restore the unit cost prior to that specific stock-in.
+     */
+    public function reverseStockIn(
+        Item $item,
+        int $quantity,
+        float $unitCost,
+        string $referenceType,
+        int $referenceId,
+        ?string $remarks = null
+    ): StockTransaction {
+        return DB::transaction(function () use ($item, $quantity, $unitCost, $referenceType, $referenceId, $remarks) {
+            $lockedItem = Item::where('id', $item->id)->lockForUpdate()->first();
+            $currentQty = $lockedItem->current_stock;
+            $currentCost = (float) $lockedItem->unit_cost;
+
+            $newQuantity = $currentQty - $quantity;
+            
+            // To properly reverse moving average:
+            // (CurrentTotalValue - ReversedTotalValue) / NewQuantity
+            if ($newQuantity > 0) {
+                $currentTotalValue = $currentQty * $currentCost;
+                $reversedTotalValue = $quantity * $unitCost;
+                $newTotalValue = $currentTotalValue - $reversedTotalValue;
+                $newCost = max(0, $newTotalValue / $newQuantity); // Avoid negative cost
+            } else {
+                $newCost = $currentCost; // Keep last known cost if stock drops to 0
+            }
+
+            $lockedItem->unit_cost = round($newCost, 2);
+            $lockedItem->current_stock = max(0, $newQuantity);
+            $lockedItem->save();
+
+            return StockTransaction::create([
+                'item_id' => $lockedItem->id,
+                'transaction_type' => 'out', // Negative adjustment
+                'quantity' => -$quantity,
+                'unit_cost' => $unitCost, // Store original cost reversed
+                'reference_type' => $referenceType,
+                'reference_id' => $referenceId,
+                'remarks' => $remarks,
+            ]);
+        });
+    }
 }

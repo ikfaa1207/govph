@@ -21,6 +21,7 @@ interface DashboardProps {
         outOfStocks: number;
         totalValue: number;
         totalProperties: number;
+        totalPpeValue?: number;
         pendingRequests: number;
     };
     recentIssuances: Array<any>;
@@ -53,51 +54,54 @@ export default function Dashboard({ stats, recentIssuances, recentReceiving, pen
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                     
                     {/* Metrics 1: Total Stock Value */}
-                    <Card className="relative overflow-hidden bg-linear-to-br from-indigo-500/10 via-background to-background">
-                        <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-                            <CardTitle className="text-sm font-medium text-muted-foreground">{stats.inventoryType} Value</CardTitle>
-                            <TrendingDown className="h-4 w-4 text-indigo-500" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold text-foreground">{formatCurrency(stats.totalValue)}</div>
-                            <p className="text-xs text-muted-foreground mt-1">Consolidated Moving Avg Cost</p>
-                        </CardContent>
+                    <Card className="relative overflow-hidden p-5 flex flex-col justify-center border border-border border-t-4 border-t-emerald-500 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-[2px] bg-card bg-linear-to-tr from-transparent to-emerald-500/5 rounded-xl">
+                        <div className="absolute -right-4 -bottom-4 text-emerald-500/5">
+                            <TrendingDown className="w-28 h-28" strokeWidth={1.5} />
+                        </div>
+                        <div className="relative z-10 space-y-1">
+                            <p className="text-[11px] font-medium uppercase tracking-wider text-emerald-500">{stats.inventoryType} Value</p>
+                            <p className="text-2xl font-bold text-foreground truncate">{formatCurrency(stats.totalValue)}</p>
+                        </div>
                     </Card>
 
                     {/* Metrics 2: Total Items Cataloged */}
-                    <Card className="relative overflow-hidden">
-                        <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-                            <CardTitle className="text-sm font-medium text-muted-foreground">{stats.inventoryType} Catalog</CardTitle>
-                            <Package className="h-4 w-4 text-sky-500" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold text-foreground">{stats.totalItems} Items</div>
-                            <p className="text-xs text-muted-foreground mt-1">Available for requisition (RIS)</p>
-                        </CardContent>
+                    <Card className="relative overflow-hidden p-5 flex flex-col justify-center border border-border border-t-4 border-t-blue-500 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-[2px] bg-card bg-linear-to-tr from-transparent to-blue-500/5 rounded-xl">
+                        <div className="absolute -right-4 -bottom-4 text-blue-500/5">
+                            <Package className="w-28 h-28" strokeWidth={1.5} />
+                        </div>
+                        <div className="relative z-10 space-y-1">
+                            <p className="text-[11px] font-medium uppercase tracking-wider text-blue-500">{stats.inventoryType} Catalog</p>
+                            <p className="text-2xl font-bold text-foreground truncate">{stats.totalItems} Items</p>
+                        </div>
                     </Card>
 
                     {/* Metrics 3: PPE Property Registry */}
-                    <Card className="relative overflow-hidden">
-                        <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-                            <CardTitle className="text-sm font-medium text-muted-foreground">Accountable Property</CardTitle>
-                            <Database className="h-4 w-4 text-emerald-500" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold text-foreground">{stats.totalProperties} Assets</div>
-                            <p className="text-xs text-muted-foreground mt-1">Tracked under PAR / ICS</p>
-                        </CardContent>
+                    <Card className="relative overflow-hidden p-5 flex flex-col justify-center border border-border border-t-4 border-t-violet-500 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-[2px] bg-card bg-linear-to-tr from-transparent to-violet-500/5 rounded-xl">
+                        <div className="absolute -right-4 -bottom-4 text-violet-500/5">
+                            <Database className="w-28 h-28" strokeWidth={1.5} />
+                        </div>
+                        <div className="relative z-10 space-y-1">
+                            <p className="text-[11px] font-medium uppercase tracking-wider text-violet-500">Accountable Property</p>
+                            <div className="flex items-end gap-2">
+                                <p className="text-2xl font-bold text-foreground truncate">{stats.totalPpeValue !== undefined ? formatCurrency(stats.totalPpeValue) : `${stats.totalProperties} Assets`}</p>
+                                {stats.totalPpeValue !== undefined && (
+                                    <Badge variant="outline" className="mb-1 text-[10px] px-1.5 py-0 bg-violet-500/10 text-violet-600 border-violet-500/20 whitespace-nowrap">
+                                        {stats.totalProperties} Assets
+                                    </Badge>
+                                )}
+                            </div>
+                        </div>
                     </Card>
 
                     {/* Metrics 4: Pending Requisitions */}
-                    <Card className={`relative overflow-hidden ${stats.pendingRequests > 0 ? 'bg-amber-500/5 border-amber-500/20' : ''}`}>
-                        <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-                            <CardTitle className="text-sm font-medium text-muted-foreground">Pending RIS Requests</CardTitle>
-                            <ClipboardList className={`h-4 w-4 ${stats.pendingRequests > 0 ? 'text-amber-500 animate-pulse' : 'text-muted-foreground'}`} />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold text-foreground">{stats.pendingRequests} Requisitions</div>
-                            <p className="text-xs text-muted-foreground mt-1">Awaiting approvals / issuance</p>
-                        </CardContent>
+                    <Card className="relative overflow-hidden p-5 flex flex-col justify-center border border-border border-t-4 border-t-amber-500 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-[2px] bg-card bg-linear-to-tr from-transparent to-amber-500/5 rounded-xl">
+                        <div className="absolute -right-4 -bottom-4 text-amber-500/5">
+                            <ClipboardList className={`w-28 h-28 ${stats.pendingRequests > 0 ? 'animate-pulse' : ''}`} strokeWidth={1.5} />
+                        </div>
+                        <div className="relative z-10 space-y-1">
+                            <p className="text-[11px] font-medium uppercase tracking-wider text-amber-500">Pending RIS Requests</p>
+                            <p className="text-2xl font-bold text-foreground truncate">{stats.pendingRequests} Requisitions</p>
+                        </div>
                     </Card>
                 </div>
 

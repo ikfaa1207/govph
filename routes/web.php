@@ -30,6 +30,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Receiving Reports (Stock In)
     Route::get('inventory/receiving-reports', [ReceivingReportController::class, 'index'])->name('inventory.receiving.index');
     Route::post('inventory/receiving-reports', [ReceivingReportController::class, 'store'])->name('inventory.receiving.store');
+    Route::put('inventory/receiving-reports/{report}', [ReceivingReportController::class, 'update'])->name('inventory.receiving.update');
+    Route::get('inventory/receiving-reports/{report}/history', [ReceivingReportController::class, 'history'])->name('inventory.receiving.history');
     Route::post('inventory/suppliers', [SupplierController::class, 'store'])->name('inventory.suppliers.store');
     Route::post('inventory/categories', [CategoryController::class, 'store'])->name('inventory.categories.store');
     Route::post('inventory/units', [UnitController::class, 'store'])->name('inventory.units.store');

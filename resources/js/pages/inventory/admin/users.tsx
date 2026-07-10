@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { DicebearAvatar } from '@/components/dicebear-avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -369,20 +370,25 @@ export default function UsersIndex({ users, roles, offices: initialOffices, depa
                                         {((users && users.data) ? users.data : users).map((user: User) => (
                                             <TableRow key={user.id}>
                                                 <TableCell>
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="font-semibold">{user.name}</span>
-                                                        {!user.is_active && (
-                                                            <Badge variant="destructive" className="text-[9px] py-0 px-1.5 flex items-center gap-0.5">
-                                                                <XCircle className="h-2 w-2" /> Deactivated
-                                                            </Badge>
-                                                        )}
-                                                        {isUserLocked(user) && (
-                                                            <Badge className="bg-amber-500 hover:bg-amber-600 text-white text-[9px] py-0 px-1.5 flex items-center gap-0.5 border-none">
-                                                                <AlertCircle className="h-2 w-2" /> Locked
-                                                            </Badge>
-                                                        )}
+                                                    <div className="flex items-center gap-3">
+                                                        <DicebearAvatar seed={user.name} className="h-10 w-10 shrink-0 border" />
+                                                        <div>
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="font-semibold">{user.name}</span>
+                                                                {!user.is_active && (
+                                                                    <Badge variant="destructive" className="text-[9px] py-0 px-1.5 flex items-center gap-0.5">
+                                                                        <XCircle className="h-2 w-2" /> Deactivated
+                                                                    </Badge>
+                                                                )}
+                                                                {isUserLocked(user) && (
+                                                                    <Badge className="bg-amber-500 hover:bg-amber-600 text-white text-[9px] py-0 px-1.5 flex items-center gap-0.5 border-none">
+                                                                        <AlertCircle className="h-2 w-2" /> Locked
+                                                                    </Badge>
+                                                                )}
+                                                            </div>
+                                                            <div className="text-xs text-muted-foreground mt-0.5">{user.employee?.position || 'N/A'}</div>
+                                                        </div>
                                                     </div>
-                                                    <div className="text-xs text-muted-foreground">{user.employee?.position || 'N/A'}</div>
                                                 </TableCell>
                                                 <TableCell className="font-mono text-xs">{user.email}</TableCell>
                                                 <TableCell>

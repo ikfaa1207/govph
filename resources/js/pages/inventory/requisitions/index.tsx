@@ -51,8 +51,16 @@ interface Requisition {
     items: RequisitionItem[];
 }
 
+interface RequisitionStats {
+    total_ris: number;
+    pending_approval: number;
+    pending_issuance: number;
+    completed: number;
+}
+
 interface RequisitionIndexProps {
     requisitions: Requisition[];
+    stats: RequisitionStats;
     items: any[];
     currentEmployee: any;
     auth: {
@@ -66,7 +74,7 @@ interface RequisitionIndexProps {
     };
 }
 
-export default function RequisitionsIndex({ requisitions, items, auth, currentEmployee }: RequisitionIndexProps) {
+export default function RequisitionsIndex({ requisitions, stats, items, auth, currentEmployee }: RequisitionIndexProps) {
     const breadcrumbs = [{ title: 'Requisitions (RIS)', href: '/inventory/requisitions' }];
     setLayoutProps({ breadcrumbs });
     const userRole = auth.user.role;
@@ -385,6 +393,51 @@ return;
                         </CoachMark>
                     )}
                 </div>
+
+                {/* Statistics Overview */}
+                {stats && (
+                    <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+                        <Card className="relative overflow-hidden p-5 flex flex-col justify-center border border-border border-t-4 border-t-blue-500 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-[2px] bg-card bg-linear-to-tr from-transparent to-blue-500/5 rounded-xl">
+                            <div className="absolute -right-4 -bottom-4 text-blue-500/5">
+                                <ClipboardList className="w-28 h-28" strokeWidth={1.5} />
+                            </div>
+                            <div className="relative z-10 space-y-1">
+                                <p className="text-[11px] font-medium uppercase tracking-wider text-blue-500">Total RIS filed</p>
+                                <p className="text-2xl font-bold text-foreground truncate">{stats.total_ris}</p>
+                            </div>
+                        </Card>
+                        
+                        <Card className="relative overflow-hidden p-5 flex flex-col justify-center border border-border border-t-4 border-t-violet-500 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-[2px] bg-card bg-linear-to-tr from-transparent to-violet-500/5 rounded-xl">
+                            <div className="absolute -right-4 -bottom-4 text-violet-500/5">
+                                <ClipboardCheck className="w-28 h-28" strokeWidth={1.5} />
+                            </div>
+                            <div className="relative z-10 space-y-1">
+                                <p className="text-[11px] font-medium uppercase tracking-wider text-violet-500">Pending Approval</p>
+                                <p className="text-2xl font-bold text-foreground truncate">{stats.pending_approval}</p>
+                            </div>
+                        </Card>
+                        
+                        <Card className="relative overflow-hidden p-5 flex flex-col justify-center border border-border border-t-4 border-t-amber-500 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-[2px] bg-card bg-linear-to-tr from-transparent to-amber-500/5 rounded-xl">
+                            <div className="absolute -right-4 -bottom-4 text-amber-500/5">
+                                <Package2 className="w-28 h-28" strokeWidth={1.5} />
+                            </div>
+                            <div className="relative z-10 space-y-1">
+                                <p className="text-[11px] font-medium uppercase tracking-wider text-amber-500">Pending Issuance</p>
+                                <p className="text-2xl font-bold text-foreground truncate">{stats.pending_issuance}</p>
+                            </div>
+                        </Card>
+                        
+                        <Card className="relative overflow-hidden p-5 flex flex-col justify-center border border-border border-t-4 border-t-emerald-500 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-[2px] bg-card bg-linear-to-tr from-transparent to-emerald-500/5 rounded-xl">
+                            <div className="absolute -right-4 -bottom-4 text-emerald-500/5">
+                                <ClipboardCheck className="w-28 h-28" strokeWidth={1.5} />
+                            </div>
+                            <div className="relative z-10 space-y-1">
+                                <p className="text-[11px] font-medium uppercase tracking-wider text-emerald-500">Completed</p>
+                                <p className="text-2xl font-bold text-foreground truncate">{stats.completed}</p>
+                            </div>
+                        </Card>
+                    </div>
+                )}
 
                 {/* Requisitions List Board */}
                 <div className="grid gap-6">

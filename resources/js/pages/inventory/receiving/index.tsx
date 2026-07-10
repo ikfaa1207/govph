@@ -1,5 +1,5 @@
 import { Head, useForm, useHttp, setLayoutProps } from '@inertiajs/react';
-import { PlusCircle, X, Eye, Package2, ClipboardCheck, ArrowDownToLine, Calendar, User, FileText, Landmark, Plus } from 'lucide-react';
+import { PlusCircle, X, Eye, Package2, ClipboardCheck, ArrowDownToLine, Calendar, User, FileText, Landmark, Plus, History, Pencil, MoreHorizontal } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { SimplePagination } from '@/components/simple-pagination';
@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DatePicker } from '@/components/ui/date-picker';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
@@ -45,13 +46,22 @@ interface ReceivingReport {
     items: ReceivingReportItem[];
 }
 
+interface ReceivingStats {
+    total_reports: number;
+    recent_deliveries: number;
+    total_items_received: number;
+    total_items_rejected: number;
+}
+
 interface ReceivingIndexProps {
     reports: {
         data: ReceivingReport[];
         links: any[];
     };
+    stats: ReceivingStats;
     suppliers: any[];
-    employees: any[];
+    receivers: any[];
+    inspectors: any[];
     items: any[];
     auth: {
         user: {
@@ -62,20 +72,23 @@ interface ReceivingIndexProps {
     };
 }
 
-export default function ReceivingIndex({ reports, suppliers: initialSuppliers, employees, items }: ReceivingIndexProps) {
+export default function ReceivingIndex({ reports, stats, suppliers: initialSuppliers, receivers, inspectors, items }: ReceivingIndexProps) {
     const breadcrumbs = [{ title: 'Receiving (Stock In)', href: '/inventory/receiving-reports' }];
     setLayoutProps({ breadcrumbs });
 
     const [isOpen, setIsOpen] = useState(false);
     const [selectedReport, setSelectedReport] = useState<ReceivingReport | null>(null);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
+    const [editMode, setEditMode] = useState(false);
+    const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+    const [historyLogs, setHistoryLogs] = useState<any[]>([]);
 
     // Suppliers local state to allow inline additions
     const [suppliers, setSuppliers] = useState(initialSuppliers);
     const [isAddSupplierOpen, setIsAddSupplierOpen] = useState(false);
 
     // Form logic
-    const { data, setData, post, processing, errors, reset } = useForm({
+    const { data, setData, post, put, processing, errors, reset } = useForm({
         po_number: '',
         supplier_id: '',
         po_date: new Date().toISOString().slice(0, 10),
@@ -108,12 +121,12 @@ export default function ReceivingIndex({ reports, suppliers: initialSuppliers, e
     });
 
     useEffect(() => {
-        if (isOpen && !data.iar_number) {
+        if (isOpen && !editMode && !data.iar_number) {
             const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
             const rand = Math.floor(1000 + Math.random() * 9000);
             setData('iar_number', `IAR-${dateStr}-${rand}`);
         }
-    }, [isOpen, data.iar_number, setData]);
+    }, [isOpen, editMode, data.iar_number, setData]);
 
     const handleAddItemRow = () => {
         setData('items', [
@@ -126,6 +139,7 @@ export default function ReceivingIndex({ reports, suppliers: initialSuppliers, e
                 batch_number: '',
                 expiration_date: '',
                 rejection_reason: '',
+                isNew: true,
             }
         ]);
     };
@@ -172,21 +186,82 @@ export default function ReceivingIndex({ reports, suppliers: initialSuppliers, e
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        post('/inventory/receiving-reports', {
-            onSuccess: () => {
-                setIsOpen(false);
-                reset();
-                toast.success('Receiving Report saved and stock quantities updated successfully.');
-            },
-            onError: () => {
-                toast.error('Failed to create receiving report. Check validation errors.');
-            }
-        });
+
+        if (data.received_by === data.inspected_by) {
+            toast.error('The Receiver and Inspector cannot be the same person. This violates segregation of duties.');
+            return;
+        }
+
+        if (editMode && selectedReport) {
+            put(`/inventory/receiving-reports/${selectedReport.id}`, {
+                onSuccess: () => {
+                    setIsOpen(false);
+                    reset();
+                    toast.success('Receiving Report updated successfully.');
+                },
+                onError: () => {
+                    toast.error('Failed to update receiving report. Check validation errors.');
+                }
+            });
+        } else {
+            post('/inventory/receiving-reports', {
+                onSuccess: () => {
+                    setIsOpen(false);
+                    reset();
+                    toast.success('Receiving Report saved and stock quantities updated successfully.');
+                },
+                onError: () => {
+                    toast.error('Failed to create receiving report. Check validation errors.');
+                }
+            });
+        }
     };
 
     const openDetails = (report: ReceivingReport) => {
         setSelectedReport(report);
         setIsDetailOpen(true);
+    };
+
+    const openEdit = (report: ReceivingReport) => {
+        setEditMode(true);
+        setSelectedReport(report);
+        
+        setData({
+            po_number: report.purchase_order?.po_number || '',
+            supplier_id: String(suppliers.find(s => s.name === report.purchase_order?.supplier_name)?.id || ''),
+            po_date: new Date().toISOString().slice(0, 10), // Defaulting
+            iar_number: report.iar_number,
+            invoice_number: report.invoice_number || '',
+            delivery_receipt_number: report.delivery_receipt_number || '',
+            received_date: report.received_date,
+            received_by: String(receivers.find(r => r.name === report.receiver_name)?.id || ''),
+            inspected_by: String(inspectors.find(i => i.name === report.inspector_name)?.id || ''),
+            remarks: report.remarks || '',
+            items: report.items.map(item => ({
+                id: item.id,
+                item_id: String(items.find(i => i.name === item.name)?.id || ''),
+                quantity_received: item.quantity_received,
+                quantity_accepted: item.quantity_accepted,
+                unit_cost: item.unit_cost,
+                batch_number: item.batch_number || '',
+                expiration_date: item.expiration_date || '',
+                rejection_reason: item.rejection_reason || '',
+                isNew: false,
+            })) as any,
+        });
+        
+        setIsOpen(true);
+    };
+
+    const openHistory = (report: ReceivingReport) => {
+        setSelectedReport(report);
+        fetch(`/inventory/receiving-reports/${report.id}/history`)
+            .then(res => res.json())
+            .then(data => {
+                setHistoryLogs(data);
+                setIsHistoryOpen(true);
+            })
+            .catch(() => toast.error('Failed to fetch history logs.'));
     };
 
     return (
@@ -207,10 +282,11 @@ export default function ReceivingIndex({ reports, suppliers: initialSuppliers, e
 
                             if (!open) {
                                 reset();
+                                setEditMode(false);
                             }
                         }}>
                             <DialogTrigger asChild>
-                                <Button className="gap-2">
+                                <Button className="gap-2" onClick={() => setEditMode(false)}>
                                     <PlusCircle className="h-4 w-4" />
                                     Receive Delivery
                                 </Button>
@@ -221,9 +297,9 @@ export default function ReceivingIndex({ reports, suppliers: initialSuppliers, e
                                 onInteractOutside={(e) => e.preventDefault()}
                             >
                                 <DialogHeader className="mb-2">
-                                    <DialogTitle className="text-xl">Record New Receiving Report</DialogTitle>
+                                    <DialogTitle className="text-xl">{editMode ? 'Edit Receiving Report' : 'Record New Receiving Report'}</DialogTitle>
                                     <DialogDescription className="text-sm">
-                                        Log a supplier delivery PO shipment, inspect accepted stocks, and increase unit balances.
+                                        {editMode ? 'Update an existing receiving report.' : 'Log a supplier delivery PO shipment, inspect accepted stocks, and increase unit balances.'}
                                     </DialogDescription>
                                 </DialogHeader>
 
@@ -335,22 +411,25 @@ export default function ReceivingIndex({ reports, suppliers: initialSuppliers, e
                                             <div className="space-y-2">
                                                 <Label htmlFor="received_by" className="text-xs font-semibold" required>Received By (Supply Unit)</Label>
                                                 <SmartSelect 
-                                                    options={employees.map(e => ({ value: String(e.id), label: `${e.name} (${e.position})` }))}
+                                                    options={receivers.map(e => ({ value: String(e.id), label: `${e.name} (${e.position})` }))}
                                                     value={data.received_by ? String(data.received_by) : undefined}
                                                     onValueChange={val => setData('received_by', val)}
-                                                    placeholder="Select Employee"
+                                                    placeholder="Select Receiver"
                                                 />
                                                 {errors.received_by && <p className="text-xs text-rose-500">{errors.received_by}</p>}
                                             </div>
                                             <div className="space-y-2">
                                                 <Label htmlFor="inspected_by" className="text-xs font-semibold" required>Inspected By</Label>
                                                 <SmartSelect 
-                                                    options={employees.map(e => ({ value: String(e.id), label: `${e.name} (${e.position})` }))}
+                                                    options={inspectors.map(e => ({ value: String(e.id), label: `${e.name} (${e.position})` }))}
                                                     value={data.inspected_by ? String(data.inspected_by) : undefined}
                                                     onValueChange={val => setData('inspected_by', val)}
-                                                    placeholder="Select Employee"
+                                                    placeholder="Select Inspector"
                                                 />
                                                 {errors.inspected_by && <p className="text-xs text-rose-500">{errors.inspected_by}</p>}
+                                                {data.received_by && data.inspected_by && data.received_by === data.inspected_by && (
+                                                    <p className="text-xs text-rose-500 font-medium">Receiver and Inspector must be different.</p>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
@@ -364,9 +443,6 @@ export default function ReceivingIndex({ reports, suppliers: initialSuppliers, e
                                                 <Package2 className="h-4.5 w-4.5 text-primary" />
                                                 <span>Delivered Supplies List</span>
                                             </div>
-                                            <Button type="button" size="sm" variant="outline" onClick={handleAddItemRow}>
-                                                Add Item Line
-                                            </Button>
                                         </div>
 
                                         <div className="max-h-[30vh] overflow-y-auto rounded-md border border-border">
@@ -392,6 +468,7 @@ export default function ReceivingIndex({ reports, suppliers: initialSuppliers, e
                                                                     onValueChange={val => handleItemChange(idx, 'item_id', val)}
                                                                     placeholder="Select Item"
                                                                     className="h-8 text-xs bg-background"
+                                                                    defaultOpen={row.isNew}
                                                                 />
                                                             </td>
                                                             <td className="p-2.5">
@@ -457,6 +534,19 @@ export default function ReceivingIndex({ reports, suppliers: initialSuppliers, e
                                                 </tbody>
                                             </table>
                                         </div>
+                                        
+                                        <div className="flex justify-start">
+                                            <Button 
+                                                type="button" 
+                                                variant="ghost" 
+                                                size="sm" 
+                                                onClick={handleAddItemRow}
+                                                className="text-primary hover:text-primary hover:bg-primary/10 gap-1.5 -ml-2"
+                                            >
+                                                <PlusCircle className="h-4 w-4" />
+                                                Add Item
+                                            </Button>
+                                        </div>
                                     </div>
 
                                     {/* Remarks */}
@@ -481,6 +571,51 @@ export default function ReceivingIndex({ reports, suppliers: initialSuppliers, e
                         </Dialog>
                     </div>
                 </div>
+
+                {/* Statistics Overview */}
+                {stats && (
+                    <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+                        <Card className="relative overflow-hidden p-5 flex flex-col justify-center border border-border border-t-4 border-t-blue-500 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-[2px] bg-card bg-linear-to-tr from-transparent to-blue-500/5 rounded-xl">
+                            <div className="absolute -right-4 -bottom-4 text-blue-500/5">
+                                <FileText className="w-28 h-28" strokeWidth={1.5} />
+                            </div>
+                            <div className="relative z-10 space-y-1">
+                                <p className="text-[11px] font-medium uppercase tracking-wider text-blue-500">Total IAR Reports</p>
+                                <p className="text-2xl font-bold text-foreground truncate">{stats.total_reports}</p>
+                            </div>
+                        </Card>
+                        
+                        <Card className="relative overflow-hidden p-5 flex flex-col justify-center border border-border border-t-4 border-t-violet-500 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-[2px] bg-card bg-linear-to-tr from-transparent to-violet-500/5 rounded-xl">
+                            <div className="absolute -right-4 -bottom-4 text-violet-500/5">
+                                <Calendar className="w-28 h-28" strokeWidth={1.5} />
+                            </div>
+                            <div className="relative z-10 space-y-1">
+                                <p className="text-[11px] font-medium uppercase tracking-wider text-violet-500">Recent Deliveries</p>
+                                <p className="text-2xl font-bold text-foreground truncate">{stats.recent_deliveries}</p>
+                            </div>
+                        </Card>
+                        
+                        <Card className="relative overflow-hidden p-5 flex flex-col justify-center border border-border border-t-4 border-t-emerald-500 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-[2px] bg-card bg-linear-to-tr from-transparent to-emerald-500/5 rounded-xl">
+                            <div className="absolute -right-4 -bottom-4 text-emerald-500/5">
+                                <Package2 className="w-28 h-28" strokeWidth={1.5} />
+                            </div>
+                            <div className="relative z-10 space-y-1">
+                                <p className="text-[11px] font-medium uppercase tracking-wider text-emerald-500">Items Received</p>
+                                <p className="text-2xl font-bold text-foreground truncate">{stats.total_items_received}</p>
+                            </div>
+                        </Card>
+                        
+                        <Card className="relative overflow-hidden p-5 flex flex-col justify-center border border-border border-t-4 border-t-rose-500 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-[2px] bg-card bg-linear-to-tr from-transparent to-rose-500/5 rounded-xl">
+                            <div className="absolute -right-4 -bottom-4 text-rose-500/5">
+                                <X className="w-28 h-28" strokeWidth={1.5} />
+                            </div>
+                            <div className="relative z-10 space-y-1">
+                                <p className="text-[11px] font-medium uppercase tracking-wider text-rose-500">Items Rejected</p>
+                                <p className="text-2xl font-bold text-foreground truncate">{stats.total_items_rejected}</p>
+                            </div>
+                        </Card>
+                    </div>
+                )}
 
                 {/* Table list of Receiving Reports */}
                 <Card>
@@ -544,10 +679,30 @@ export default function ReceivingIndex({ reports, suppliers: initialSuppliers, e
                                                 </TableCell>
                                                 <TableCell className="text-xs text-muted-foreground">{report.receiver_name}</TableCell>
                                                 <TableCell className="text-right">
-                                                    <Button size="sm" variant="outline" className="gap-1" onClick={() => openDetails(report)}>
-                                                        <Eye className="h-3 w-3" />
-                                                        Details
-                                                    </Button>
+                                                    <DropdownMenu>
+                                                        <DropdownMenuTrigger asChild>
+                                                            <Button variant="ghost" className="h-8 w-8 p-0">
+                                                                <span className="sr-only">Open menu</span>
+                                                                <MoreHorizontal className="h-4 w-4" />
+                                                            </Button>
+                                                        </DropdownMenuTrigger>
+                                                        <DropdownMenuContent align="end">
+                                                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                                            <DropdownMenuSeparator />
+                                                            <DropdownMenuItem onClick={() => openDetails(report)} className="cursor-pointer">
+                                                                <Eye className="mr-2 h-4 w-4 text-muted-foreground" />
+                                                                View Details
+                                                            </DropdownMenuItem>
+                                                            <DropdownMenuItem onClick={() => openEdit(report)} className="cursor-pointer">
+                                                                <Pencil className="mr-2 h-4 w-4 text-muted-foreground" />
+                                                                Edit Report
+                                                            </DropdownMenuItem>
+                                                            <DropdownMenuItem onClick={() => openHistory(report)} className="cursor-pointer">
+                                                                <History className="mr-2 h-4 w-4 text-muted-foreground" />
+                                                                View History
+                                                            </DropdownMenuItem>
+                                                        </DropdownMenuContent>
+                                                    </DropdownMenu>
                                                 </TableCell>
                                             </TableRow>
                                         ))}
@@ -696,6 +851,73 @@ export default function ReceivingIndex({ reports, suppliers: initialSuppliers, e
                                 <Button type="submit" disabled={supplierHttp.processing}>Save Supplier</Button>
                             </div>
                         </form>
+                    </DialogContent>
+                </Dialog>
+
+                {/* Dialog: Revision History */}
+                <Dialog open={isHistoryOpen} onOpenChange={setIsHistoryOpen}>
+                    <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+                        <DialogHeader>
+                            <DialogTitle className="flex items-center gap-2">
+                                <History className="h-5 w-5 text-muted-foreground" />
+                                Revision History: {selectedReport?.iar_number}
+                            </DialogTitle>
+                            <DialogDescription>
+                                Audit trail of all modifications made to this Receiving Report.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-4 mt-2">
+                            {historyLogs.length === 0 ? (
+                                <div className="text-center py-8 text-muted-foreground text-sm border border-dashed rounded-md">
+                                    No revisions found for this report.
+                                </div>
+                            ) : (
+                                <div className="space-y-4">
+                                    {historyLogs.map((log) => (
+                                        <div key={log.id} className="p-4 rounded-md border border-border bg-card shadow-sm text-sm">
+                                            <div className="flex justify-between items-start mb-2 pb-2 border-b">
+                                                <div>
+                                                    <p className="font-semibold text-primary">{log.action}</p>
+                                                    <p className="text-xs text-muted-foreground">by {log.user?.name} ({log.user_role})</p>
+                                                </div>
+                                                <span className="text-xs font-mono text-muted-foreground">
+                                                    {new Date(log.created_at).toLocaleString()}
+                                                </span>
+                                            </div>
+                                            {log.old_values && log.new_values && (
+                                                <div className="text-xs mt-2 overflow-x-auto bg-muted/30 p-2 rounded">
+                                                    <table className="w-full text-left">
+                                                        <thead>
+                                                            <tr className="text-muted-foreground border-b border-border/50">
+                                                                <th className="font-medium pb-1">Field</th>
+                                                                <th className="font-medium pb-1">Previous</th>
+                                                                <th className="font-medium pb-1">Updated</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            {Object.keys(log.new_values).map(key => {
+                                                                const oldVal = JSON.stringify(log.old_values[key]);
+                                                                const newVal = JSON.stringify(log.new_values[key]);
+                                                                if (oldVal !== newVal && key !== 'updated_at') {
+                                                                    return (
+                                                                        <tr key={key} className="border-b border-border/30 last:border-0">
+                                                                            <td className="py-1 pr-2 font-mono text-muted-foreground">{key}</td>
+                                                                            <td className="py-1 pr-2 text-rose-600 line-through truncate max-w-[150px]">{oldVal}</td>
+                                                                            <td className="py-1 text-emerald-600 font-medium truncate max-w-[150px]">{newVal}</td>
+                                                                        </tr>
+                                                                    );
+                                                                }
+                                                                return null;
+                                                            })}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                     </DialogContent>
                 </Dialog>
 

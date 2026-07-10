@@ -46,6 +46,7 @@ class DashboardController extends Controller
             $totalValue = (float) ($aggregates->total_value ?? 0);
 
             $totalProperties = Property::count();
+            $totalPpeValue = (float) Property::sum('unit_cost');
         } else {
             $totalItems = DepartmentItem::where('department_id', $employee->department_id)->count();
 
@@ -62,9 +63,12 @@ class DashboardController extends Controller
             $outOfStocksCount = (int) ($aggregates->out_of_stock ?? 0);
             $totalValue = (float) ($aggregates->total_value ?? 0);
 
-            $totalProperties = Property::whereHas('activeAssignment.assignee', function ($query) use ($employee) {
+            $deptPropertiesQuery = Property::whereHas('activeAssignment.assignee', function ($query) use ($employee) {
                 $query->where('department_id', $employee->department_id);
-            })->count();
+            });
+            
+            $totalProperties = $deptPropertiesQuery->count();
+            $totalPpeValue = (float) $deptPropertiesQuery->sum('unit_cost');
         }
 
         $countQuery = Requisition::whereIn('status', ['pending_dept_head', 'pending_supply'])
@@ -112,6 +116,7 @@ class DashboardController extends Controller
                 'outOfStocks' => $outOfStocksCount,
                 'totalValue' => round($totalValue, 2),
                 'totalProperties' => $totalProperties,
+                'totalPpeValue' => round($totalPpeValue, 2),
                 'pendingRequests' => $pendingRequisitionsCount,
             ],
             'recentIssuances' => $recentIssuances,
