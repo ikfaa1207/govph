@@ -62,6 +62,12 @@ const mainNavItems: GimsNavItem[] = [
         icon: FileText,
         permission: 'reports.view',
     },
+    {
+        title: 'Physical Counts',
+        href: '/inventory/physical-counts',
+        icon: FileText,
+        permission: 'reports.view',
+    },
 ];
 
 const footerNavItems: NavItem[] = [

@@ -77,7 +77,9 @@ export default function PropertyIndex({ properties, employees, categories, offic
 
     const [isAddOpen, setIsAddOpen] = useState(false);
     const [selectedProp, setSelectedProp] = useState<Property | null>(null);
+    const [selectedPropIds, setSelectedPropIds] = useState<number[]>([]);
     const [isAssignOpen, setIsAssignOpen] = useState(false);
+    const [isBatchAssignOpen, setIsBatchAssignOpen] = useState(false);
     const [isTransferOpen, setIsTransferOpen] = useState(false);
     const [isDisposeOpen, setIsDisposeOpen] = useState(false);
     const [isSubAssignOpen, setIsSubAssignOpen] = useState(false);
@@ -96,6 +98,16 @@ export default function PropertyIndex({ properties, employees, categories, offic
 
     // Form for Assignment
     const assignForm = useForm({
+        assigned_to: '',
+        is_non_system: false,
+        non_system_name: '',
+        non_system_department: '',
+        remarks: '',
+    });
+
+    // Form for Batch Assignment
+    const batchAssignForm = useForm({
+        property_ids: [] as number[],
         assigned_to: '',
         is_non_system: false,
         non_system_name: '',
@@ -156,13 +168,29 @@ export default function PropertyIndex({ properties, employees, categories, offic
         e.preventDefault();
 
         if (!selectedProp) {
-return;
-}
+            return;
+        }
 
         assignForm.post(`/inventory/properties/${selectedProp.id}/assign`, {
             onSuccess: () => {
                 setIsAssignOpen(false);
                 toast.success('Equipment assigned. Handover document generated.');
+            },
+            onError: () => {
+                toast.error('Failed to assign equipment.');
+            }
+        });
+    };
+
+    const handleBatchAssignSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+
+        batchAssignForm.post(`/inventory/properties/batch-assign`, {
+            onSuccess: () => {
+                setIsBatchAssignOpen(false);
+                setSelectedPropIds([]);
+                batchAssignForm.reset();
+                toast.success('Equipment assigned. Handover document(s) generated.');
             },
             onError: () => {
                 toast.error('Failed to assign equipment.');
@@ -278,8 +306,22 @@ return;
                         <p className="text-sm text-muted-foreground">Manage capitalized properties, serial codes, and handovers.</p>
                     </div>
 
-                    <Can permission="property.assign">
-                        <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+                    <div className="flex gap-2 items-center">
+                        <Can permission="property.assign">
+                            {selectedPropIds.length > 0 && (
+                                <Button 
+                                    variant="secondary" 
+                                    className="gap-2"
+                                    onClick={() => {
+                                        batchAssignForm.setData('property_ids', selectedPropIds);
+                                        setIsBatchAssignOpen(true);
+                                    }}
+                                >
+                                    <UserCheck className="h-4 w-4" />
+                                    Batch Assign ({selectedPropIds.length})
+                                </Button>
+                            )}
+                            <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
                             <DialogTrigger asChild>
                                 <Button className="gap-2">
                                     <PlusCircle className="h-4 w-4" />
@@ -347,6 +389,7 @@ return;
                             </DialogContent>
                         </Dialog>
                     </Can>
+                    </div>
                 </div>
 
                 {/* Statistics Overview */}
@@ -419,6 +462,22 @@ return;
                                 <Table className="text-xs">
                                     <TableHeader>
                                         <TableRow>
+                                            <TableHead className="w-10 text-center">
+                                                <input 
+                                                    type="checkbox" 
+                                                    className="rounded border-gray-300"
+                                                    checked={properties.data.length > 0 && properties.data.every(p => selectedPropIds.includes(p.id) || p.status !== 'available')}
+                                                    onChange={(e) => {
+                                                        if (e.target.checked) {
+                                                            const availableIds = properties.data.filter(p => p.status === 'available').map(p => p.id);
+                                                            setSelectedPropIds(prev => Array.from(new Set([...prev, ...availableIds])));
+                                                        } else {
+                                                            const idsToRemove = properties.data.map(p => p.id);
+                                                            setSelectedPropIds(prev => prev.filter(id => !idsToRemove.includes(id)));
+                                                        }
+                                                    }}
+                                                />
+                                            </TableHead>
                                             <TableHead className="whitespace-nowrap">Property No.</TableHead>
                                             <TableHead>Category</TableHead>
                                             <TableHead className="w-[180px]">Equipment Details</TableHead>
@@ -433,6 +492,22 @@ return;
                                     <TableBody>
                                         {properties.data.map((prop) => (
                                             <TableRow key={prop.id}>
+                                                <TableCell className="text-center">
+                                                    {prop.status === 'available' && (
+                                                        <input 
+                                                            type="checkbox" 
+                                                            className="rounded border-gray-300"
+                                                            checked={selectedPropIds.includes(prop.id)}
+                                                            onChange={(e) => {
+                                                                if (e.target.checked) {
+                                                                    setSelectedPropIds(prev => [...prev, prop.id]);
+                                                                } else {
+                                                                    setSelectedPropIds(prev => prev.filter(id => id !== prop.id));
+                                                                }
+                                                            }}
+                                                        />
+                                                    )}
+                                                </TableCell>
                                                 <TableCell className="font-mono text-[11px] whitespace-nowrap">{prop.property_number}</TableCell>
                                                 <TableCell className="text-muted-foreground text-[11px]">{prop.category?.name}</TableCell>
                                                 <TableCell className="max-w-[200px]">
@@ -685,6 +760,116 @@ return;
                                 </div>
                             </form>
                         )}
+                    </DialogContent>
+                </Dialog>
+
+                {/* Dialog: Batch Assign Property */}
+                <Dialog open={isBatchAssignOpen} onOpenChange={setIsBatchAssignOpen}>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Batch Assign Equipment Accountability</DialogTitle>
+                            <DialogDescription>Assign {selectedPropIds.length} properties to an employee. PAR and ICS documents will be automatically generated and grouped.</DialogDescription>
+                        </DialogHeader>
+                        <form onSubmit={handleBatchAssignSubmit} className="space-y-4">
+                            <div className="space-y-3">
+                                <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Assignee Type</Label>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            batchAssignForm.setData(data => ({
+                                                ...data,
+                                                is_non_system: false,
+                                                non_system_name: '',
+                                                non_system_department: '',
+                                            }));
+                                        }}
+                                        className={`flex flex-col items-center gap-1 p-3 rounded-lg border-2 text-xs font-semibold transition-all ${
+                                            !batchAssignForm.data.is_non_system
+                                                ? 'border-indigo-600 bg-indigo-50/50 text-indigo-600 dark:border-indigo-400 dark:bg-indigo-950/20 dark:text-indigo-400'
+                                                : 'border-border bg-card text-muted-foreground hover:bg-muted/50'
+                                        }`}
+                                    >
+                                        <span>Registered Employee</span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            batchAssignForm.setData(data => ({
+                                                ...data,
+                                                is_non_system: true,
+                                                assigned_to: '',
+                                            }));
+                                        }}
+                                        className={`flex flex-col items-center gap-1 p-3 rounded-lg border-2 text-xs font-semibold transition-all ${
+                                            batchAssignForm.data.is_non_system
+                                                ? 'border-indigo-600 bg-indigo-50/50 text-indigo-600 dark:border-indigo-400 dark:bg-indigo-950/20 dark:text-indigo-400'
+                                                : 'border-border bg-card text-muted-foreground hover:bg-muted/50'
+                                        }`}
+                                    >
+                                        <span>Non-System / External User</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            {!batchAssignForm.data.is_non_system ? (
+                                <div className="space-y-1">
+                                    <Label htmlFor="batch_assignee">Employee</Label>
+                                    <SmartSelect 
+                                        options={employees.map(e => ({ value: String(e.id), label: `${e.name} (${e.position})` }))}
+                                        value={batchAssignForm.data.assigned_to ? String(batchAssignForm.data.assigned_to) : undefined}
+                                        onValueChange={val => batchAssignForm.setData('assigned_to', val)}
+                                        placeholder="Select Employee"
+                                        className="w-full"
+                                        disabled={batchAssignForm.data.is_non_system}
+                                    />
+                                    {batchAssignForm.errors.assigned_to && (
+                                        <p className="text-xs text-destructive">{batchAssignForm.errors.assigned_to}</p>
+                                    )}
+                                </div>
+                            ) : (
+                                <div className="space-y-3">
+                                    <div className="space-y-1">
+                                        <Label htmlFor="batch_non_system_name" required>Full Name</Label>
+                                        <Input
+                                            id="batch_non_system_name"
+                                            type="text"
+                                            placeholder="e.g., Juan dela Cruz"
+                                            value={batchAssignForm.data.non_system_name}
+                                            onChange={e => batchAssignForm.setData('non_system_name', e.target.value)}
+                                            required={batchAssignForm.data.is_non_system}
+                                        />
+                                        {batchAssignForm.errors.non_system_name && (
+                                            <p className="text-xs text-destructive">{batchAssignForm.errors.non_system_name}</p>
+                                        )}
+                                    </div>
+                                    <div className="space-y-1">
+                                        <Label htmlFor="batch_non_system_department" required>Department / Office / Agency</Label>
+                                        <Input
+                                            id="batch_non_system_department"
+                                            type="text"
+                                            placeholder="e.g., DICT Regional Office"
+                                            value={batchAssignForm.data.non_system_department}
+                                            onChange={e => batchAssignForm.setData('non_system_department', e.target.value)}
+                                            required={batchAssignForm.data.is_non_system}
+                                        />
+                                        {batchAssignForm.errors.non_system_department && (
+                                            <p className="text-xs text-destructive">{batchAssignForm.errors.non_system_department}</p>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="space-y-1">
+                                <Label htmlFor="batch_rem" required>Remarks</Label>
+                                <textarea id="batch_rem" className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-hidden" value={batchAssignForm.data.remarks} onChange={e => batchAssignForm.setData('remarks', e.target.value)} />
+                            </div>
+
+                            <div className="flex justify-end gap-2 pt-2">
+                                <Button type="button" variant="outline" onClick={() => setIsBatchAssignOpen(false)}>Cancel</Button>
+                                <Button type="submit" disabled={batchAssignForm.processing}>Confirm Batch Assignment</Button>
+                            </div>
+                        </form>
                     </DialogContent>
                 </Dialog>
 

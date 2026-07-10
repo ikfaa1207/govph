@@ -48,6 +48,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Properties/Assets
     Route::get('inventory/properties', [PropertyController::class, 'index'])->name('inventory.properties.index');
     Route::post('inventory/properties', [PropertyController::class, 'store'])->name('inventory.properties.store');
+    Route::post('inventory/properties/batch-assign', [PropertyController::class, 'batchAssign'])->name('inventory.properties.batch-assign');
     Route::post('inventory/properties/{property}/assign', [PropertyController::class, 'assign'])->name('inventory.properties.assign');
     Route::post('inventory/properties/{property}/transfer', [PropertyController::class, 'transfer'])->name('inventory.properties.transfer');
     Route::post('inventory/properties/{property}/sub-assign', [PropertyController::class, 'subAssign'])->name('inventory.properties.sub-assign');
@@ -57,6 +58,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Reports
     Route::get('inventory/reports', [ReportController::class, 'index'])->name('inventory.reports.index');
     Route::get('inventory/reports/{type}', [ReportController::class, 'generate'])->name('inventory.reports.generate');
+
+    // Physical Counts (RPCPPE/RPCI)
+    Route::get('inventory/physical-counts', [\App\Http\Controllers\Inventory\PhysicalCountController::class, 'index'])->name('inventory.physical-counts.index');
+    Route::post('inventory/physical-counts', [\App\Http\Controllers\Inventory\PhysicalCountController::class, 'store'])->name('inventory.physical-counts.store');
+    Route::get('inventory/physical-counts/{physicalCount}', [\App\Http\Controllers\Inventory\PhysicalCountController::class, 'show'])->name('inventory.physical-counts.show');
+    Route::put('inventory/physical-counts/{physicalCount}', [\App\Http\Controllers\Inventory\PhysicalCountController::class, 'update'])->name('inventory.physical-counts.update');
+    Route::get('inventory/physical-counts/{physicalCount}/export', [\App\Http\Controllers\Inventory\PhysicalCountController::class, 'export'])->name('inventory.physical-counts.export');
 
     // Helpdesk
     Route::get('inventory/helpdesk', [HelpdeskController::class, 'index'])->name('helpdesk');

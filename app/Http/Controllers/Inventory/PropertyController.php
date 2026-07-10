@@ -179,6 +179,101 @@ class PropertyController extends Controller
     }
 
     /**
+     * Assign multiple properties to an employee in a batch.
+     */
+    public function batchAssign(Request $request): RedirectResponse
+    {
+        Gate::authorize('property.assign');
+
+        $user = Auth::user();
+        $custodian = Employee::where('user_id', $user->id)->first();
+
+        if (! $custodian) {
+            return redirect()->back()->withErrors(['error' => 'Property Custodian employee profile not found.']);
+        }
+
+        $request->validate([
+            'property_ids' => ['required', 'array', 'min:1'],
+            'property_ids.*' => ['exists:properties,id'],
+            'is_non_system' => ['nullable', 'boolean'],
+            'assigned_to' => ['required_unless:is_non_system,true', 'nullable', 'exists:employees,id'],
+            'non_system_name' => ['required_if:is_non_system,true', 'nullable', 'string', 'max:255'],
+            'non_system_department' => ['required_if:is_non_system,true', 'nullable', 'string', 'max:255'],
+            'remarks' => ['nullable', 'string'],
+        ]);
+
+        $properties = Property::whereIn('id', $request->input('property_ids'))->get();
+        
+        foreach ($properties as $property) {
+            abort_if($property->status !== PropertyStatus::Available, 400, "Property {$property->property_number} is not available for assignment.");
+        }
+
+        DB::transaction(function () use ($request, $properties, $custodian) {
+            $threshold = config('inventory.capitalization_threshold', 50000.00);
+            
+            // Separate properties into PAR and ICS based on threshold
+            $ppeProperties = [];
+            $icsProperties = [];
+            
+            foreach ($properties as $property) {
+                if ((float) $property->unit_cost >= $threshold) {
+                    $ppeProperties[] = $property;
+                } else {
+                    $icsProperties[] = $property;
+                }
+            }
+            
+            $isNonSystem = $request->boolean('is_non_system');
+            
+            // Assign PAR properties
+            if (count($ppeProperties) > 0) {
+                $parDocNo = $this->sequences->next('PAR');
+                foreach ($ppeProperties as $property) {
+                    PropertyAssignment::create([
+                        'property_id' => $property->id,
+                        'assigned_to' => $isNonSystem ? null : $request->input('assigned_to'),
+                        'non_system_name' => $isNonSystem ? $request->input('non_system_name') : null,
+                        'non_system_department' => $isNonSystem ? $request->input('non_system_department') : null,
+                        'document_type' => 'PAR',
+                        'document_number' => $parDocNo,
+                        'assigned_by' => $custodian->id,
+                        'date_assigned' => now()->toDateString(),
+                        'remarks' => $request->input('remarks'),
+                    ]);
+                    
+                    $property->status = PropertyStatus::Assigned;
+                    $property->save();
+                    AuditLogger::log('ASSIGN_PROPERTY', $property, null, ['document_type' => 'PAR', 'document_number' => $parDocNo]);
+                }
+            }
+            
+            // Assign ICS properties
+            if (count($icsProperties) > 0) {
+                $icsDocNo = $this->sequences->next('ICS');
+                foreach ($icsProperties as $property) {
+                    PropertyAssignment::create([
+                        'property_id' => $property->id,
+                        'assigned_to' => $isNonSystem ? null : $request->input('assigned_to'),
+                        'non_system_name' => $isNonSystem ? $request->input('non_system_name') : null,
+                        'non_system_department' => $isNonSystem ? $request->input('non_system_department') : null,
+                        'document_type' => 'ICS',
+                        'document_number' => $icsDocNo,
+                        'assigned_by' => $custodian->id,
+                        'date_assigned' => now()->toDateString(),
+                        'remarks' => $request->input('remarks'),
+                    ]);
+                    
+                    $property->status = PropertyStatus::Assigned;
+                    $property->save();
+                    AuditLogger::log('ASSIGN_PROPERTY', $property, null, ['document_type' => 'ICS', 'document_number' => $icsDocNo]);
+                }
+            }
+        });
+
+        return redirect()->back()->with('success', 'Properties assigned successfully.');
+    }
+
+    /**
      * Transfer property (PTR) to another employee.
      */
     public function transfer(Request $request, Property $property): RedirectResponse
@@ -192,7 +287,7 @@ class PropertyController extends Controller
             return redirect()->back()->withErrors(['error' => 'Property Custodian employee profile not found.']);
         }
 
-        abort_if($property->status !== PropertyStatus::Assigned, 400, 'Only assigned properties can be transferred.');
+        abort_if(! in_array($property->status, [PropertyStatus::Assigned, PropertyStatus::Transferred]), 400, 'Only assigned or transferred properties can be transferred.');
 
         $request->validate([
             'to_employee_id' => ['required', 'exists:employees,id'],
@@ -326,7 +421,7 @@ class PropertyController extends Controller
             return redirect()->back()->withErrors(['error' => 'Issuer employee profile not found.']);
         }
 
-        abort_if($property->status !== PropertyStatus::Assigned, 400, 'Only assigned properties can be sub-assigned.');
+        abort_if(! in_array($property->status, [PropertyStatus::Assigned, PropertyStatus::Transferred]), 400, 'Only assigned or transferred properties can be sub-assigned.');
 
         $request->validate([
             'is_non_system' => ['nullable', 'boolean'],
