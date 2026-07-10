@@ -68,6 +68,15 @@ class ItemController extends Controller
             ];
         });
 
+        // Calculate statistics
+        $stats = [
+            'total_items' => Item::where('status', 'active')->count(),
+            'low_stock' => Item::where('status', 'active')->whereColumn('current_stock', '<=', 'reorder_level')->where('current_stock', '>', 0)->count(),
+            'out_of_stock' => Item::where('status', 'active')->where('current_stock', '<=', 0)->count(),
+            'total_value' => Item::where('status', 'active')->sum(\Illuminate\Support\Facades\DB::raw('current_stock * unit_cost')),
+            'recently_added' => Item::where('status', 'active')->where('created_at', '>=', now()->subDays(7))->count(),
+        ];
+
         return Inertia::render('inventory/items/index', [
             'items' => $items,
             'categories' => Category::all(),
@@ -75,6 +84,7 @@ class ItemController extends Controller
             'locations' => Location::with('warehouse')->get(),
             'warehouses' => Warehouse::all(),
             'filters' => $request->only(['search', 'category_id']),
+            'stats' => $stats,
         ]);
     }
 

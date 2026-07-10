@@ -1,5 +1,5 @@
 import { Head, useForm, setLayoutProps } from '@inertiajs/react';
-import { PlusCircle, UserCheck, RefreshCw, Trash2, ShieldCheck, Clipboard, MoreHorizontal } from 'lucide-react';
+import { PlusCircle, UserCheck, RefreshCw, Trash2, ShieldCheck, Clipboard, MoreHorizontal, Package, PhilippinePeso, Clock, CheckCircle, PackageOpen } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Can } from '@/components/can';
@@ -58,9 +58,16 @@ interface PropertyIndexProps {
         };
     };
     current_employee: any;
+    stats: {
+        total_items: number;
+        available: number;
+        assigned: number;
+        total_value: number;
+        recently_added: number;
+    };
 }
 
-export default function PropertyIndex({ properties, employees, categories, offices, auth, current_employee }: PropertyIndexProps) {
+export default function PropertyIndex({ properties, employees, categories, offices, auth, current_employee, stats }: PropertyIndexProps) {
     const breadcrumbs = [{ title: 'Property Registry (PPE)', href: '/inventory/properties' }];
     setLayoutProps({ breadcrumbs });
     
@@ -341,6 +348,57 @@ return;
                         </Dialog>
                     </Can>
                 </div>
+
+                {/* Statistics Overview */}
+                {stats && (
+                    <div className="grid gap-3 grid-cols-2 lg:grid-cols-5">
+                        <Card className="p-3 flex flex-row items-center gap-3 border-blue-100 bg-blue-50/30 dark:bg-blue-950/20 dark:border-blue-900 shadow-none">
+                            <div className="rounded-md bg-blue-100 p-2 text-blue-600 dark:bg-blue-900 dark:text-blue-300">
+                                <Package className="h-4 w-4" />
+                            </div>
+                            <div>
+                                <p className="text-[11px] font-medium uppercase tracking-wider text-blue-600/80 dark:text-blue-400/80">Total PPEs</p>
+                                <p className="text-lg font-bold leading-none text-blue-900 dark:text-blue-100 mt-1">{stats.total_items}</p>
+                            </div>
+                        </Card>
+                        <Card className="p-3 flex flex-row items-center gap-3 border-emerald-100 bg-emerald-50/30 dark:bg-emerald-950/20 dark:border-emerald-900 shadow-none">
+                            <div className="rounded-md bg-emerald-100 p-2 text-emerald-600 dark:bg-emerald-900 dark:text-emerald-300">
+                                <PhilippinePeso className="h-4 w-4" />
+                            </div>
+                            <div>
+                                <p className="text-[11px] font-medium uppercase tracking-wider text-emerald-600/80 dark:text-emerald-400/80">Total Value</p>
+                                <p className="text-lg font-bold leading-none text-emerald-900 dark:text-emerald-100 mt-1">{formatCurrency(stats.total_value)}</p>
+                            </div>
+                        </Card>
+                        <Card className="p-3 flex flex-row items-center gap-3 border-indigo-100 bg-indigo-50/30 dark:bg-indigo-950/20 dark:border-indigo-900 shadow-none">
+                            <div className="rounded-md bg-indigo-100 p-2 text-indigo-600 dark:bg-indigo-900 dark:text-indigo-300">
+                                <Clock className="h-4 w-4" />
+                            </div>
+                            <div>
+                                <p className="text-[11px] font-medium uppercase tracking-wider text-indigo-600/80 dark:text-indigo-400/80">Recently Added</p>
+                                <p className="text-lg font-bold leading-none text-indigo-900 dark:text-indigo-100 mt-1">{stats.recently_added}</p>
+                            </div>
+                        </Card>
+                        <Card className="p-3 flex flex-row items-center gap-3 border-amber-100 bg-amber-50/30 dark:bg-amber-950/20 dark:border-amber-900 shadow-none">
+                            <div className="rounded-md bg-amber-100 p-2 text-amber-600 dark:bg-amber-900 dark:text-amber-300">
+                                <CheckCircle className="h-4 w-4" />
+                            </div>
+                            <div>
+                                <p className="text-[11px] font-medium uppercase tracking-wider text-amber-600/80 dark:text-amber-400/80">Assigned</p>
+                                <p className="text-lg font-bold leading-none text-amber-900 dark:text-amber-100 mt-1">{stats.assigned}</p>
+                            </div>
+                        </Card>
+                        <Card className="p-3 flex flex-row items-center gap-3 border-rose-100 bg-rose-50/30 dark:bg-rose-950/20 dark:border-rose-900 shadow-none">
+                            <div className="rounded-md bg-rose-100 p-2 text-rose-600 dark:bg-rose-900 dark:text-rose-300">
+                                <PackageOpen className="h-4 w-4" />
+                            </div>
+                            <div>
+                                <p className="text-[11px] font-medium uppercase tracking-wider text-rose-600/80 dark:text-rose-400/80">Available</p>
+                                <p className="text-lg font-bold leading-none text-rose-900 dark:text-rose-100 mt-1">{stats.available}</p>
+                            </div>
+                        </Card>
+                    </div>
+                )}
 
                 {/* Properties Registry Board */}
                 <Card>

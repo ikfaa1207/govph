@@ -12,16 +12,26 @@ export function toUrl(url: NonNullable<InertiaLinkProps['href']>): string {
 }
 
 export function formatCurrency(amount: number | string | null | undefined): string {
-    if (amount == null) return '₱ 0.00';
+    if (amount == null) {
+return '₱ 0.00';
+}
+
     const num = typeof amount === 'string' ? parseFloat(amount) : amount;
-    if (isNaN(num)) return '₱ 0.00';
+
+    if (isNaN(num)) {
+return '₱ 0.00';
+}
+
     return '₱ ' + new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num);
 }
 
 import { format } from "date-fns";
 
 export function formatDateTime(date: string | Date | null | undefined): string {
-    if (!date) return '-';
+    if (!date) {
+return '-';
+}
+
     try {
         return format(new Date(date), 'MMM dd, yyyy hh:mm a');
     } catch (e) {

@@ -67,6 +67,14 @@ class PropertyController extends Controller
         $categories = Category::all();
         $offices = Office::all();
 
+        $stats = [
+            'total_items' => Property::count(),
+            'available' => Property::where('status', 'available')->count(),
+            'assigned' => Property::where('status', 'assigned')->count(),
+            'total_value' => Property::sum('unit_cost'),
+            'recently_added' => Property::where('created_at', '>=', now()->subDays(7))->count(),
+        ];
+
         return Inertia::render('inventory/property/index', [
             'properties' => $properties,
             'employees' => $employees,
@@ -74,6 +82,7 @@ class PropertyController extends Controller
             'offices' => $offices,
             'current_employee' => $employee,
             'filters' => $request->only(['status', 'search']),
+            'stats' => $stats,
         ]);
     }
 
