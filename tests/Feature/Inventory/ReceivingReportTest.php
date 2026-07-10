@@ -59,6 +59,14 @@ test('can create receiving report and update stock and moving average cost', fun
         'department_id' => $dept->id,
     ]);
 
+    $employee2 = Employee::create([
+        'employee_id' => 'EMP-002',
+        'name' => 'Inspector Name',
+        'position' => 'Inspector',
+        'office_id' => $office->id,
+        'department_id' => $dept->id,
+    ]);
+
     $supplier = Supplier::create([
         'name' => 'Test Supplier',
         'address' => 'Addr 1',
@@ -98,7 +106,7 @@ test('can create receiving report and update stock and moving average cost', fun
             'delivery_receipt_number' => 'DR-2026-99',
             'received_date' => '2026-06-29',
             'received_by' => $employee->id,
-            'inspected_by' => $employee->id,
+            'inspected_by' => $employee2->id,
             'remarks' => 'Everything accepted.',
             'items' => [
                 [
