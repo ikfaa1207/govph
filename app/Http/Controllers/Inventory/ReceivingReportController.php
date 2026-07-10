@@ -255,13 +255,15 @@ class ReceivingReportController extends Controller
             ]);
 
             // Track IDs from the payload to delete missing items
-            $payloadItemIds = collect($validated['items'])->pluck('id')->filter()->toArray();
+            $payloadItemIds = array_filter(array_map(function($item) { return $item['id'] ?? null; }, $validated['items']));
 
             // Handle deleted items: reverse stock and delete
             foreach ($report->items as $existingItem) {
                 if (!in_array($existingItem->id, $payloadItemIds)) {
                     if ($existingItem->quantity_accepted > 0) {
-                        $item = Item::findOrFail($existingItem->item_id);
+                        $existingItemId = (int) $existingItem->item_id;
+                        /** @var \App\Models\Item $item */
+                        $item = Item::findOrFail($existingItemId);
                         $this->valuationService->reverseStockIn(
                             $item,
                             $existingItem->quantity_accepted,
@@ -277,7 +279,8 @@ class ReceivingReportController extends Controller
 
             // Process payload items
             foreach ($validated['items'] as $itemData) {
-                $itemId = $itemData['item_id'];
+                $itemId = (int) $itemData['item_id'];
+                /** @var \App\Models\Item $item */
                 $item = Item::findOrFail($itemId);
 
                 $receivedQty = (int) $itemData['quantity_received'];
@@ -287,7 +290,9 @@ class ReceivingReportController extends Controller
 
                 if (isset($itemData['id'])) {
                     // Updating an existing item
-                    $existingLine = ReceivingReportItem::findOrFail($itemData['id']);
+                    $existingLineId = (int) $itemData['id'];
+                    /** @var \App\Models\ReceivingReportItem $existingLine */
+                    $existingLine = ReceivingReportItem::findOrFail($existingLineId);
                     
                     // Reverse old stock-in
                     if ($existingLine->quantity_accepted > 0) {
@@ -356,7 +361,7 @@ class ReceivingReportController extends Controller
     /**
      * Get the audit history for a specific receiving report.
      */
-    public function history(ReceivingReport $report)
+    public function history(ReceivingReport $report): \Illuminate\Http\JsonResponse
     {
         Gate::authorize('warehouse.receive');
         

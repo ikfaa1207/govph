@@ -169,7 +169,7 @@ class PhysicalCountController extends Controller
         }
     }
 
-    public function export(PhysicalCount $physicalCount)
+    public function export(PhysicalCount $physicalCount): \Symfony\Component\HttpFoundation\StreamedResponse
     {
         $physicalCount->load(['creator', 'items.property.category', 'items.item.category', 'items.property.activeAssignment']);
         
@@ -184,6 +184,9 @@ class PhysicalCountController extends Controller
 
         $callback = function() use($physicalCount) {
             $file = fopen('php://output', 'w');
+            if ($file === false) {
+                return;
+            }
             
             // Title
             if ($physicalCount->type === 'RPCPPE') {
@@ -202,7 +205,9 @@ class PhysicalCountController extends Controller
                     'Overage Qty', 'Overage Value', 'Remarks'
                 ]);
 
+                /** @var \App\Models\PhysicalCountItem $item */
                 foreach ($physicalCount->items as $item) {
+                    /** @var \App\Models\Property|null $prop */
                     $prop = $item->property;
                     if (!$prop) continue;
                     
@@ -229,7 +234,9 @@ class PhysicalCountController extends Controller
                     'Overage Qty', 'Overage Value', 'Remarks'
                 ]);
 
+                /** @var \App\Models\PhysicalCountItem $i */
                 foreach ($physicalCount->items as $i) {
+                    /** @var \App\Models\Item|null $item */
                     $item = $i->item;
                     if (!$item) continue;
                     
