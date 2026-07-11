@@ -6,6 +6,7 @@ use App\Http\Controllers\Inventory\DashboardController;
 use App\Http\Controllers\Inventory\HelpdeskController;
 use App\Http\Controllers\Inventory\ItemController;
 use App\Http\Controllers\Inventory\LocationController;
+use App\Http\Controllers\Inventory\PhysicalCountController;
 use App\Http\Controllers\Inventory\PropertyController;
 use App\Http\Controllers\Inventory\ReceivingReportController;
 use App\Http\Controllers\Inventory\ReportController;
@@ -60,11 +61,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('inventory/reports/{type}', [ReportController::class, 'generate'])->name('inventory.reports.generate');
 
     // Physical Counts (RPCPPE/RPCI)
-    Route::get('inventory/physical-counts', [\App\Http\Controllers\Inventory\PhysicalCountController::class, 'index'])->name('inventory.physical-counts.index');
-    Route::post('inventory/physical-counts', [\App\Http\Controllers\Inventory\PhysicalCountController::class, 'store'])->name('inventory.physical-counts.store');
-    Route::get('inventory/physical-counts/{physicalCount}', [\App\Http\Controllers\Inventory\PhysicalCountController::class, 'show'])->name('inventory.physical-counts.show');
-    Route::put('inventory/physical-counts/{physicalCount}', [\App\Http\Controllers\Inventory\PhysicalCountController::class, 'update'])->name('inventory.physical-counts.update');
-    Route::get('inventory/physical-counts/{physicalCount}/export', [\App\Http\Controllers\Inventory\PhysicalCountController::class, 'export'])->name('inventory.physical-counts.export');
+    Route::get('inventory/physical-counts', [PhysicalCountController::class, 'index'])->name('inventory.physical-counts.index');
+    Route::post('inventory/physical-counts', [PhysicalCountController::class, 'store'])->name('inventory.physical-counts.store');
+    Route::get('inventory/physical-counts/{physicalCount}', [PhysicalCountController::class, 'show'])->name('inventory.physical-counts.show');
+    Route::put('inventory/physical-counts/{physicalCount}', [PhysicalCountController::class, 'update'])->name('inventory.physical-counts.update');
+    Route::put('inventory/physical-counts/{physicalCount}/approve', [PhysicalCountController::class, 'approve'])->name('inventory.physical-counts.approve');
+    Route::get('inventory/physical-counts/{physicalCount}/export', [PhysicalCountController::class, 'export'])->name('inventory.physical-counts.export');
+    Route::delete('inventory/physical-counts/{physicalCount}', [PhysicalCountController::class, 'destroy'])->name('inventory.physical-counts.destroy');
 
     // Helpdesk
     Route::get('inventory/helpdesk', [HelpdeskController::class, 'index'])->name('helpdesk');

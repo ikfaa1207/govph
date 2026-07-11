@@ -68,6 +68,7 @@ export default function ItemsIndex({ items, categories: initialCategories, units
 
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [selectedItem, setSelectedItem] = useState<Item | null>(null);
+    const [itemToArchive, setItemToArchive] = useState<Item | null>(null);
 
     const editForm = useForm({
         name: '',
@@ -222,9 +223,16 @@ return;
     };
 
     const handleArchiveItem = (item: Item) => {
-        if (!confirm(`Are you sure you want to archive "${item.name}"? It will no longer appear in active dropdowns.`)) {
+        setItemToArchive(item);
+    };
+
+    const confirmArchive = () => {
+        if (!itemToArchive) {
             return;
         }
+
+        const item = itemToArchive;
+        setItemToArchive(null);
 
         archiveHttp.patch(`/inventory/items/${item.id}/archive`, {
             onSuccess: () => {
@@ -265,6 +273,24 @@ queryParams.set('search', searchVal);
     return (
         <>
             <Head title="Supplies Catalog - GIMS" />
+
+            <Dialog open={itemToArchive !== null} onOpenChange={(open) => !open && setItemToArchive(null)}>
+                <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                        <DialogTitle>Archive Supply Item</DialogTitle>
+                        <DialogDescription className="pt-2">
+                            Are you sure you want to archive "{itemToArchive?.name}"? It will no longer appear in active dropdowns.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="flex justify-end gap-2 pt-4">
+                        <Button variant="outline" onClick={() => setItemToArchive(null)}>Cancel</Button>
+                        <Button variant="destructive" onClick={confirmArchive}>
+                            Confirm Archive
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
             <div className="space-y-6 p-6">
                 
                 {/* Header Section */}

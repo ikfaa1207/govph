@@ -60,6 +60,7 @@ export default function RolesIndex({ roles, permissions }: RolesIndexProps) {
     const [selectedRole, setSelectedRole] = useState<Role | null>(null);
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [isCloneOpen, setIsCloneOpen] = useState(false);
+    const [roleToDelete, setRoleToDelete] = useState<Role | null>(null);
 
     // Form: Create Role
     const addForm = useForm({
@@ -157,17 +158,25 @@ return;
             return;
         }
 
-        if (confirm(`Are you sure you want to delete the role "${role.name}"?`)) {
-            // Send delete request
-            router.delete(`/inventory/admin/roles/${role.id}`, {
-                onSuccess: () => {
-                    toast.success('Role deleted successfully.');
-                },
-                onError: () => {
-                    toast.error('Failed to delete role.');
-                }
-            });
+        setRoleToDelete(role);
+    };
+
+    const confirmDeleteRole = () => {
+        if (!roleToDelete) {
+            return;
         }
+
+        const role = roleToDelete;
+        setRoleToDelete(null);
+
+        router.delete(`/inventory/admin/roles/${role.id}`, {
+            onSuccess: () => {
+                toast.success('Role deleted successfully.');
+            },
+            onError: () => {
+                toast.error('Failed to delete role.');
+            }
+        });
     };
 
     const togglePermissionSelection = (form: typeof addForm | typeof editForm, id: number) => {
@@ -186,6 +195,24 @@ return;
     return (
         <>
             <Head title="Role Matrix - GIMS" />
+
+            <Dialog open={roleToDelete !== null} onOpenChange={(open) => !open && setRoleToDelete(null)}>
+                <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                        <DialogTitle>Delete Role</DialogTitle>
+                        <DialogDescription className="pt-2 text-xs">
+                            Are you sure you want to delete the role "{roleToDelete?.name}"? This action cannot be undone.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="flex justify-end gap-2 pt-4">
+                        <Button variant="outline" onClick={() => setRoleToDelete(null)}>Cancel</Button>
+                        <Button variant="destructive" onClick={confirmDeleteRole}>
+                            Confirm Delete
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
             <div className="space-y-6 p-6">
                 
                 {/* Header Section */}

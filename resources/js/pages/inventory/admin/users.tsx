@@ -53,6 +53,7 @@ export default function UsersIndex({ users, roles, offices: initialOffices, depa
     const [isAddDepartmentOpen, setIsAddDepartmentOpen] = useState(false);
     const [inlineFormContext, setInlineFormContext] = useState<'create' | 'edit'>('create');
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
+    const [isToggleStatusConfirmOpen, setIsToggleStatusConfirmOpen] = useState(false);
 
     // Password reset section state
     const [isResetSectionOpen, setIsResetSectionOpen] = useState(false);
@@ -214,23 +215,26 @@ export default function UsersIndex({ users, roles, offices: initialOffices, depa
             return;
         }
 
-        const isSelf = selectedUser.id === currentUser.id;
-        const confirmMessage = isSelf
-            ? 'WARNING: You are about to deactivate your own account. If you proceed, you will be logged out immediately and lose access to GIMS. Are you sure you want to proceed?'
-            : `Are you sure you want to ${selectedUser.is_active ? 'deactivate' : 'activate'} this user account?`;
+        setIsToggleStatusConfirmOpen(true);
+    };
 
-        if (confirm(confirmMessage)) {
-            router.post(`/inventory/admin/users/${selectedUser.id}/toggle`, {}, {
-                onSuccess: () => {
-                    setIsEditOpen(false);
-                    toast.success('User status updated successfully.');
-                },
-                onError: (errs) => {
-                    const firstError = Object.values(errs)[0];
-                    toast.error(firstError || 'Failed to toggle user status.');
-                }
-            });
+    const confirmToggleStatus = () => {
+        if (!selectedUser) {
+            return;
         }
+
+        setIsToggleStatusConfirmOpen(false);
+
+        router.post(`/inventory/admin/users/${selectedUser.id}/toggle`, {}, {
+            onSuccess: () => {
+                setIsEditOpen(false);
+                toast.success('User status updated successfully.');
+            },
+            onError: (errs) => {
+                const firstError = Object.values(errs)[0];
+                toast.error(firstError || 'Failed to toggle user status.');
+            }
+        });
     };
 
     const handleUnlockUser = () => {
@@ -464,6 +468,30 @@ export default function UsersIndex({ users, roles, offices: initialOffices, depa
                             </div>
                         </nav>
                     )}
+
+                {/* Dialog: Confirm Toggle Status */}
+                <Dialog open={isToggleStatusConfirmOpen} onOpenChange={setIsToggleStatusConfirmOpen}>
+                    <DialogContent className="sm:max-w-[425px]">
+                        <DialogHeader>
+                            <DialogTitle>Update User Status</DialogTitle>
+                            <DialogDescription className="pt-2 text-xs">
+                                {selectedUser && (selectedUser.id === currentUser.id
+                                    ? 'WARNING: You are about to deactivate your own account. If you proceed, you will be logged out immediately and lose access to GIMS. Are you sure you want to proceed?'
+                                    : `Are you sure you want to ${selectedUser.is_active ? 'deactivate' : 'activate'} this user account?`
+                                )}
+                            </DialogDescription>
+                        </DialogHeader>
+                        <div className="flex justify-end gap-2 pt-4">
+                            <Button variant="outline" onClick={() => setIsToggleStatusConfirmOpen(false)}>Cancel</Button>
+                            <Button 
+                                variant={selectedUser?.is_active ? "destructive" : "default"} 
+                                onClick={confirmToggleStatus}
+                            >
+                                Confirm {selectedUser?.is_active ? 'Deactivate' : 'Activate'}
+                            </Button>
+                        </div>
+                    </DialogContent>
+                </Dialog>
 
                 {/* Dialog: Create User */}
                 <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
