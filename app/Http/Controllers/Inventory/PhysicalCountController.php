@@ -201,7 +201,7 @@ class PhysicalCountController extends Controller
 
             $hasQty = false;
             foreach ($items as $item) {
-                if (isset($item['actual_qty']) && $item['actual_qty'] !== null && $item['actual_qty'] !== '') {
+                if (isset($item['actual_qty']) && $item['actual_qty'] !== '') {
                     $hasQty = true;
                     break;
                 }
