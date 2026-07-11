@@ -1,15 +1,14 @@
 import { Head, useForm, router } from '@inertiajs/react';
-import { Save, CheckCircle, FileSpreadsheet, User, Send, ListChecks, Trash2 } from 'lucide-react';
-import { usePermissions } from '@/hooks/use-permissions';
+import { Save, FileSpreadsheet, User, Send, ListChecks, Trash2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { usePermissions } from '@/hooks/use-permissions';
 
 interface PhysicalCountItem {
     id: number;
@@ -70,8 +69,6 @@ export default function PhysicalCountShow({ physicalCount, employees, auth }: Pr
     const isPendingReview = physicalCount.status === 'pending_review';
     const isFinalized = physicalCount.status === 'finalized';
 
-    const getCommitteeByRole = (role: string) => physicalCount.committees?.filter(c => c.role === role) || [];
-    
     const { hasPermission } = usePermissions();
     const currentEmployee = employees.find(e => e.user_id === auth.user?.id);
     const isCreator = currentEmployee && physicalCount.created_by === currentEmployee.id;
@@ -79,11 +76,7 @@ export default function PhysicalCountShow({ physicalCount, employees, auth }: Pr
 
     const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
     
-    // We try to populate from existing DB committees if they exist
-    const defaultChairperson = getCommitteeByRole('chairperson')[0]?.employee_id?.toString() || '';
-    const defaultHead = getCommitteeByRole('head_of_agency')[0]?.employee_id?.toString() || '';
-    const defaultMembers = getCommitteeByRole('member').map(c => c.employee_id?.toString());
-    if (defaultMembers.length === 0) defaultMembers.push(''); // Start with at least one empty member slot
+
 
     const [isApprovalsOpen, setIsApprovalsOpen] = useState(false);
     const [isSubmitConfirmOpen, setIsSubmitConfirmOpen] = useState(false);
@@ -137,12 +130,15 @@ export default function PhysicalCountShow({ physicalCount, employees, auth }: Pr
 
         if (localItems.length === 0) {
             toast.error('Cannot submit a physical count with no items.');
+
             return;
         }
 
         const allBlank = localItems.every(item => item.form_actual_qty === '' || item.form_actual_qty === null);
+
         if (allBlank) {
             toast.error('Cannot submit for review when all actual quantities are blank. Please encode at least one quantity.');
+
             return;
         }
 

@@ -1,15 +1,14 @@
 import { Head, Link, useForm, usePage, router } from '@inertiajs/react';
 import { PlusCircle, FileSpreadsheet, ListChecks, UserPlus, Trash2 } from 'lucide-react';
-import { usePermissions } from '@/hooks/use-permissions';
-import { toast } from 'sonner';
 import { useState } from 'react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { SmartSelect } from '@/components/ui/smart-select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { usePermissions } from '@/hooks/use-permissions';
 import type { BreadcrumbItem } from '@/types';
 
 interface PhysicalCount {
@@ -82,7 +81,9 @@ export default function PhysicalCountsIndex({ counts, employees }: Props) {
     };
 
     const confirmDelete = () => {
-        if (!countToDelete) return;
+        if (!countToDelete) {
+return;
+}
         
         router.delete(`/inventory/physical-counts/${countToDelete.id}`, {
             onSuccess: () => setCountToDelete(null),
