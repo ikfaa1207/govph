@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Inventory;
 
+use App\Enums\ItemStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Issuance;
@@ -15,6 +16,7 @@ use App\Services\DocumentSequenceService;
 use App\Services\Valuation\ValuationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -73,7 +75,7 @@ class ItemController extends Controller
             'total_items' => Item::where('status', 'active')->count(),
             'low_stock' => Item::where('status', 'active')->whereColumn('current_stock', '<=', 'reorder_level')->where('current_stock', '>', 0)->count(),
             'out_of_stock' => Item::where('status', 'active')->where('current_stock', '<=', 0)->count(),
-            'total_value' => Item::where('status', 'active')->sum(\Illuminate\Support\Facades\DB::raw('current_stock * unit_cost')),
+            'total_value' => Item::where('status', 'active')->sum(DB::raw('current_stock * unit_cost')),
             'recently_added' => Item::where('status', 'active')->where('created_at', '>=', now()->subDays(7))->count(),
         ];
 
@@ -195,8 +197,8 @@ class ItemController extends Controller
             'reorder_level' => ['required', 'integer', 'min:0'],
             'maximum_stock' => ['required', 'integer', 'min:0'],
             'location_id' => ['nullable', 'exists:locations,id'],
-            'stock_number' => ['nullable', 'string', 'unique:items,stock_number,' . $item->id],
-            'barcode' => ['nullable', 'string', 'unique:items,barcode,' . $item->id],
+            'stock_number' => ['nullable', 'string', 'unique:items,stock_number,'.$item->id],
+            'barcode' => ['nullable', 'string', 'unique:items,barcode,'.$item->id],
             'expiration_date' => ['nullable', 'date'],
         ]);
 
@@ -214,7 +216,7 @@ class ItemController extends Controller
     {
         Gate::authorize('inventory.delete'); // using delete permission for archiving
 
-        $item->status = \App\Enums\ItemStatus::Inactive->value;
+        $item->status = ItemStatus::Inactive->value;
         $item->save();
 
         AuditLogger::log('ARCHIVE_ITEM', $item, null, $item->toArray());

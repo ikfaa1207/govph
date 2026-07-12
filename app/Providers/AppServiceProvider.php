@@ -133,6 +133,22 @@ class AppServiceProvider extends ServiceProvider
             return Response::allow();
         });
 
+        // Property / Sub-Assignment Gates
+        Gate::define('property.subassign', function (User $user) {
+            $allowed = $user->hasPermissionTo('property.transfer') || $user->hasRole('Department Head');
+
+            if (! $allowed) {
+                $request = request();
+                if (! $request->wantsJson() && ! $request->is('inertia/*') && (! app()->runningInConsole() || app()->runningUnitTests())) {
+                    AuditLogger::logUnauthorized('property.subassign', 'property');
+                }
+
+                return Response::deny('Unauthorized to issue or return Memorandum Receipts.');
+            }
+
+            return Response::allow();
+        });
+
         // Ticket / Helpdesk Gates
         Gate::define('ticket.viewAny', function (User $user) {
             return true;

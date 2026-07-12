@@ -36,6 +36,10 @@ class TransferProperty
             throw new RuntimeException('Property has no active custodian to transfer from.');
         }
 
+        if ($activeAssignment->assigned_to && (int) $activeAssignment->assigned_to === (int) $data['to_employee_id']) {
+            throw new InvalidArgumentException('Cannot transfer a property to the employee who already holds it.');
+        }
+
         DB::transaction(function () use ($property, $activeAssignment, $data, $custodian) {
             // Close active assignment
             $activeAssignment->returned_date = now()->toDateString();

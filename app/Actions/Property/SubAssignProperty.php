@@ -7,11 +7,14 @@ use App\Models\Employee;
 use App\Models\Property;
 use App\Models\PropertySubAssignment;
 use App\Services\Audit\AuditLogger;
+use App\Services\DocumentSequenceService;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
 class SubAssignProperty
 {
+    public function __construct(protected DocumentSequenceService $sequences) {}
+
     /**
      * Issue an internal Sub-Assignment (Memorandum Receipt) for a property.
      *
@@ -23,7 +26,14 @@ class SubAssignProperty
             throw new InvalidArgumentException('Only assigned or transferred properties can be sub-assigned.');
         }
 
-        DB::transaction(function () use ($property, $data, $issuer) {
+        $isNonSystem = filter_var($data['is_non_system'] ?? false, FILTER_VALIDATE_BOOLEAN);
+
+        // Check if already sub-assigned to the same employee
+        if (! $isNonSystem && $property->activeSubAssignment && (int) $property->activeSubAssignment->issued_to === (int) $data['issued_to']) {
+            throw new InvalidArgumentException('Cannot sub-assign a property to the employee who already holds it.');
+        }
+
+        DB::transaction(function () use ($property, $data, $issuer, $isNonSystem) {
             // Close existing active sub-assignment if there is one
             if ($activeSubAssignment = $property->activeSubAssignment) {
                 $activeSubAssignment->returned_date = now()->toDateString();
@@ -31,10 +41,8 @@ class SubAssignProperty
                 $activeSubAssignment->save();
             }
 
-            $isNonSystem = filter_var($data['is_non_system'] ?? false, FILTER_VALIDATE_BOOLEAN);
-
-            // Generate MR number (MR-YYYY-XXXXX)
-            $mrNumber = 'MR-'.date('Y').'-'.str_pad((string) (PropertySubAssignment::count() + 1), 5, '0', STR_PAD_LEFT);
+            // Generate MR number via DocumentSequenceService
+            $mrNumber = $this->sequences->next('MR');
 
             $subAssignment = PropertySubAssignment::create([
                 'property_id' => $property->id,

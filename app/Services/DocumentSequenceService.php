@@ -32,6 +32,7 @@ class DocumentSequenceService
         'ITEM' => 'ITEM',
         'PPE' => 'PPE',
         'EMP' => 'EMP',
+        'MR' => 'MR',
     ];
 
     /**

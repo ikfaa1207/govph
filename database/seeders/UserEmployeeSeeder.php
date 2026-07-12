@@ -122,15 +122,15 @@ class UserEmployeeSeeder extends Seeder
         for ($i = 1; $i <= 44; $i++) {
             $firstName = $faker->firstName();
             $lastName = $faker->lastName();
-            $fullName = $firstName . ' ' . $lastName;
-            $email = strtolower(substr($firstName, 0, 1) . $lastName) . $i . '@example.com';
-            
+            $fullName = $firstName.' '.$lastName;
+            $email = strtolower(substr($firstName, 0, 1).$lastName).$i.'@example.com';
+
             $user = User::create([
                 'name' => $fullName,
                 'email' => $email,
                 'password' => Hash::make('password'),
             ]);
-            
+
             // Assign 90% as Requesting Employee, 10% as Department Head
             $role = ($i % 10 === 0) ? $roleHead : $roleEmployee;
             $user->assignRole($role);
@@ -140,7 +140,7 @@ class UserEmployeeSeeder extends Seeder
 
             Employee::create([
                 'user_id' => $user->id,
-                'employee_id' => 'EMP-GEN-' . str_pad((string)($i + 6), 3, '0', STR_PAD_LEFT),
+                'employee_id' => 'EMP-GEN-'.str_pad((string) ($i + 6), 3, '0', STR_PAD_LEFT),
                 'name' => $fullName,
                 'position' => $position,
                 'office_id' => $randomDept->office_id,

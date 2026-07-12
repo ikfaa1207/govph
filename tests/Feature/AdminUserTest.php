@@ -14,7 +14,7 @@ test('unauthorized users cannot access admin users page', function () {
     $user = User::factory()->create();
 
     $response = $this->actingAs($user)->get(route('inventory.admin.users.index'));
-    
+
     $response->assertForbidden();
 });
 
@@ -24,7 +24,7 @@ test('authorized users can access admin users page', function () {
     $user->givePermissionTo('users.manage');
 
     $response = $this->actingAs($user)->get(route('inventory.admin.users.index'));
-    
+
     $response->assertOk();
     $response->assertInertia(fn (Assert $page) => $page
         ->component('inventory/admin/users')
@@ -49,7 +49,7 @@ test('authorized users can create a new user', function () {
         'department_id' => $department->id,
         'position' => 'Staff',
     ]);
-    
+
     $response->assertRedirect();
     $response->assertSessionHas('success', 'User account created successfully.');
 
@@ -57,7 +57,7 @@ test('authorized users can create a new user', function () {
         'email' => 'john.doe@example.com',
         'name' => 'John Doe',
     ]);
-    
+
     $this->assertDatabaseHas('employees', [
         'name' => 'John Doe',
         'office_id' => $office->id,

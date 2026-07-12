@@ -13,6 +13,9 @@ use App\Models\Requisition;
 use App\Models\RequisitionItem;
 use App\Models\Unit;
 use App\Models\User;
+use App\Enums\PropertyStatus;
+use App\Models\PropertySubAssignment;
+use App\Models\Role;
 use App\Services\Valuation\ValuationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -375,4 +378,190 @@ test('property assigned to a non-system user can be transferred to a system empl
     expect($newAssignment)->not->toBeNull();
     expect($newAssignment->assigned_to)->toBe($toEmployee->id);
     expect($newAssignment->remarks)->toContain('Transferred from Pedro Penduko (Third-party Auditing Firm)');
+});
+
+test('property subassign generates sequential MR numbers and prevents self sub-assignment', function () {
+    $office = Office::create(['code' => 'O-TEST-SUB', 'name' => 'Test Office']);
+    $dept = Department::create(['office_id' => $office->id, 'code' => 'D-TEST-SUB', 'name' => 'Test Dept']);
+
+    $custodianUser = User::factory()->propertyCustodian()->create(['name' => 'Custodian User', 'email' => 'cust1@example.com']);
+    $custodian = Employee::create(['user_id' => $custodianUser->id, 'employee_id' => 'EMP-C1', 'name' => 'Custodian User', 'position' => 'Custodian', 'office_id' => $office->id, 'department_id' => $dept->id]);
+
+    $employeeUser = User::factory()->employee()->create(['name' => 'Staff User', 'email' => 'staff1@example.com']);
+    $employee = Employee::create(['user_id' => $employeeUser->id, 'employee_id' => 'EMP-S1', 'name' => 'Staff User', 'position' => 'Staff', 'office_id' => $office->id, 'department_id' => $dept->id]);
+
+    Permission::create(['name' => 'property.assign', 'module' => 'property']);
+    Permission::create(['name' => 'property.transfer', 'module' => 'property']);
+    $custodianUser->givePermissionTo('property.assign');
+    $custodianUser->givePermissionTo('property.transfer');
+
+    $category = Category::create(['name' => 'IT Equipment', 'code' => 'IT-EQP-SUB', 'is_ppe' => true]);
+    $property = Property::create([
+        'property_number' => 'PPE-SUB-01',
+        'serial_number' => 'SN-SUB-01',
+        'model' => 'L340 Laptop',
+        'brand' => 'Lenovo',
+        'unit_cost' => 55000.00,
+        'date_acquired' => now()->toDateString(),
+        'category_id' => $category->id,
+        'condition' => 'new',
+        'status' => 'available',
+    ]);
+
+    // Assign to employee first
+    $this->actingAs($custodianUser);
+    $this->post(route('inventory.properties.assign', $property->id), [
+        'assigned_to' => $employee->id,
+        'remarks' => 'Initial assignment.',
+    ])->assertRedirect();
+
+    // Create another employee
+    $employeeUser2 = User::factory()->employee()->create(['name' => 'Staff User 2', 'email' => 'staff2@example.com']);
+    $employee2 = Employee::create(['user_id' => $employeeUser2->id, 'employee_id' => 'EMP-S2', 'name' => 'Staff User 2', 'position' => 'Staff', 'office_id' => $office->id, 'department_id' => $dept->id]);
+
+    // Subassign to employee2 (should succeed)
+    $responseOk = $this->post(route('inventory.properties.sub-assign', $property->id), [
+        'issued_to' => $employee2->id,
+        'remarks' => 'Sub-assignment to employee 2.',
+    ]);
+    $responseOk->assertRedirect();
+
+    // Try to subassign to employee2 AGAIN (should fail)
+    $responseFail = $this->post(route('inventory.properties.sub-assign', $property->id), [
+        'issued_to' => $employee2->id,
+        'remarks' => 'Duplicate sub-assignment.',
+    ]);
+    $responseFail->assertStatus(400);
+
+    $subAssignment = PropertySubAssignment::where('property_id', $property->id)->first();
+    expect($subAssignment)->not->toBeNull();
+    // Verify sequence MR number prefix format (MR-YYYY-00000X)
+    expect($subAssignment->mr_number)->toContain('MR-');
+    expect(strlen($subAssignment->mr_number))->toBe(14); // MR-YYYY-000001 = 2 + 1 + 4 + 1 + 6 = 14
+});
+
+test('property transfer prevents self-transfer', function () {
+    $office = Office::create(['code' => 'O-TEST-TRF', 'name' => 'Test Office']);
+    $dept = Department::create(['office_id' => $office->id, 'code' => 'D-TEST-TRF', 'name' => 'Test Dept']);
+
+    $custodianUser = User::factory()->propertyCustodian()->create(['name' => 'Custodian User', 'email' => 'cust2@example.com']);
+    $custodian = Employee::create(['user_id' => $custodianUser->id, 'employee_id' => 'EMP-C2', 'name' => 'Custodian User', 'position' => 'Custodian', 'office_id' => $office->id, 'department_id' => $dept->id]);
+
+    $employeeUser = User::factory()->employee()->create(['name' => 'Staff User', 'email' => 'staff3@example.com']);
+    $employee = Employee::create(['user_id' => $employeeUser->id, 'employee_id' => 'EMP-S3', 'name' => 'Staff User', 'position' => 'Staff', 'office_id' => $office->id, 'department_id' => $dept->id]);
+
+    Permission::create(['name' => 'property.assign', 'module' => 'property']);
+    Permission::create(['name' => 'property.transfer', 'module' => 'property']);
+    $custodianUser->givePermissionTo('property.assign');
+    $custodianUser->givePermissionTo('property.transfer');
+
+    $category = Category::create(['name' => 'IT Equipment', 'code' => 'IT-EQP-TRF', 'is_ppe' => true]);
+    $property = Property::create([
+        'property_number' => 'PPE-TRF-01',
+        'serial_number' => 'SN-TRF-01',
+        'model' => 'L340 Laptop',
+        'brand' => 'Lenovo',
+        'unit_cost' => 55000.00,
+        'date_acquired' => now()->toDateString(),
+        'category_id' => $category->id,
+        'condition' => 'new',
+        'status' => 'available',
+    ]);
+
+    // Assign to employee
+    $this->actingAs($custodianUser);
+    $this->post(route('inventory.properties.assign', $property->id), [
+        'assigned_to' => $employee->id,
+        'remarks' => 'Initial assignment.',
+    ])->assertRedirect();
+
+    $property->refresh();
+
+    // Try to transfer to the same employee (should fail)
+    $response = $this->post(route('inventory.properties.transfer', $property->id), [
+        'to_employee_id' => $employee->id,
+        'office_id' => $office->id,
+        'reason' => 'Transferring to the same person.',
+    ]);
+    $response->assertStatus(400);
+});
+
+test('property disposal prevents self-approval and requires witness name', function () {
+    $office = Office::create(['code' => 'O-TEST-DISP', 'name' => 'Test Office']);
+    $dept = Department::create(['office_id' => $office->id, 'code' => 'D-TEST-DISP', 'name' => 'Test Dept']);
+
+    $custodianUser = User::factory()->propertyCustodian()->create(['name' => 'Custodian User', 'email' => 'cust3@example.com']);
+    $custodian = Employee::create(['user_id' => $custodianUser->id, 'employee_id' => 'EMP-C3', 'name' => 'Custodian User', 'position' => 'Custodian', 'office_id' => $office->id, 'department_id' => $dept->id]);
+
+    $approverUser = User::factory()->admin()->create(['name' => 'Approver User', 'email' => 'appr3@example.com']);
+    $approver = Employee::create(['user_id' => $approverUser->id, 'employee_id' => 'EMP-A3', 'name' => 'Approver User', 'position' => 'Inspection Officer', 'office_id' => $office->id, 'department_id' => $dept->id]);
+
+    Permission::create(['name' => 'property.dispose', 'module' => 'property']);
+    $custodianUser->givePermissionTo('property.dispose');
+
+    $category = Category::create(['name' => 'IT Equipment', 'code' => 'IT-EQP-DISP', 'is_ppe' => true]);
+    $property = Property::create([
+        'property_number' => 'PPE-DISP-01',
+        'serial_number' => 'SN-DISP-01',
+        'model' => 'L340 Laptop',
+        'brand' => 'Lenovo',
+        'unit_cost' => 55000.00,
+        'date_acquired' => now()->toDateString(),
+        'category_id' => $category->id,
+        'condition' => 'new',
+        'status' => 'available',
+    ]);
+
+    $this->actingAs($custodianUser);
+
+    // Try disposing with self as approver (should fail validation)
+    $responseSelf = $this->post(route('inventory.properties.dispose', $property->id), [
+        'disposal_method' => 'destruction',
+        'reason' => 'broken',
+        'approved_by' => $custodian->id, // Mismatch
+        'witness_by' => 'COA Auditor',
+    ]);
+    $responseSelf->assertSessionHasErrors(['approved_by']);
+
+    // Dispose with separate approver (should succeed)
+    $responseOk = $this->post(route('inventory.properties.dispose', $property->id), [
+        'disposal_method' => 'destruction',
+        'reason' => 'broken',
+        'approved_by' => $approver->id,
+        'witness_by' => 'COA Auditor',
+    ]);
+    $responseOk->assertRedirect();
+
+    $property->refresh();
+    expect($property->status)->toBe(PropertyStatus::Disposed);
+    expect($property->condition)->toBe('unserviceable');
+});
+
+test('property subassign gate secures MR actions and logs unauthorized attempts', function () {
+    $office = Office::create(['code' => 'O-TEST-GATE', 'name' => 'Test Office']);
+    $dept = Department::create(['office_id' => $office->id, 'code' => 'D-TEST-GATE', 'name' => 'Test Dept']);
+
+    $employeeUser = User::factory()->employee()->create(['name' => 'Staff User', 'email' => 'staff4@example.com']);
+    $employee = Employee::create(['user_id' => $employeeUser->id, 'employee_id' => 'EMP-S4', 'name' => 'Staff User', 'position' => 'Staff', 'office_id' => $office->id, 'department_id' => $dept->id]);
+
+    $category = Category::create(['name' => 'IT Equipment', 'code' => 'IT-EQP-GATE', 'is_ppe' => true]);
+    $property = Property::create([
+        'property_number' => 'PPE-GATE-01',
+        'serial_number' => 'SN-GATE-01',
+        'model' => 'L340 Laptop',
+        'brand' => 'Lenovo',
+        'unit_cost' => 55000.00,
+        'date_acquired' => now()->toDateString(),
+        'category_id' => $category->id,
+        'condition' => 'new',
+        'status' => 'available',
+    ]);
+
+    // Staff User has no permission or role (should fail sub-assignment)
+    $this->actingAs($employeeUser);
+    $response = $this->post(route('inventory.properties.sub-assign', $property->id), [
+        'issued_to' => $employee->id,
+        'remarks' => 'Unauthorized sub-assignment.',
+    ]);
+    $response->assertStatus(403);
 });

@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\Category;
 use App\Models\Employee;
 use App\Models\Item;
 use App\Models\Property;
@@ -33,11 +32,11 @@ class TransactionSeeder extends Seeder
             $numRequests = rand(1, 3);
             for ($i = 0; $i < $numRequests; $i++) {
                 $status = $faker->randomElement(['pending_dept_head', 'pending_supply', 'issued', 'partially_issued']);
-                
+
                 $dateRequested = Carbon::now()->subDays(rand(1, 60));
-                
+
                 $ris = Requisition::create([
-                    'ris_number' => 'RIS-' . date('Y') . '-' . str_pad((string)rand(1, 9999), 4, '0', STR_PAD_LEFT),
+                    'ris_number' => 'RIS-'.date('Y').'-'.str_pad((string) rand(1, 9999), 4, '0', STR_PAD_LEFT),
                     'requesting_employee_id' => $emp->id,
                     'department_id' => $emp->department_id,
                     'remarks' => $faker->randomElement(['Office Use', 'Seminar/Training Materials', 'Quarterly Supply Replenishment', 'Field Work']),
@@ -68,11 +67,11 @@ class TransactionSeeder extends Seeder
         foreach ($employees as $emp) {
             // Assign 1 to 2 pieces of equipment per employee (e.g. Laptop, Chair)
             $assignedEqp = $equipment->random(rand(1, 2));
-            
+
             foreach ($assignedEqp as $item) {
                 // Create the physical Property entity first
                 $property = Property::create([
-                    'property_number' => 'PROP-' . date('Y') . '-' . str_pad((string)($propNumber++), 4, '0', STR_PAD_LEFT),
+                    'property_number' => 'PROP-'.date('Y').'-'.str_pad((string) ($propNumber++), 4, '0', STR_PAD_LEFT),
                     'serial_number' => strtoupper($faker->bothify('SN-????-####')),
                     'model' => $item->name,
                     'brand' => explode(' ', $item->name)[0], // Simple guess
@@ -90,7 +89,7 @@ class TransactionSeeder extends Seeder
                     'property_id' => $property->id,
                     'assigned_to' => $emp->id,
                     'document_type' => $documentType,
-                    'document_number' => $documentType . '-' . date('Y') . '-' . str_pad((string)($propNumber - 1), 4, '0', STR_PAD_LEFT),
+                    'document_number' => $documentType.'-'.date('Y').'-'.str_pad((string) ($propNumber - 1), 4, '0', STR_PAD_LEFT),
                     'assigned_by' => $custodian->id,
                     'date_assigned' => Carbon::now()->subMonths(rand(1, 12)),
                     'remarks' => 'Initial issuance to employee.',

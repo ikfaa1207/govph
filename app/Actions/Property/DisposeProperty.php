@@ -28,7 +28,7 @@ class DisposeProperty
             throw new InvalidArgumentException('This property has already been disposed.');
         }
 
-        DB::transaction(function () use ($property, $data, $custodian) {
+        DB::transaction(function () use ($property, $data) {
             // Close active assignment if exists
             if ($activeAssignment = $property->activeAssignment) {
                 $activeAssignment->returned_date = now()->toDateString();
@@ -45,8 +45,8 @@ class DisposeProperty
                 'disposal_date' => now()->toDateString(),
                 'appraised_value' => $data['appraised_value'] ?? 0.00,
                 'proceeds' => $data['proceeds'] ?? 0.00,
-                'witness_by' => 'COA Auditor Representative',
-                'approved_by' => $custodian->id,
+                'witness_by' => $data['witness_by'],
+                'approved_by' => $data['approved_by'],
                 'status' => 'completed',
             ]);
 

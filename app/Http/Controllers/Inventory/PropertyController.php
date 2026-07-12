@@ -229,6 +229,16 @@ class PropertyController extends Controller
             'reason' => ['required', 'in:broken,obsolete,lost,expired,condemned'],
             'appraised_value' => ['nullable', 'numeric', 'min:0'],
             'proceeds' => ['nullable', 'numeric', 'min:0'],
+            'witness_by' => ['required', 'string', 'max:255'],
+            'approved_by' => [
+                'required',
+                'exists:employees,id',
+                function (string $attribute, mixed $value, \Closure $fail) use ($custodian) {
+                    if ((int) $value === (int) $custodian->id) {
+                        $fail('The disposal approver cannot be the same custodian who initiated the disposal.');
+                    }
+                },
+            ],
         ]);
 
         try {
@@ -245,9 +255,7 @@ class PropertyController extends Controller
      */
     public function subAssign(Request $request, Property $property): RedirectResponse
     {
-        if (! Gate::allows('property.transfer') && ! Auth::user()->hasRole('Department Head')) {
-            abort(403, 'Unauthorized to issue Memorandum Receipts.');
-        }
+        Gate::authorize('property.subassign');
 
         $user = Auth::user();
         $issuer = $user->getEmployeeOrAbort('Issuer employee profile not found.');
@@ -276,9 +284,7 @@ class PropertyController extends Controller
      */
     public function returnSubAssignment(Request $request, PropertySubAssignment $subAssignment): RedirectResponse
     {
-        if (! Gate::allows('property.transfer') && ! Auth::user()->hasRole('Department Head')) {
-            abort(403, 'Unauthorized to return Memorandum Receipts.');
-        }
+        Gate::authorize('property.subassign');
 
         $validated = $request->validate([
             'remarks' => ['nullable', 'string'],

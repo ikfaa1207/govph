@@ -351,6 +351,8 @@ export default function PropertyIndex({
                         isOpen={isDisposeOpen}
                         onClose={() => setIsDisposeOpen(false)}
                         property={selectedProp}
+                        employees={employees}
+                        current_employee={current_employee}
                     />
                 )}
 
