@@ -1,4 +1,4 @@
-import { Clipboard, MoreHorizontal, UserCheck, RefreshCw, Trash2 } from 'lucide-react';
+import { Clipboard, MoreHorizontal, UserCheck, RefreshCw, Trash2, Check, User, AlertTriangle } from 'lucide-react';
 import { Can } from '@/components/can';
 import { SimplePagination } from '@/components/simple-pagination';
 import { Badge } from '@/components/ui/badge';
@@ -50,6 +50,66 @@ export function PropertyTable({
     openReturnSubAssignModal,
     openDisposeModal,
 }: PropertyTableProps) {
+    const renderStatusBadge = (status: Property['status']) => {
+        switch (status) {
+            case 'available':
+                return (
+                    <Badge variant="outline" className="inline-flex items-center gap-1 bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-800/30">
+                        <Check className="h-3 w-3 text-emerald-500" aria-hidden="true" />
+                        <span>Available</span>
+                    </Badge>
+                );
+            case 'assigned':
+                return (
+                    <Badge variant="outline" className="inline-flex items-center gap-1 bg-blue-50 px-2 py-0.5 text-[10px] font-medium text-blue-700 border-blue-200 dark:bg-blue-950/30 dark:text-blue-400 dark:border-blue-800/30">
+                        <User className="h-3 w-3 text-blue-500" aria-hidden="true" />
+                        <span>Assigned</span>
+                    </Badge>
+                );
+            case 'transferred':
+                return (
+                    <Badge variant="outline" className="inline-flex items-center gap-1 bg-indigo-50 px-2 py-0.5 text-[10px] font-medium text-indigo-700 border-indigo-200 dark:bg-indigo-950/30 dark:text-indigo-400 dark:border-indigo-800/30">
+                        <RefreshCw className="h-2.5 w-2.5 text-indigo-500" aria-hidden="true" />
+                        <span>Transferred</span>
+                    </Badge>
+                );
+            case 'disposed':
+                return (
+                    <Badge variant="outline" className="inline-flex items-center gap-1 bg-neutral-100 px-2 py-0.5 text-[10px] font-medium text-neutral-600 border-neutral-200 dark:bg-neutral-900/50 dark:text-neutral-400 dark:border-neutral-800/50">
+                        <Trash2 className="h-3 w-3 text-neutral-500" aria-hidden="true" />
+                        <span>Disposed</span>
+                    </Badge>
+                );
+            default:
+                return (
+                    <Badge variant="outline" className="px-2 py-0.5 text-[10px] capitalize">
+                        {status.replace(/_/g, ' ')}
+                    </Badge>
+                );
+        }
+    };
+
+    const renderConditionBadge = (condition: Property['condition']) => {
+        const isGood = condition === 'new' || condition === 'good';
+        const label = condition.replace(/_/g, ' ');
+
+        if (isGood) {
+            return (
+                <Badge variant="outline" className="inline-flex items-center gap-1 bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-800/30">
+                    <Check className="h-3 w-3 text-emerald-500" aria-hidden="true" />
+                    <span className="capitalize">{label}</span>
+                </Badge>
+            );
+        }
+
+        return (
+            <Badge variant="outline" className="inline-flex items-center gap-1 bg-rose-50 px-2 py-0.5 text-[10px] font-medium text-rose-700 border-rose-200 dark:bg-rose-950/30 dark:text-rose-400 dark:border-rose-800/30">
+                <AlertTriangle className="h-3 w-3 text-rose-500" aria-hidden="true" />
+                <span className="capitalize">{label}</span>
+            </Badge>
+        );
+    };
+
     return (
         <div className="overflow-x-auto">
             <Table className="text-xs">
@@ -58,6 +118,7 @@ export function PropertyTable({
                         <TableHead className="w-10 text-center">
                             <input
                                 type="checkbox"
+                                aria-label="Select all available properties"
                                 className="rounded border-gray-300"
                                 checked={
                                     properties.data.length > 0 &&
@@ -104,6 +165,7 @@ export function PropertyTable({
                                 {prop.status === 'available' && (
                                     <input
                                         type="checkbox"
+                                        aria-label={`Select property ${prop.property_number}`}
                                         className="rounded border-gray-300"
                                         checked={selectedPropIds.includes(prop.id)}
                                         onChange={(e) => {
@@ -191,21 +253,10 @@ export function PropertyTable({
                                 )}
                             </TableCell>
                             <TableCell className="hidden lg:table-cell text-center capitalize">
-                                <Badge
-                                    variant={
-                                        prop.condition === 'new' || prop.condition === 'good'
-                                            ? 'default'
-                                            : 'destructive'
-                                    }
-                                    className="px-1.5 py-0 text-[10px]"
-                                >
-                                    {prop.condition.replace(/_/g, ' ')}
-                                </Badge>
+                                {renderConditionBadge(prop.condition)}
                             </TableCell>
                             <TableCell className="text-center capitalize">
-                                <Badge variant="outline" className="px-1.5 py-0 text-[10px]">
-                                    {prop.status}
-                                </Badge>
+                                {renderStatusBadge(prop.status)}
                             </TableCell>
                             {canManage && (
                                 <TableCell className="text-right whitespace-nowrap">
