@@ -1,4 +1,5 @@
 import { Clipboard, MoreHorizontal, UserCheck, RefreshCw, Trash2, Check, User, AlertTriangle } from 'lucide-react';
+import { usePermissions } from '@/hooks/use-permissions';
 import { Can } from '@/components/can';
 import { RowActionsMenu, RowAction } from '@/components/row-actions-menu';
 import { SimplePagination } from '@/components/simple-pagination';
@@ -51,6 +52,9 @@ export function PropertyTable({
     openReturnSubAssignModal,
     openDisposeModal,
 }: PropertyTableProps) {
+    const { hasPermission } = usePermissions();
+    const canManageSubAssign = hasPermission('property.subassign') || isDeptHead;
+
     const renderStatusBadge = (status: Property['status']) => {
         switch (status) {
             case 'available':
@@ -154,7 +158,7 @@ export function PropertyTable({
                         <TableHead className="hidden lg:table-cell whitespace-nowrap">Doc Reference</TableHead>
                         <TableHead className="hidden lg:table-cell text-center whitespace-nowrap">Condition</TableHead>
                         <TableHead className="text-center whitespace-nowrap">Status</TableHead>
-                        {canManage && (
+                        {(canManage || canManageSubAssign) && (
                             <TableHead className="text-right whitespace-nowrap">Actions</TableHead>
                         )}
                     </TableRow>
@@ -259,7 +263,7 @@ export function PropertyTable({
                             <TableCell className="text-center capitalize">
                                 {renderStatusBadge(prop.status)}
                             </TableCell>
-                            {canManage && (
+                            {(canManage || canManageSubAssign) && (
                                 <TableCell className="text-right whitespace-nowrap">
                                     <RowActionsMenu
                                         actions={[
@@ -283,8 +287,8 @@ export function PropertyTable({
                                                 label: 'Issue Memo Receipt (MR)',
                                                 icon: UserCheck,
                                                 onClick: () => openSubAssignModal(prop),
+                                                permission: 'property.subassign',
                                                 show:
-                                                    (canManage || isDeptHead) &&
                                                     (prop.status === 'assigned' ||
                                                         prop.status === 'transferred') &&
                                                     !prop.active_sub_assignment,
@@ -293,8 +297,8 @@ export function PropertyTable({
                                                 label: 'Return Memo Receipt',
                                                 icon: RefreshCw,
                                                 onClick: () => openReturnSubAssignModal(prop),
+                                                permission: 'property.subassign',
                                                 show:
-                                                    (canManage || isDeptHead) &&
                                                     !!prop.active_sub_assignment,
                                             },
                                             {

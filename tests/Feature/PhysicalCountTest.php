@@ -71,7 +71,7 @@ test('creator can delete draft physical count', function () {
     $this->assertDatabaseMissing('physical_counts', ['id' => $count->id]);
 });
 
-test('user with reports.view permission can delete draft physical count', function () {
+test('user with reports.view permission cannot delete draft physical count', function () {
     $user = User::factory()->create();
     Permission::firstOrCreate(['name' => 'reports.view', 'module' => 'reports']);
     $user->givePermissionTo('reports.view');
@@ -104,8 +104,8 @@ test('user with reports.view permission can delete draft physical count', functi
 
     $response = $this->actingAs($user)->delete(route('inventory.physical-counts.destroy', $count));
 
-    $response->assertRedirect(route('inventory.physical-counts.index'));
-    $this->assertDatabaseMissing('physical_counts', ['id' => $count->id]);
+    $response->assertForbidden();
+    $this->assertDatabaseHas('physical_counts', ['id' => $count->id]);
 });
 
 test('cannot delete non-draft physical count', function () {

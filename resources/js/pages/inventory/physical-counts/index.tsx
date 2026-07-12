@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { Can } from '@/components/can';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -163,243 +164,245 @@ export default function PhysicalCountsIndex({ counts, employees }: Props) {
                         </p>
                     </div>
 
-                    <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-                        <DialogTrigger asChild>
-                            <Button className="gap-2">
-                                <PlusCircle className="h-4 w-4" />
-                                Initiate Physical Count
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[600px]">
-                            <DialogHeader>
-                                <DialogTitle>
-                                    Initiate New Physical Count
-                                </DialogTitle>
-                                <DialogDescription>
-                                    This will take a snapshot of the current
-                                    inventory for reporting.
-                                </DialogDescription>
-                            </DialogHeader>
-                            <form onSubmit={submit} className="mt-2 space-y-4">
-                                <div className="space-y-2">
-                                    <Label>Count Type / Report Type</Label>
-                                    <div className="grid grid-cols-2 gap-2">
-                                        <button
-                                            type="button"
-                                            onClick={() =>
-                                                form.setData('type', 'RPCPPE')
-                                            }
-                                            className={`flex flex-col items-center justify-center rounded-md border p-4 transition-all ${
-                                                form.data.type === 'RPCPPE'
-                                                    ? 'border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-950/30'
-                                                    : 'hover:bg-muted/50'
-                                            }`}
-                                        >
-                                            <span className="font-bold">
-                                                RPCPPE
-                                            </span>
-                                            <span className="text-xs opacity-70">
-                                                Property, Plant & Equipment
-                                            </span>
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() =>
-                                                form.setData('type', 'RPCI')
-                                            }
-                                            className={`flex flex-col items-center justify-center rounded-md border p-4 transition-all ${
-                                                form.data.type === 'RPCI'
-                                                    ? 'border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-950/30'
-                                                    : 'hover:bg-muted/50'
-                                            }`}
-                                        >
-                                            <span className="font-bold">
-                                                RPCI
-                                            </span>
-                                            <span className="text-xs opacity-70">
-                                                Inventories / Consumables
-                                            </span>
-                                        </button>
-                                    </div>
-                                    {form.errors.type && (
-                                        <p className="text-xs text-destructive">
-                                            {form.errors.type}
-                                        </p>
-                                    )}
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="as_of_date">
-                                        As of Date
-                                    </Label>
-                                    <Input
-                                        id="as_of_date"
-                                        type="date"
-                                        value={form.data.as_of_date}
-                                        onChange={(e) =>
-                                            form.setData(
-                                                'as_of_date',
-                                                e.target.value,
-                                            )
-                                        }
-                                        required
-                                    />
-                                    {form.errors.as_of_date && (
-                                        <p className="text-xs text-destructive">
-                                            {form.errors.as_of_date}
-                                        </p>
-                                    )}
-                                </div>
-                                <div className="mt-4 space-y-4 rounded-lg border bg-muted/30 p-4">
-                                    <div>
-                                        <h4 className="text-sm font-semibold tracking-tight">
-                                            Committee Assignment
-                                        </h4>
-                                        <p className="text-xs text-muted-foreground">
-                                            Assign personnel to oversee the
-                                            physical count.
-                                        </p>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-1.5">
-                                            <Label>Chairperson</Label>
-                                            <SmartSelect
-                                                options={employeeOptions}
-                                                value={form.data.chairperson_id}
-                                                onValueChange={(v) =>
-                                                    form.setData(
-                                                        'chairperson_id',
-                                                        v,
-                                                    )
-                                                }
-                                                placeholder="Select Chairperson"
-                                                searchPlaceholder="Search employees..."
-                                            />
-                                            {form.errors.chairperson_id && (
-                                                <p className="text-xs text-destructive">
-                                                    {form.errors.chairperson_id}
-                                                </p>
-                                            )}
-                                        </div>
-                                        <div className="space-y-1.5">
-                                            <Label>Head of Agency</Label>
-                                            <SmartSelect
-                                                options={employeeOptions}
-                                                value={
-                                                    form.data.head_of_agency_id
-                                                }
-                                                onValueChange={(v) =>
-                                                    form.setData(
-                                                        'head_of_agency_id',
-                                                        v,
-                                                    )
-                                                }
-                                                placeholder="Select Head of Agency"
-                                                searchPlaceholder="Search employees..."
-                                            />
-                                            {form.errors.head_of_agency_id && (
-                                                <p className="text-xs text-destructive">
-                                                    {
-                                                        form.errors
-                                                            .head_of_agency_id
-                                                    }
-                                                </p>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-3 pt-2">
-                                        <div className="flex items-center justify-between">
-                                            <Label>Committee Members</Label>
-                                            <Button
+                    <Can permission="physical-count.create">
+                        <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+                            <DialogTrigger asChild>
+                                <Button className="gap-2">
+                                    <PlusCircle className="h-4 w-4" />
+                                    Initiate Physical Count
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[600px]">
+                                <DialogHeader>
+                                    <DialogTitle>
+                                        Initiate New Physical Count
+                                    </DialogTitle>
+                                    <DialogDescription>
+                                        This will take a snapshot of the current
+                                        inventory for reporting.
+                                    </DialogDescription>
+                                </DialogHeader>
+                                <form onSubmit={submit} className="mt-2 space-y-4">
+                                    <div className="space-y-2">
+                                        <Label>Count Type / Report Type</Label>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <button
                                                 type="button"
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={addMemberSlot}
+                                                onClick={() =>
+                                                    form.setData('type', 'RPCPPE')
+                                                }
+                                                className={`flex flex-col items-center justify-center rounded-md border p-4 transition-all ${
+                                                    form.data.type === 'RPCPPE'
+                                                        ? 'border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-950/30'
+                                                        : 'hover:bg-muted/50'
+                                                }`}
                                             >
-                                                <UserPlus className="mr-1.5 h-3.5 w-3.5" />{' '}
-                                                Add Member
-                                            </Button>
+                                                <span className="font-bold">
+                                                    RPCPPE
+                                                </span>
+                                                <span className="text-xs opacity-70">
+                                                    Property, Plant & Equipment
+                                                </span>
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    form.setData('type', 'RPCI')
+                                                }
+                                                className={`flex flex-col items-center justify-center rounded-md border p-4 transition-all ${
+                                                    form.data.type === 'RPCI'
+                                                        ? 'border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-950/30'
+                                                        : 'hover:bg-muted/50'
+                                                }`}
+                                            >
+                                                <span className="font-bold">
+                                                    RPCI
+                                                </span>
+                                                <span className="text-xs opacity-70">
+                                                    Inventories / Consumables
+                                                </span>
+                                            </button>
                                         </div>
-                                        <div className="space-y-2">
-                                            {form.data.member_ids.map(
-                                                (memberId, index) => (
-                                                    <div
-                                                        key={index}
-                                                        className="flex items-center gap-2"
-                                                    >
-                                                        <SmartSelect
-                                                            options={
-                                                                employeeOptions
-                                                            }
-                                                            value={memberId}
-                                                            onValueChange={(
-                                                                v,
-                                                            ) => {
-                                                                const newMembers =
-                                                                    [
-                                                                        ...form
-                                                                            .data
-                                                                            .member_ids,
-                                                                    ];
-                                                                newMembers[
-                                                                    index
-                                                                ] = v;
-                                                                form.setData(
-                                                                    'member_ids',
-                                                                    newMembers,
-                                                                );
-                                                            }}
-                                                            placeholder="Select Member"
-                                                            searchPlaceholder="Search employees..."
-                                                            defaultOpen={
-                                                                newMemberIndex ===
-                                                                index
-                                                            }
-                                                        />
-                                                        {form.data.member_ids
-                                                            .length > 1 && (
-                                                            <Button
-                                                                type="button"
-                                                                variant="ghost"
-                                                                size="icon"
-                                                                className="shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                                                                onClick={() =>
-                                                                    removeMemberSlot(
-                                                                        index,
-                                                                    )
+                                        {form.errors.type && (
+                                            <p className="text-xs text-destructive">
+                                                {form.errors.type}
+                                            </p>
+                                        )}
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="as_of_date">
+                                            As of Date
+                                        </Label>
+                                        <Input
+                                            id="as_of_date"
+                                            type="date"
+                                            value={form.data.as_of_date}
+                                            onChange={(e) =>
+                                                form.setData(
+                                                    'as_of_date',
+                                                    e.target.value,
+                                                )
+                                            }
+                                            required
+                                        />
+                                        {form.errors.as_of_date && (
+                                            <p className="text-xs text-destructive">
+                                                {form.errors.as_of_date}
+                                            </p>
+                                        )}
+                                    </div>
+                                    <div className="mt-4 space-y-4 rounded-lg border bg-muted/30 p-4">
+                                        <div>
+                                            <h4 className="text-sm font-semibold tracking-tight">
+                                                Committee Assignment
+                                            </h4>
+                                            <p className="text-xs text-muted-foreground">
+                                                Assign personnel to oversee the
+                                                physical count.
+                                            </p>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="space-y-1.5">
+                                                <Label>Chairperson</Label>
+                                                <SmartSelect
+                                                    options={employeeOptions}
+                                                    value={form.data.chairperson_id}
+                                                    onValueChange={(v) =>
+                                                        form.setData(
+                                                            'chairperson_id',
+                                                            v,
+                                                        )
+                                                    }
+                                                    placeholder="Select Chairperson"
+                                                    searchPlaceholder="Search employees..."
+                                                />
+                                                {form.errors.chairperson_id && (
+                                                    <p className="text-xs text-destructive">
+                                                        {form.errors.chairperson_id}
+                                                    </p>
+                                                )}
+                                            </div>
+                                            <div className="space-y-1.5">
+                                                <Label>Head of Agency</Label>
+                                                <SmartSelect
+                                                    options={employeeOptions}
+                                                    value={
+                                                        form.data.head_of_agency_id
+                                                    }
+                                                    onValueChange={(v) =>
+                                                        form.setData(
+                                                            'head_of_agency_id',
+                                                            v,
+                                                        )
+                                                    }
+                                                    placeholder="Select Head of Agency"
+                                                    searchPlaceholder="Search employees..."
+                                                />
+                                                {form.errors.head_of_agency_id && (
+                                                    <p className="text-xs text-destructive">
+                                                        {
+                                                            form.errors
+                                                                .head_of_agency_id
+                                                        }
+                                                    </p>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-3 pt-2">
+                                            <div className="flex items-center justify-between">
+                                                <Label>Committee Members</Label>
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={addMemberSlot}
+                                                >
+                                                    <UserPlus className="mr-1.5 h-3.5 w-3.5" />{' '}
+                                                    Add Member
+                                                </Button>
+                                            </div>
+                                            <div className="space-y-2">
+                                                {form.data.member_ids.map(
+                                                    (memberId, index) => (
+                                                        <div
+                                                            key={index}
+                                                            className="flex items-center gap-2"
+                                                        >
+                                                            <SmartSelect
+                                                                options={
+                                                                    employeeOptions
                                                                 }
-                                                            >
-                                                                <Trash2 className="h-4 w-4" />
-                                                                <span className="sr-only">
-                                                                    Remove
-                                                                </span>
-                                                            </Button>
-                                                        )}
-                                                    </div>
-                                                ),
-                                            )}
+                                                                value={memberId}
+                                                                onValueChange={(
+                                                                    v,
+                                                                ) => {
+                                                                    const newMembers =
+                                                                        [
+                                                                            ...form
+                                                                                .data
+                                                                                .member_ids,
+                                                                        ];
+                                                                    newMembers[
+                                                                        index
+                                                                    ] = v;
+                                                                    form.setData(
+                                                                        'member_ids',
+                                                                        newMembers,
+                                                                    );
+                                                                }}
+                                                                placeholder="Select Member"
+                                                                searchPlaceholder="Search employees..."
+                                                                defaultOpen={
+                                                                    newMemberIndex ===
+                                                                    index
+                                                                }
+                                                            />
+                                                            {form.data.member_ids
+                                                                .length > 1 && (
+                                                                <Button
+                                                                    type="button"
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    className="shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                                                                    onClick={() =>
+                                                                        removeMemberSlot(
+                                                                            index,
+                                                                        )
+                                                                    }
+                                                                >
+                                                                    <Trash2 className="h-4 w-4" />
+                                                                    <span className="sr-only">
+                                                                        Remove
+                                                                    </span>
+                                                                </Button>
+                                                            )}
+                                                        </div>
+                                                    ),
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                                <div className="flex justify-end pt-4">
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        className="mr-2"
-                                        onClick={() => setIsCreateOpen(false)}
-                                    >
-                                        Cancel
-                                    </Button>
-                                    <Button
-                                        type="submit"
-                                        disabled={form.processing}
-                                    >
-                                        Start Count
-                                    </Button>
-                                </div>
-                            </form>
-                        </DialogContent>
-                    </Dialog>
+                                    <div className="flex justify-end pt-4">
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            className="mr-2"
+                                            onClick={() => setIsCreateOpen(false)}
+                                        >
+                                            Cancel
+                                        </Button>
+                                        <Button
+                                            type="submit"
+                                            disabled={form.processing}
+                                        >
+                                            Start Count
+                                        </Button>
+                                    </div>
+                                </form>
+                            </DialogContent>
+                        </Dialog>
+                    </Can>
                 </div>
 
                 <div className="overflow-hidden rounded-xl border bg-card shadow-xs">
@@ -433,9 +436,7 @@ export default function PhysicalCountsIndex({ counts, employees }: Props) {
                                         currentEmployee &&
                                         count.created_by === currentEmployee.id;
                                     const canDelete =
-                                        isDraft &&
-                                        (hasPermission('reports.view') ||
-                                            isCreator);
+                                        isDraft && isCreator;
 
                                     return (
                                         <TableRow key={count.id}>

@@ -15,6 +15,7 @@ use App\Models\Property;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -29,6 +30,8 @@ class PhysicalCountController extends Controller
 
     public function index(): Response
     {
+        Gate::authorize('physical-count.viewAny');
+
         $user = Auth::user();
         $employee = $user?->employee;
 
@@ -57,6 +60,8 @@ class PhysicalCountController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        Gate::authorize('physical-count.create');
+
         $validated = $request->validate([
             'type' => ['required', 'in:RPCPPE,RPCI'],
             'as_of_date' => ['required', 'date'],
@@ -81,19 +86,7 @@ class PhysicalCountController extends Controller
 
     public function show(PhysicalCount $physicalCount): Response
     {
-        $user = Auth::user();
-        $employee = $user?->employee;
-
-        if (! $user->hasPermissionTo('reports.view')) {
-            $isCreator = $employee && $physicalCount->created_by === $employee->id;
-            $isCommitteeMember = $employee &&
-                                 in_array($physicalCount->status, [PhysicalCountStatus::PendingReview, PhysicalCountStatus::Finalized]) &&
-                                 $physicalCount->committees()->where('employee_id', $employee->id)->exists();
-
-            if (! $isCreator && ! $isCommitteeMember) {
-                abort(403, 'Unauthorized action.');
-            }
-        }
+        Gate::authorize('physical-count.view', $physicalCount);
 
         $physicalCount->load(['creator', 'items.property.category', 'items.item.category', 'committees.employee']);
 
@@ -107,15 +100,7 @@ class PhysicalCountController extends Controller
 
     public function update(Request $request, PhysicalCount $physicalCount): RedirectResponse
     {
-        $user = Auth::user();
-        $employee = $user?->employee;
-
-        if (! $user->hasPermissionTo('reports.view')) {
-            $isCreator = $employee && $physicalCount->created_by === $employee->id;
-            if (! $isCreator) {
-                abort(403, 'Unauthorized action.');
-            }
-        }
+        Gate::authorize('physical-count.update', $physicalCount);
 
         if ($physicalCount->status !== PhysicalCountStatus::Draft) {
             return redirect()->back()->withErrors(['error' => 'Cannot update a finalized count.']);
@@ -169,6 +154,8 @@ class PhysicalCountController extends Controller
 
     public function approve(Request $request, PhysicalCount $physicalCount): RedirectResponse
     {
+        Gate::authorize('physical-count.review', $physicalCount);
+
         if ($physicalCount->status !== PhysicalCountStatus::PendingReview) {
             return redirect()->back()->withErrors(['error' => 'This count is not pending review.']);
         }
@@ -193,19 +180,7 @@ class PhysicalCountController extends Controller
 
     public function export(PhysicalCount $physicalCount): StreamedResponse
     {
-        $user = Auth::user();
-        $employee = $user?->employee;
-
-        if (! $user->hasPermissionTo('reports.view')) {
-            $isCreator = $employee && $physicalCount->created_by === $employee->id;
-            $isCommitteeMember = $employee &&
-                                 in_array($physicalCount->status, [PhysicalCountStatus::PendingReview, PhysicalCountStatus::Finalized]) &&
-                                 $physicalCount->committees()->where('employee_id', $employee->id)->exists();
-
-            if (! $isCreator && ! $isCommitteeMember) {
-                abort(403, 'Unauthorized action.');
-            }
-        }
+        Gate::authorize('physical-count.view', $physicalCount);
 
         $physicalCount->load(['creator', 'items.property.category', 'items.item.category', 'items.property.activeAssignment']);
 
@@ -309,18 +284,10 @@ class PhysicalCountController extends Controller
 
     public function destroy(PhysicalCount $physicalCount): RedirectResponse
     {
-        $user = Auth::user();
-        $employee = $user?->employee;
+        Gate::authorize('physical-count.delete', $physicalCount);
 
         if ($physicalCount->status !== PhysicalCountStatus::Draft) {
             return redirect()->back()->withErrors(['error' => 'Only draft physical counts can be deleted.']);
-        }
-
-        $isCreator = $employee && $physicalCount->created_by === $employee->id;
-        $isAuthorized = $user->hasPermissionTo('reports.view') || $isCreator;
-
-        if (! $isAuthorized) {
-            abort(403, 'Unauthorized action.');
         }
 
         $physicalCount->delete();

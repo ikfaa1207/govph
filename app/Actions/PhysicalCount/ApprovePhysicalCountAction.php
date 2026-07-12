@@ -14,6 +14,13 @@ class ApprovePhysicalCountAction
     /**
      * Submit a committee member review.
      *
+     * Note: This implements the "Any Objection Veto" policy rule.
+     * Unanimous consent from all committee members is required to finalize
+     * the count. If any single committee member rejects/dissents, the count
+     * status immediately reverts to Draft, and all other committee members'
+     * statuses are reset to pending to ensure a complete new review cycle
+     * on resubmission.
+     *
      * @param  array{
      *     status: string,
      *     remarks?: string|null,

@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
+use App\Enums\PhysicalCountStatus;
 use App\Enums\RequisitionStatus;
+use App\Models\PhysicalCount;
 use App\Models\Requisition;
 use App\Models\Ticket;
 use App\Models\User;
@@ -147,6 +149,83 @@ class AppServiceProvider extends ServiceProvider
             }
 
             return Response::allow();
+        });
+
+        // Physical Count Gates
+        Gate::define('physical-count.viewAny', function (User $user) {
+            return true;
+        });
+
+        Gate::define('physical-count.create', function (User $user) {
+            return $user->hasPermissionTo('reports.view');
+        });
+
+        Gate::define('physical-count.view', function (User $user, PhysicalCount $physicalCount) {
+            if ($user->hasPermissionTo('reports.view')) {
+                return Response::allow();
+            }
+
+            $employee = $user->employee;
+            if (! $employee) {
+                return Response::deny('You must have an employee profile to view physical counts.');
+            }
+
+            if ($physicalCount->created_by === $employee->id) {
+                return Response::allow();
+            }
+
+            $isCommitteeMember = in_array($physicalCount->status, [PhysicalCountStatus::PendingReview, PhysicalCountStatus::Finalized], true)
+                && $physicalCount->committees()->where('employee_id', $employee->id)->exists();
+
+            if ($isCommitteeMember) {
+                return Response::allow();
+            }
+
+            return Response::deny('You are not authorized to view this physical count.');
+        });
+
+        Gate::define('physical-count.update', function (User $user, PhysicalCount $physicalCount) {
+            if ($user->hasPermissionTo('reports.view')) {
+                return Response::allow();
+            }
+
+            $employee = $user->employee;
+            if (! $employee) {
+                return Response::deny('You must have an employee profile to update physical counts.');
+            }
+
+            if ($physicalCount->created_by === $employee->id) {
+                return Response::allow();
+            }
+
+            return Response::deny('You are not authorized to update this physical count.');
+        });
+
+        Gate::define('physical-count.review', function (User $user, PhysicalCount $physicalCount) {
+            $employee = $user->employee;
+            if (! $employee) {
+                return Response::deny('You must have an employee profile to review physical counts.');
+            }
+
+            $isCommitteeMember = $physicalCount->committees()->where('employee_id', $employee->id)->exists();
+            if ($isCommitteeMember) {
+                return Response::allow();
+            }
+
+            return Response::deny('You are not assigned to the committee for this physical count.');
+        });
+
+        Gate::define('physical-count.delete', function (User $user, PhysicalCount $physicalCount) {
+            $employee = $user->employee;
+            if (! $employee) {
+                return Response::deny('You must have an employee profile to delete physical counts.');
+            }
+
+            if ($physicalCount->created_by === $employee->id) {
+                return Response::allow();
+            }
+
+            return Response::deny('Only the creator of the physical count can delete it.');
         });
 
         // Ticket / Helpdesk Gates
