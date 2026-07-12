@@ -2,24 +2,24 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+#[Fillable([
+    'physical_count_id',
+    'property_id',
+    'item_id',
+    'recorded_qty',
+    'actual_qty',
+    'shortage_qty',
+    'overage_qty',
+    'remarks',
+])]
 class PhysicalCountItem extends Model
 {
     use HasFactory;
-
-    protected $fillable = [
-        'physical_count_id',
-        'property_id',
-        'item_id',
-        'recorded_qty',
-        'actual_qty',
-        'shortage_qty',
-        'overage_qty',
-        'remarks',
-    ];
 
     protected $casts = [
         'recorded_qty' => 'decimal:2',

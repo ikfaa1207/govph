@@ -88,11 +88,29 @@ class AppServiceProvider extends ServiceProvider
                 return Response::deny('A creator cannot approve their own requisition request.');
             }
 
+            $isAdmin = $user->hasRole('System Administrator') || $user->hasPermissionTo('admin.super');
+
             if ($requisition->department_head_id === null) {
+                if ($isAdmin) {
+                    if ($requisition->status !== RequisitionStatus::PendingDeptHead) {
+                        return Response::deny('Only pending requisitions can be approved.');
+                    }
+
+                    return Response::allow();
+                }
+
                 return Response::deny('This requisition has no assigned department head and must be approved by an administrator.');
             }
 
             if ($employee === null || $requisition->department_head_id !== $employee->getKey()) {
+                if ($isAdmin) {
+                    if ($requisition->status !== RequisitionStatus::PendingDeptHead) {
+                        return Response::deny('Only pending requisitions can be approved.');
+                    }
+
+                    return Response::allow();
+                }
+
                 return Response::deny('You are not the designated department head for this requisition.');
             }
 

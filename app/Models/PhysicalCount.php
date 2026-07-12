@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\PhysicalCountStatus;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -18,16 +19,15 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
+#[Fillable([
+    'type',
+    'as_of_date',
+    'status',
+    'created_by',
+])]
 class PhysicalCount extends Model
 {
     use HasFactory;
-
-    protected $fillable = [
-        'type',
-        'as_of_date',
-        'status',
-        'created_by',
-    ];
 
     protected $casts = [
         'as_of_date' => 'date',

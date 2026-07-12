@@ -2,17 +2,17 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+#[Fillable([
+    'department_id',
+    'item_id',
+    'current_stock',
+])]
 class DepartmentItem extends Model
 {
-    protected $fillable = [
-        'department_id',
-        'item_id',
-        'current_stock',
-    ];
-
     public function department(): BelongsTo
     {
         return $this->belongsTo(Department::class);
