@@ -1,0 +1,198 @@
+import { useForm } from '@inertiajs/react';
+import { ShieldCheck } from 'lucide-react';
+import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { SmartSelect } from '@/components/ui/smart-select';
+import { formatCurrency } from '@/lib/utils';
+import { Property } from '../index';
+
+interface AssignDialogProps {
+    isOpen: boolean;
+    onClose: () => void;
+    property: Property;
+    employees: any[];
+}
+
+export function AssignDialog({ isOpen, onClose, property, employees }: AssignDialogProps) {
+    const form = useForm({
+        assigned_to: '',
+        is_non_system: false,
+        non_system_name: '',
+        non_system_department: '',
+        remarks: '',
+    });
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        form.post(`/inventory/properties/${property.id}/assign`, {
+            onSuccess: () => {
+                onClose();
+                toast.success('Equipment assigned. Handover document generated.');
+            },
+            onError: () => {
+                toast.error('Failed to assign equipment.');
+            },
+        });
+    };
+
+    return (
+        <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Assign Equipment Accountability</DialogTitle>
+                    <DialogDescription>
+                        Assign this equipment to an employee. The document routing is determined automatically.
+                    </DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="mb-2 flex items-start gap-2.5 rounded-lg bg-muted/40 p-3 text-xs text-muted-foreground">
+                        <ShieldCheck className="mt-0.5 h-4 w-4 text-indigo-500" />
+                        <div>
+                            <strong>Automatic Document Determination:</strong>
+                            <p className="mt-0.5">
+                                Cost: <strong>{formatCurrency(property.unit_cost)}</strong>.
+                                {property.unit_cost >= 50000 ? (
+                                    <span className="mt-0.5 block font-semibold text-emerald-600">
+                                        Cost is ≥ ₱50k. System will generate a Property Acknowledgment Receipt (PAR) for PPE.
+                                    </span>
+                                ) : (
+                                    <span className="mt-0.5 block font-semibold text-amber-600">
+                                        Cost is &lt; ₱50k. System will generate an Inventory Custodian Slip (ICS) for semi-expendables.
+                                    </span>
+                                )}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="space-y-3">
+                        <Label className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+                            Assignee Type
+                        </Label>
+                        <div className="grid grid-cols-2 gap-2">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    form.setData((data) => ({
+                                        ...data,
+                                        is_non_system: false,
+                                        non_system_name: '',
+                                        non_system_department: '',
+                                    }));
+                                }}
+                                className={`flex flex-col items-center gap-1 rounded-lg border-2 p-3 text-xs font-semibold transition-all ${
+                                    !form.data.is_non_system
+                                        ? 'border-indigo-600 bg-indigo-50/50 text-indigo-600 dark:border-indigo-400 dark:bg-indigo-950/20 dark:text-indigo-400'
+                                        : 'border-border bg-card text-muted-foreground hover:bg-muted/50'
+                                }`}
+                            >
+                                <span>Registered Employee</span>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    form.setData((data) => ({
+                                        ...data,
+                                        is_non_system: true,
+                                        assigned_to: '',
+                                    }));
+                                }}
+                                className={`flex flex-col items-center gap-1 rounded-lg border-2 p-3 text-xs font-semibold transition-all ${
+                                    form.data.is_non_system
+                                        ? 'border-indigo-600 bg-indigo-50/50 text-indigo-600 dark:border-indigo-400 dark:bg-indigo-950/20 dark:text-indigo-400'
+                                        : 'border-border bg-card text-muted-foreground hover:bg-muted/50'
+                                }`}
+                            >
+                                <span>Non-System / External User</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    {!form.data.is_non_system ? (
+                        <div className="space-y-1">
+                            <Label htmlFor="assignee">Employee</Label>
+                            <SmartSelect
+                                options={employees.map((e) => ({
+                                    value: String(e.id),
+                                    label: `${e.name} (${e.position})`,
+                                }))}
+                                value={form.data.assigned_to ? String(form.data.assigned_to) : undefined}
+                                onValueChange={(val) => form.setData('assigned_to', val)}
+                                placeholder="Select Employee"
+                                className="w-full"
+                                disabled={form.data.is_non_system}
+                            />
+                            {form.errors.assigned_to && (
+                                <p className="text-xs text-destructive">{form.errors.assigned_to}</p>
+                            )}
+                        </div>
+                    ) : (
+                        <div className="space-y-3">
+                            <div className="space-y-1">
+                                <Label htmlFor="non_system_name" required>
+                                    Full Name
+                                </Label>
+                                <Input
+                                    id="non_system_name"
+                                    type="text"
+                                    placeholder="Juan dela Cruz"
+                                    value={form.data.non_system_name}
+                                    onChange={(e) => form.setData('non_system_name', e.target.value)}
+                                    required={form.data.is_non_system}
+                                />
+                                {form.errors.non_system_name && (
+                                    <p className="text-xs text-destructive">{form.errors.non_system_name}</p>
+                                )}
+                            </div>
+                            <div className="space-y-1">
+                                <Label htmlFor="non_system_department" required>
+                                    Department / Office / Agency
+                                </Label>
+                                <Input
+                                    id="non_system_department"
+                                    type="text"
+                                    placeholder="DICT Regional Office"
+                                    value={form.data.non_system_department}
+                                    onChange={(e) => form.setData('non_system_department', e.target.value)}
+                                    required={form.data.is_non_system}
+                                />
+                                {form.errors.non_system_department && (
+                                    <p className="text-xs text-destructive">{form.errors.non_system_department}</p>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="space-y-1">
+                        <Label htmlFor="rem" required>
+                            Remarks
+                        </Label>
+                        <textarea
+                            id="rem"
+                            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-hidden"
+                            value={form.data.remarks}
+                            onChange={(e) => form.setData('remarks', e.target.value)}
+                        />
+                    </div>
+
+                    <div className="flex justify-end gap-2 pt-2">
+                        <Button type="button" variant="outline" onClick={onClose}>
+                            Cancel
+                        </Button>
+                        <Button type="submit" disabled={form.processing}>
+                            Confirm Assignment
+                        </Button>
+                    </div>
+                </form>
+            </DialogContent>
+        </Dialog>
+    );
+}

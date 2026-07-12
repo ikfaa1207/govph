@@ -2,20 +2,18 @@
 
 namespace App\Http\Controllers\Inventory;
 
+use App\Actions\ReceivingReport\CreateReceivingReportAction;
+use App\Actions\ReceivingReport\UpdateReceivingReportAction;
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\Employee;
 use App\Models\Item;
-use App\Models\PurchaseOrder;
 use App\Models\ReceivingReport;
 use App\Models\ReceivingReportItem;
 use App\Models\Supplier;
-use App\Services\Audit\AuditLogger;
-use App\Services\Valuation\ValuationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -25,7 +23,10 @@ class ReceivingReportController extends Controller
     /**
      * Create a new controller instance.
      */
-    public function __construct(protected ValuationService $valuationService) {}
+    public function __construct(
+        protected CreateReceivingReportAction $createAction,
+        protected UpdateReceivingReportAction $updateAction
+    ) {}
 
     /**
      * Display a listing of the receiving reports.
@@ -147,75 +148,13 @@ class ReceivingReportController extends Controller
             'items.*.rejection_reason' => ['nullable', 'string'],
         ]);
 
-        DB::transaction(function () use ($validated, $status) {
-            // Find or create Purchase Order
-            $po = PurchaseOrder::firstOrCreate(
-                ['po_number' => $validated['po_number']],
-                [
-                    'supplier_id' => $validated['supplier_id'],
-                    'po_date' => $validated['po_date'],
-                    'status' => $status === 'finalized' ? 'received' : 'draft',
-                ]
-            );
+        try {
+            $this->createAction->execute($validated);
 
-            if ($status === 'finalized' && $po->status !== 'received') {
-                $po->update(['status' => 'received']);
-            }
-
-            // Create Receiving Report
-            $receivingReport = ReceivingReport::create([
-                'purchase_order_id' => $po->id,
-                'iar_number' => $validated['iar_number'] ?? null,
-                'invoice_number' => $validated['invoice_number'] ?? null,
-                'delivery_receipt_number' => $validated['delivery_receipt_number'] ?? null,
-                'received_date' => $validated['received_date'] ?? null,
-                'received_by' => $validated['received_by'] ?? null,
-                'inspected_by' => $validated['inspected_by'] ?? null,
-                'remarks' => $validated['remarks'] ?? null,
-                'status' => $status,
-            ]);
-
-            // Add items and update inventory stock and moving average costs if finalized
-            foreach ($validated['items'] as $itemData) {
-                $itemId = $itemData['item_id'];
-                $item = Item::where('id', $itemId)->firstOrFail();
-
-                $receivedQty = (int) $itemData['quantity_received'];
-                $acceptedQty = isset($itemData['quantity_accepted']) ? (int) $itemData['quantity_accepted'] : 0;
-                $rejectedQty = max(0, $receivedQty - $acceptedQty);
-                $unitCost = (float) $itemData['unit_cost'];
-
-                // Create receiving report item line record
-                ReceivingReportItem::create([
-                    'receiving_report_id' => $receivingReport->id,
-                    'item_id' => $itemId,
-                    'quantity_received' => $receivedQty,
-                    'quantity_accepted' => $acceptedQty,
-                    'quantity_rejected' => $rejectedQty,
-                    'unit_cost' => $unitCost,
-                    'batch_number' => $itemData['batch_number'] ?? null,
-                    'expiration_date' => $itemData['expiration_date'] ?? null,
-                    'rejection_reason' => $itemData['rejection_reason'] ?? null,
-                ]);
-
-                // Record stock in for accepted quantities ONLY if finalized
-                if ($status === 'finalized' && $acceptedQty > 0) {
-                    $this->valuationService->recordStockIn(
-                        $item,
-                        $acceptedQty,
-                        $unitCost,
-                        ReceivingReport::class,
-                        $receivingReport->id,
-                        "Received via IAR #{$receivingReport->iar_number}"
-                    );
-                }
-            }
-
-            // Log creating receiving report in audit log
-            AuditLogger::log('CREATE_RECEIVING_REPORT', $receivingReport, null, $receivingReport->toArray());
-        });
-
-        return redirect()->back()->with('success', $status === 'finalized' ? 'Receiving report created and stock updated successfully.' : 'Receiving report draft saved successfully.');
+            return redirect()->back()->with('success', $status === 'finalized' ? 'Receiving report created and stock updated successfully.' : 'Receiving report draft saved successfully.');
+        } catch (\Exception $e) {
+            return redirect()->back()->withErrors(['error' => 'Failed to create receiving report: '.$e->getMessage()]);
+        }
     }
 
     /**
@@ -265,144 +204,13 @@ class ReceivingReportController extends Controller
             'items.*.rejection_reason' => ['nullable', 'string'],
         ]);
 
-        $oldStatus = $report->status;
+        try {
+            $this->updateAction->execute($report, $validated);
 
-        DB::transaction(function () use ($validated, $report, $status, $oldStatus) {
-            // Load relations for accurate old state tracking
-            $report->load('items');
-            $oldState = $report->toArray();
-
-            // Find or update Purchase Order (we won't overwrite existing POs fully, just ensure it exists)
-            $po = PurchaseOrder::firstOrCreate(
-                ['po_number' => $validated['po_number']],
-                [
-                    'supplier_id' => $validated['supplier_id'],
-                    'po_date' => $validated['po_date'],
-                    'status' => $status === 'finalized' ? 'received' : 'draft',
-                ]
-            );
-
-            if ($status === 'finalized' && $po->status !== 'received') {
-                $po->update(['status' => 'received']);
-            }
-
-            // Update Report Details
-            $report->update([
-                'purchase_order_id' => $po->id,
-                'iar_number' => $validated['iar_number'] ?? null,
-                'invoice_number' => $validated['invoice_number'] ?? null,
-                'delivery_receipt_number' => $validated['delivery_receipt_number'] ?? null,
-                'received_date' => $validated['received_date'] ?? null,
-                'received_by' => $validated['received_by'] ?? null,
-                'inspected_by' => $validated['inspected_by'] ?? null,
-                'remarks' => $validated['remarks'] ?? null,
-                'status' => $status,
-            ]);
-
-            // Track IDs from the payload to delete missing items
-            $payloadItemIds = array_filter(array_map(function ($item) {
-                return $item['id'] ?? null;
-            }, $validated['items']));
-
-            // Handle deleted items: reverse stock and delete (only if old state was finalized)
-            foreach ($report->items as $existingItem) {
-                if (! in_array($existingItem->id, $payloadItemIds)) {
-                    if ($oldStatus === 'finalized' && $existingItem->quantity_accepted > 0) {
-                        $existingItemId = (int) $existingItem->item_id;
-                        /** @var Item $item */
-                        $item = Item::findOrFail($existingItemId);
-                        $this->valuationService->reverseStockIn(
-                            $item,
-                            $existingItem->quantity_accepted,
-                            $existingItem->unit_cost,
-                            ReceivingReport::class,
-                            $report->id,
-                            "Reversed via Edit IAR #{$report->iar_number}"
-                        );
-                    }
-                    $existingItem->delete();
-                }
-            }
-
-            // Process payload items
-            foreach ($validated['items'] as $itemData) {
-                $itemId = (int) $itemData['item_id'];
-                /** @var Item $item */
-                $item = Item::findOrFail($itemId);
-
-                $receivedQty = (int) $itemData['quantity_received'];
-                $acceptedQty = isset($itemData['quantity_accepted']) ? (int) $itemData['quantity_accepted'] : 0;
-                $rejectedQty = max(0, $receivedQty - $acceptedQty);
-                $unitCost = (float) $itemData['unit_cost'];
-
-                if (isset($itemData['id'])) {
-                    // Updating an existing item
-                    $existingLineId = (int) $itemData['id'];
-                    /** @var ReceivingReportItem $existingLine */
-                    $existingLine = ReceivingReportItem::findOrFail($existingLineId);
-
-                    // Reverse old stock-in only if old status was finalized
-                    if ($oldStatus === 'finalized' && $existingLine->quantity_accepted > 0) {
-                        $this->valuationService->reverseStockIn(
-                            $item,
-                            $existingLine->quantity_accepted,
-                            $existingLine->unit_cost,
-                            ReceivingReport::class,
-                            $report->id,
-                            "Reversed (Update) via IAR #{$report->iar_number}"
-                        );
-                    }
-
-                    // Update record
-                    $existingLine->update([
-                        'item_id' => $itemId,
-                        'quantity_received' => $receivedQty,
-                        'quantity_accepted' => $acceptedQty,
-                        'quantity_rejected' => $rejectedQty,
-                        'unit_cost' => $unitCost,
-                        'batch_number' => $itemData['batch_number'] ?? null,
-                        'expiration_date' => $itemData['expiration_date'] ?? null,
-                        'rejection_reason' => $itemData['rejection_reason'] ?? null,
-                    ]);
-
-                } else {
-                    // Creating new item line
-                    ReceivingReportItem::create([
-                        'receiving_report_id' => $report->id,
-                        'item_id' => $itemId,
-                        'quantity_received' => $receivedQty,
-                        'quantity_accepted' => $acceptedQty,
-                        'quantity_rejected' => $rejectedQty,
-                        'unit_cost' => $unitCost,
-                        'batch_number' => $itemData['batch_number'] ?? null,
-                        'expiration_date' => $itemData['expiration_date'] ?? null,
-                        'rejection_reason' => $itemData['rejection_reason'] ?? null,
-                    ]);
-                }
-
-                // Apply new stock-in only if new status is finalized
-                if ($status === 'finalized' && $acceptedQty > 0) {
-                    $this->valuationService->recordStockIn(
-                        $item,
-                        $acceptedQty,
-                        $unitCost,
-                        ReceivingReport::class,
-                        $report->id,
-                        "Received via Edit IAR #{$report->iar_number}"
-                    );
-                }
-            }
-
-            // Refresh to get latest items for new state
-            $report->refresh();
-            $report->load('items');
-            $newState = $report->toArray();
-
-            // Log update
-            AuditLogger::log('UPDATE_RECEIVING_REPORT', $report, $oldState, $newState);
-        });
-
-        return redirect()->back()->with('success', 'Receiving report updated successfully.');
+            return redirect()->back()->with('success', 'Receiving report updated successfully.');
+        } catch (\Exception $e) {
+            return redirect()->back()->withErrors(['error' => 'Failed to update receiving report: '.$e->getMessage()]);
+        }
     }
 
     /**

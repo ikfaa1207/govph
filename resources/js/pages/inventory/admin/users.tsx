@@ -418,34 +418,18 @@ export default function UsersIndex({
                     <CardContent>
                         {(users && users.data ? users.data : users).length ===
                         0 ? (
-                            <div className="overflow-x-auto">
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead>User Name</TableHead>
-                                            <TableHead>Email Address</TableHead>
-                                            <TableHead>
-                                                Office / Department
-                                            </TableHead>
-                                            <TableHead>
-                                                Assigned Roles
-                                            </TableHead>
-                                            <TableHead className="text-right">
-                                                Actions
-                                            </TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        <TableRow>
-                                            <TableCell
-                                                colSpan={5}
-                                                className="py-8 text-center text-sm text-muted-foreground"
-                                            >
-                                                No user accounts registered.
-                                            </TableCell>
-                                        </TableRow>
-                                    </TableBody>
-                                </Table>
+                            <div className="flex flex-col items-center justify-center py-12 text-center">
+                                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                                    <UserPlus className="h-6 w-6" />
+                                </div>
+                                <h3 className="mt-4 text-sm font-semibold">No user accounts registered</h3>
+                                <p className="mt-2 text-sm text-muted-foreground max-w-sm">
+                                    Get started by creating a new employee or administrator account.
+                                </p>
+                                <Button className="mt-4 gap-2" onClick={() => setIsCreateOpen(true)}>
+                                    <UserPlus className="h-4 w-4" />
+                                    Create Account
+                                </Button>
                             </div>
                         ) : (
                             <div className="overflow-x-auto">
@@ -453,11 +437,11 @@ export default function UsersIndex({
                                     <TableHeader>
                                         <TableRow>
                                             <TableHead>User Name</TableHead>
-                                            <TableHead>Email Address</TableHead>
-                                            <TableHead>
+                                            <TableHead className="hidden md:table-cell">Email Address</TableHead>
+                                            <TableHead className="hidden lg:table-cell">
                                                 Office / Department
                                             </TableHead>
-                                            <TableHead>
+                                            <TableHead className="hidden sm:table-cell">
                                                 Assigned Roles
                                             </TableHead>
                                             <TableHead className="text-right">
@@ -508,10 +492,10 @@ export default function UsersIndex({
                                                         </div>
                                                     </div>
                                                 </TableCell>
-                                                <TableCell className="font-mono text-xs">
+                                                <TableCell className="hidden md:table-cell font-mono text-xs">
                                                     {user.email}
                                                 </TableCell>
-                                                <TableCell>
+                                                <TableCell className="hidden lg:table-cell">
                                                     <div className="text-sm">
                                                         {user.employee?.office
                                                             ?.name || 'N/A'}
@@ -522,7 +506,7 @@ export default function UsersIndex({
                                                             ?.name || 'N/A'}
                                                     </div>
                                                 </TableCell>
-                                                <TableCell>
+                                                <TableCell className="hidden sm:table-cell">
                                                     <div className="flex flex-wrap gap-1">
                                                         {user.roles.length ===
                                                         0 ? (

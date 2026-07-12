@@ -1,5 +1,5 @@
 import { Head, useForm, router, setLayoutProps } from '@inertiajs/react';
-import { Plus, Edit2, Copy, Trash2, Users, MoreHorizontal } from 'lucide-react';
+import { Plus, Edit2, Copy, Trash2, Users, MoreHorizontal, Shield } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import {
@@ -419,32 +419,37 @@ export default function RolesIndex({ roles, permissions }: RolesIndexProps) {
                 </div>
 
                 {/* Roles Board */}
-                <Card>
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead className="w-[30%]">
-                                    Role / Description
-                                </TableHead>
-                                <TableHead>Users Assigned</TableHead>
-                                <TableHead>Permissions Count</TableHead>
-                                <TableHead className="text-right">
-                                    Actions
-                                </TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {roles.length === 0 ? (
+                {roles.length === 0 ? (
+                    <Card className="flex flex-col items-center justify-center py-12 text-center p-6">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                            <Shield className="h-6 w-6" />
+                        </div>
+                        <h3 className="mt-4 text-sm font-semibold">No custom roles configured</h3>
+                        <p className="mt-2 text-sm text-muted-foreground max-w-sm">
+                            Build custom permission schemes and security clearance levels for your staff.
+                        </p>
+                        <Button className="mt-4 gap-2" onClick={() => setIsAddOpen(true)}>
+                            <Plus className="h-4 w-4" />
+                            Create Custom Role
+                        </Button>
+                    </Card>
+                ) : (
+                    <Card>
+                        <Table>
+                            <TableHeader>
                                 <TableRow>
-                                    <TableCell
-                                        colSpan={4}
-                                        className="h-24 text-center text-muted-foreground"
-                                    >
-                                        No roles configured yet.
-                                    </TableCell>
+                                    <TableHead className="w-[30%]">
+                                        Role / Description
+                                    </TableHead>
+                                    <TableHead className="hidden sm:table-cell">Users Assigned</TableHead>
+                                    <TableHead className="hidden sm:table-cell">Permissions Count</TableHead>
+                                    <TableHead className="text-right">
+                                        Actions
+                                    </TableHead>
                                 </TableRow>
-                            ) : (
-                                roles.map((role) => (
+                            </TableHeader>
+                            <TableBody>
+                                {roles.map((role) => (
                                     <TableRow key={role.id}>
                                         <TableCell>
                                             <div className="font-semibold text-foreground">
@@ -455,7 +460,7 @@ export default function RolesIndex({ roles, permissions }: RolesIndexProps) {
                                                     'No description provided'}
                                             </div>
                                         </TableCell>
-                                        <TableCell>
+                                        <TableCell className="hidden sm:table-cell">
                                             <Badge
                                                 variant="outline"
                                                 className="flex w-fit items-center gap-1 bg-muted/20"
@@ -464,7 +469,7 @@ export default function RolesIndex({ roles, permissions }: RolesIndexProps) {
                                                 {role.users.length} Users
                                             </Badge>
                                         </TableCell>
-                                        <TableCell>
+                                        <TableCell className="hidden sm:table-cell">
                                             <Badge
                                                 variant="secondary"
                                                 className="font-mono"
@@ -529,11 +534,11 @@ export default function RolesIndex({ roles, permissions }: RolesIndexProps) {
                                             </DropdownMenu>
                                         </TableCell>
                                     </TableRow>
-                                ))
-                            )}
-                        </TableBody>
-                    </Table>
-                </Card>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </Card>
+                )}
 
                 {/* Dialog: Edit Permissions */}
                 <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>

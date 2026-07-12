@@ -1,12 +1,7 @@
-import { Head, useForm, setLayoutProps } from '@inertiajs/react';
+import { Head, setLayoutProps } from '@inertiajs/react';
 import {
     PlusCircle,
     UserCheck,
-    RefreshCw,
-    Trash2,
-    ShieldCheck,
-    Clipboard,
-    MoreHorizontal,
     Package,
     PhilippinePeso,
     Clock,
@@ -14,51 +9,23 @@ import {
     PackageOpen,
 } from 'lucide-react';
 import { useState } from 'react';
-import { toast } from 'sonner';
 import { Can } from '@/components/can';
-import { SimplePagination } from '@/components/simple-pagination';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { DatePicker } from '@/components/ui/date-picker';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from '@/components/ui/dialog';
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
-import { SmartSelect } from '@/components/ui/smart-select';
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '@/components/ui/table';
 import { usePermissions } from '@/hooks/use-permissions';
 import { formatCurrency } from '@/lib/utils';
 
-interface Property {
+// Import extracted components
+import { AddPropertyDialog } from './components/AddPropertyDialog';
+import { AssignDialog } from './components/AssignDialog';
+import { BatchAssignDialog } from './components/BatchAssignDialog';
+import { DisposeDialog } from './components/DisposeDialog';
+import { PropertyTable } from './components/PropertyTable';
+import { ReturnSubAssignDialog } from './components/ReturnSubAssignDialog';
+import { SubAssignDialog } from './components/SubAssignDialog';
+import { TransferDialog } from './components/TransferDialog';
+
+export interface Property {
     id: number;
     property_number: string;
     serial_number: string;
@@ -68,9 +35,18 @@ interface Property {
     date_acquired: string;
     warranty_expiration: string | null;
     condition:
-        'new' | 'good' | 'fair' | 'needs_repair' | 'unserviceable' | 'disposed';
+        | 'new'
+        | 'good'
+        | 'fair'
+        | 'needs_repair'
+        | 'unserviceable'
+        | 'disposed';
     status:
-        'available' | 'assigned' | 'transferred' | 'for_disposal' | 'disposed';
+        | 'available'
+        | 'assigned'
+        | 'transferred'
+        | 'for_disposal'
+        | 'disposed';
     category?: {
         name: string;
     };
@@ -82,6 +58,14 @@ interface Property {
         };
         non_system_name?: string | null;
         non_system_department?: string | null;
+    };
+    active_sub_assignment?: {
+        id: number;
+        mr_number: string;
+        assignee?: {
+            name: string;
+        };
+        non_system_name?: string | null;
     };
 }
 
@@ -148,229 +132,29 @@ export default function PropertyIndex({
     const [isSubAssignOpen, setIsSubAssignOpen] = useState(false);
     const [isReturnSubAssignOpen, setIsReturnSubAssignOpen] = useState(false);
 
-    // Form for Adding Property
-    const addForm = useForm({
-        brand: '',
-        model: '',
-        serial_number: '',
-        unit_cost: 0,
-        date_acquired: '',
-        category_id: '',
-        warranty_expiration: '',
-    });
-
-    // Form for Assignment
-    const assignForm = useForm({
-        assigned_to: '',
-        is_non_system: false,
-        non_system_name: '',
-        non_system_department: '',
-        remarks: '',
-    });
-
-    // Form for Batch Assignment
-    const batchAssignForm = useForm({
-        property_ids: [] as number[],
-        assigned_to: '',
-        is_non_system: false,
-        non_system_name: '',
-        non_system_department: '',
-        remarks: '',
-    });
-
-    // Form for Transfer
-    const transferForm = useForm({
-        to_employee_id: '',
-        office_id: '',
-        reason: '',
-    });
-
-    // Form for Disposal
-    const disposeForm = useForm({
-        disposal_method: 'destruction',
-        reason: 'broken',
-        appraised_value: 0,
-        proceeds: 0,
-    });
-
-    // Form for Sub-Assignment (MR)
-    const subAssignForm = useForm({
-        issued_to: '',
-        is_non_system: false,
-        non_system_name: '',
-        non_system_department: '',
-        remarks: '',
-    });
-
-    // Form for Return Sub-Assignment
-    const returnSubAssignForm = useForm({
-        remarks: '',
-    });
-
-    const handleAddSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        addForm.post('/inventory/properties', {
-            onSuccess: () => {
-                setIsAddOpen(false);
-                addForm.reset();
-                toast.success('Equipment registered in database.');
-            },
-            onError: () => {
-                toast.error('Failed to register property.');
-            },
-        });
-    };
-
     const openAssignModal = (prop: Property) => {
         setSelectedProp(prop);
-        assignForm.reset();
         setIsAssignOpen(true);
-    };
-
-    const handleAssignSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-
-        if (!selectedProp) {
-            return;
-        }
-
-        assignForm.post(`/inventory/properties/${selectedProp.id}/assign`, {
-            onSuccess: () => {
-                setIsAssignOpen(false);
-                toast.success(
-                    'Equipment assigned. Handover document generated.',
-                );
-            },
-            onError: () => {
-                toast.error('Failed to assign equipment.');
-            },
-        });
-    };
-
-    const handleBatchAssignSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-
-        batchAssignForm.post(`/inventory/properties/batch-assign`, {
-            onSuccess: () => {
-                setIsBatchAssignOpen(false);
-                setSelectedPropIds([]);
-                batchAssignForm.reset();
-                toast.success(
-                    'Equipment assigned. Handover document(s) generated.',
-                );
-            },
-            onError: () => {
-                toast.error('Failed to assign equipment.');
-            },
-        });
     };
 
     const openTransferModal = (prop: Property) => {
         setSelectedProp(prop);
-        transferForm.reset();
         setIsTransferOpen(true);
-    };
-
-    const handleTransferSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-
-        if (!selectedProp) {
-            return;
-        }
-
-        transferForm.post(`/inventory/properties/${selectedProp.id}/transfer`, {
-            onSuccess: () => {
-                setIsTransferOpen(false);
-                toast.success(
-                    'Property transferred and new PAR/ICS generated.',
-                );
-            },
-            onError: () => {
-                toast.error('Failed to complete property transfer.');
-            },
-        });
     };
 
     const openDisposeModal = (prop: Property) => {
         setSelectedProp(prop);
-        disposeForm.reset();
         setIsDisposeOpen(true);
-    };
-
-    const handleDisposeSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-
-        if (!selectedProp) {
-            return;
-        }
-
-        disposeForm.post(`/inventory/properties/${selectedProp.id}/dispose`, {
-            onSuccess: () => {
-                setIsDisposeOpen(false);
-                toast.success(
-                    'Property condemned / disposed. IIRUP report completed.',
-                );
-            },
-            onError: () => {
-                toast.error('Failed to dispose property.');
-            },
-        });
     };
 
     const openSubAssignModal = (prop: Property) => {
         setSelectedProp(prop);
-        subAssignForm.reset();
         setIsSubAssignOpen(true);
-    };
-
-    const handleSubAssignSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-
-        if (!selectedProp) {
-            return;
-        }
-
-        subAssignForm.post(
-            `/inventory/properties/${selectedProp.id}/sub-assign`,
-            {
-                onSuccess: () => {
-                    setIsSubAssignOpen(false);
-                    toast.success(
-                        'Memorandum Receipt (MR) issued successfully.',
-                    );
-                },
-                onError: () => {
-                    toast.error('Failed to issue MR.');
-                },
-            },
-        );
     };
 
     const openReturnSubAssignModal = (prop: Property) => {
         setSelectedProp(prop);
-        returnSubAssignForm.reset();
         setIsReturnSubAssignOpen(true);
-    };
-
-    const handleReturnSubAssignSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-
-        if (!selectedProp || !selectedProp.active_sub_assignment) {
-            return;
-        }
-
-        returnSubAssignForm.post(
-            `/inventory/properties/sub-assignments/${selectedProp.active_sub_assignment.id}/return`,
-            {
-                onSuccess: () => {
-                    setIsReturnSubAssignOpen(false);
-                    toast.success('Memorandum Receipt returned successfully.');
-                },
-                onError: () => {
-                    toast.error('Failed to return MR.');
-                },
-            },
-        );
     };
 
     return (
@@ -384,8 +168,7 @@ export default function PropertyIndex({
                             Property, Plant, and Equipment (PPE)
                         </h1>
                         <p className="text-sm text-muted-foreground">
-                            Manage capitalized properties, serial codes, and
-                            handovers.
+                            Manage capitalized properties, serial codes, and handovers.
                         </p>
                     </div>
 
@@ -395,203 +178,16 @@ export default function PropertyIndex({
                                 <Button
                                     variant="secondary"
                                     className="gap-2"
-                                    onClick={() => {
-                                        batchAssignForm.setData(
-                                            'property_ids',
-                                            selectedPropIds,
-                                        );
-                                        setIsBatchAssignOpen(true);
-                                    }}
+                                    onClick={() => setIsBatchAssignOpen(true)}
                                 >
                                     <UserCheck className="h-4 w-4" />
                                     Batch Assign ({selectedPropIds.length})
                                 </Button>
                             )}
-                            <Dialog
-                                open={isAddOpen}
-                                onOpenChange={setIsAddOpen}
-                            >
-                                <DialogTrigger asChild>
-                                    <Button className="gap-2">
-                                        <PlusCircle className="h-4 w-4" />
-                                        Register Equipment
-                                    </Button>
-                                </DialogTrigger>
-                                <DialogContent className="max-h-[85vh] max-w-md overflow-y-auto">
-                                    <DialogHeader>
-                                        <DialogTitle>
-                                            Register Property (PPE)
-                                        </DialogTitle>
-                                        <DialogDescription>
-                                            Register high-value assets and
-                                            equipment into the registry.
-                                        </DialogDescription>
-                                    </DialogHeader>
-                                    <form
-                                        onSubmit={handleAddSubmit}
-                                        className="space-y-4"
-                                    >
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div className="space-y-1">
-                                                <Label htmlFor="brand" required>
-                                                    Brand
-                                                </Label>
-                                                <Input
-                                                    id="brand"
-                                                    value={addForm.data.brand}
-                                                    onChange={(e) =>
-                                                        addForm.setData(
-                                                            'brand',
-                                                            e.target.value,
-                                                        )
-                                                    }
-                                                    required
-                                                />
-                                            </div>
-                                            <div className="space-y-1">
-                                                <Label htmlFor="model" required>
-                                                    Model
-                                                </Label>
-                                                <Input
-                                                    id="model"
-                                                    value={addForm.data.model}
-                                                    onChange={(e) =>
-                                                        addForm.setData(
-                                                            'model',
-                                                            e.target.value,
-                                                        )
-                                                    }
-                                                    required
-                                                />
-                                            </div>
-                                        </div>
-                                        <div className="space-y-1">
-                                            <Label htmlFor="serial" required>
-                                                Serial Number
-                                            </Label>
-                                            <Input
-                                                id="serial"
-                                                value={
-                                                    addForm.data.serial_number
-                                                }
-                                                onChange={(e) =>
-                                                    addForm.setData(
-                                                        'serial_number',
-                                                        e.target.value,
-                                                    )
-                                                }
-                                                required
-                                            />
-                                        </div>
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div className="space-y-1">
-                                                <Label htmlFor="cost" required>
-                                                    Unit Cost (PHP)
-                                                </Label>
-                                                <Input
-                                                    id="cost"
-                                                    type="number"
-                                                    value={
-                                                        addForm.data.unit_cost
-                                                    }
-                                                    onChange={(e) =>
-                                                        addForm.setData(
-                                                            'unit_cost',
-                                                            parseFloat(
-                                                                e.target.value,
-                                                            ),
-                                                        )
-                                                    }
-                                                    required
-                                                />
-                                            </div>
-                                            <div className="space-y-1">
-                                                <Label htmlFor="cat" required>
-                                                    Category
-                                                </Label>
-                                                <SmartSelect
-                                                    options={categories.map(
-                                                        (c) => ({
-                                                            value: String(c.id),
-                                                            label: c.name,
-                                                        }),
-                                                    )}
-                                                    value={
-                                                        addForm.data.category_id
-                                                            ? String(
-                                                                  addForm.data
-                                                                      .category_id,
-                                                              )
-                                                            : undefined
-                                                    }
-                                                    onValueChange={(val) =>
-                                                        addForm.setData(
-                                                            'category_id',
-                                                            val,
-                                                        )
-                                                    }
-                                                    placeholder="Select Category"
-                                                    className="w-full"
-                                                />
-                                            </div>
-                                        </div>
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div className="space-y-1">
-                                                <Label htmlFor="acq" required>
-                                                    Acquisition Date
-                                                </Label>
-                                                <DatePicker
-                                                    value={
-                                                        addForm.data
-                                                            .date_acquired
-                                                    }
-                                                    onChange={(val) =>
-                                                        addForm.setData(
-                                                            'date_acquired',
-                                                            val,
-                                                        )
-                                                    }
-                                                    required
-                                                />
-                                            </div>
-                                            <div className="space-y-1">
-                                                <Label htmlFor="war" required>
-                                                    Warranty Expiration
-                                                </Label>
-                                                <DatePicker
-                                                    value={
-                                                        addForm.data
-                                                            .warranty_expiration
-                                                    }
-                                                    onChange={(val) =>
-                                                        addForm.setData(
-                                                            'warranty_expiration',
-                                                            val,
-                                                        )
-                                                    }
-                                                />
-                                            </div>
-                                        </div>
-                                        <div className="flex justify-end gap-2 pt-2">
-                                            <Button
-                                                type="button"
-                                                variant="outline"
-                                                onClick={() =>
-                                                    setIsAddOpen(false)
-                                                }
-                                            >
-                                                Cancel
-                                            </Button>
-                                            <Button
-                                                type="submit"
-                                                disabled={addForm.processing}
-                                            >
-                                                Register Asset
-                                            </Button>
-                                        </div>
-                                    </form>
-                                </DialogContent>
-                            </Dialog>
+                            <Button className="gap-2" onClick={() => setIsAddOpen(true)}>
+                                <PlusCircle className="h-4 w-4" />
+                                Register Equipment
+                            </Button>
                         </Can>
                     </div>
                 </div>
@@ -601,10 +197,7 @@ export default function PropertyIndex({
                     <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
                         <Card className="relative flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-blue-500 bg-card bg-linear-to-tr from-transparent to-blue-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
                             <div className="absolute -right-4 -bottom-4 text-blue-500/5">
-                                <Package
-                                    className="h-28 w-28"
-                                    strokeWidth={1.5}
-                                />
+                                <Package className="h-28 w-28" strokeWidth={1.5} />
                             </div>
                             <div className="relative z-10 space-y-1">
                                 <p className="text-[11px] font-medium tracking-wider text-blue-500 uppercase">
@@ -618,10 +211,7 @@ export default function PropertyIndex({
 
                         <Card className="relative flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-emerald-500 bg-card bg-linear-to-tr from-transparent to-emerald-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
                             <div className="absolute -right-4 -bottom-4 text-emerald-500/5">
-                                <PhilippinePeso
-                                    className="h-28 w-28"
-                                    strokeWidth={1.5}
-                                />
+                                <PhilippinePeso className="h-28 w-28" strokeWidth={1.5} />
                             </div>
                             <div className="relative z-10 space-y-1">
                                 <p className="text-[11px] font-medium tracking-wider text-emerald-500 uppercase">
@@ -635,10 +225,7 @@ export default function PropertyIndex({
 
                         <Card className="relative flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-violet-500 bg-card bg-linear-to-tr from-transparent to-violet-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
                             <div className="absolute -right-4 -bottom-4 text-violet-500/5">
-                                <Clock
-                                    className="h-28 w-28"
-                                    strokeWidth={1.5}
-                                />
+                                <Clock className="h-28 w-28" strokeWidth={1.5} />
                             </div>
                             <div className="relative z-10 space-y-1">
                                 <p className="text-[11px] font-medium tracking-wider text-violet-500 uppercase">
@@ -652,10 +239,7 @@ export default function PropertyIndex({
 
                         <Card className="relative flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-amber-500 bg-card bg-linear-to-tr from-transparent to-amber-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
                             <div className="absolute -right-4 -bottom-4 text-amber-500/5">
-                                <CheckCircle
-                                    className="h-28 w-28"
-                                    strokeWidth={1.5}
-                                />
+                                <CheckCircle className="h-28 w-28" strokeWidth={1.5} />
                             </div>
                             <div className="relative z-10 space-y-1">
                                 <p className="text-[11px] font-medium tracking-wider text-amber-500 uppercase">
@@ -669,10 +253,7 @@ export default function PropertyIndex({
 
                         <Card className="relative flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-rose-500 bg-card bg-linear-to-tr from-transparent to-rose-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
                             <div className="absolute -right-4 -bottom-4 text-rose-500/5">
-                                <PackageOpen
-                                    className="h-28 w-28"
-                                    strokeWidth={1.5}
-                                />
+                                <PackageOpen className="h-28 w-28" strokeWidth={1.5} />
                             </div>
                             <div className="relative z-10 space-y-1">
                                 <p className="text-[11px] font-medium tracking-wider text-rose-500 uppercase">
@@ -695,1389 +276,101 @@ export default function PropertyIndex({
                     </CardHeader>
                     <CardContent>
                         {properties.data.length === 0 ? (
-                            <div className="py-12 text-center text-muted-foreground">
-                                No properties registered in the system.
+                            <div className="flex flex-col items-center justify-center py-12 text-center">
+                                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                                    <PackageOpen className="h-6 w-6" />
+                                </div>
+                                <h3 className="mt-4 text-sm font-semibold">No properties registered</h3>
+                                <p className="mt-2 text-sm text-muted-foreground max-w-sm">
+                                    Get started by registering high-value assets and equipment into the registry.
+                                </p>
+                                <Can permission="property.assign">
+                                    <Button className="mt-4 gap-2" onClick={() => setIsAddOpen(true)}>
+                                        <PlusCircle className="h-4 w-4" />
+                                        Register Equipment
+                                    </Button>
+                                </Can>
                             </div>
                         ) : (
-                            <div className="overflow-x-auto">
-                                <Table className="text-xs">
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead className="w-10 text-center">
-                                                <input
-                                                    type="checkbox"
-                                                    className="rounded border-gray-300"
-                                                    checked={
-                                                        properties.data.length >
-                                                            0 &&
-                                                        properties.data.every(
-                                                            (p) =>
-                                                                selectedPropIds.includes(
-                                                                    p.id,
-                                                                ) ||
-                                                                p.status !==
-                                                                    'available',
-                                                        )
-                                                    }
-                                                    onChange={(e) => {
-                                                        if (e.target.checked) {
-                                                            const availableIds =
-                                                                properties.data
-                                                                    .filter(
-                                                                        (p) =>
-                                                                            p.status ===
-                                                                            'available',
-                                                                    )
-                                                                    .map(
-                                                                        (p) =>
-                                                                            p.id,
-                                                                    );
-                                                            setSelectedPropIds(
-                                                                (prev) =>
-                                                                    Array.from(
-                                                                        new Set(
-                                                                            [
-                                                                                ...prev,
-                                                                                ...availableIds,
-                                                                            ],
-                                                                        ),
-                                                                    ),
-                                                            );
-                                                        } else {
-                                                            const idsToRemove =
-                                                                properties.data.map(
-                                                                    (p) => p.id,
-                                                                );
-                                                            setSelectedPropIds(
-                                                                (prev) =>
-                                                                    prev.filter(
-                                                                        (id) =>
-                                                                            !idsToRemove.includes(
-                                                                                id,
-                                                                            ),
-                                                                    ),
-                                                            );
-                                                        }
-                                                    }}
-                                                />
-                                            </TableHead>
-                                            <TableHead className="whitespace-nowrap">
-                                                Property No.
-                                            </TableHead>
-                                            <TableHead>Category</TableHead>
-                                            <TableHead className="w-[180px]">
-                                                Equipment Details
-                                            </TableHead>
-                                            <TableHead className="text-right whitespace-nowrap">
-                                                Cost
-                                            </TableHead>
-                                            <TableHead>
-                                                Accountable Officer
-                                            </TableHead>
-                                            <TableHead className="whitespace-nowrap">
-                                                Doc Reference
-                                            </TableHead>
-                                            <TableHead className="text-center whitespace-nowrap">
-                                                Condition
-                                            </TableHead>
-                                            <TableHead className="text-center whitespace-nowrap">
-                                                Status
-                                            </TableHead>
-                                            {canManage && (
-                                                <TableHead className="text-right whitespace-nowrap">
-                                                    Actions
-                                                </TableHead>
-                                            )}
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {properties.data.map((prop) => (
-                                            <TableRow key={prop.id}>
-                                                <TableCell className="text-center">
-                                                    {prop.status ===
-                                                        'available' && (
-                                                        <input
-                                                            type="checkbox"
-                                                            className="rounded border-gray-300"
-                                                            checked={selectedPropIds.includes(
-                                                                prop.id,
-                                                            )}
-                                                            onChange={(e) => {
-                                                                if (
-                                                                    e.target
-                                                                        .checked
-                                                                ) {
-                                                                    setSelectedPropIds(
-                                                                        (
-                                                                            prev,
-                                                                        ) => [
-                                                                            ...prev,
-                                                                            prop.id,
-                                                                        ],
-                                                                    );
-                                                                } else {
-                                                                    setSelectedPropIds(
-                                                                        (
-                                                                            prev,
-                                                                        ) =>
-                                                                            prev.filter(
-                                                                                (
-                                                                                    id,
-                                                                                ) =>
-                                                                                    id !==
-                                                                                    prop.id,
-                                                                            ),
-                                                                    );
-                                                                }
-                                                            }}
-                                                        />
-                                                    )}
-                                                </TableCell>
-                                                <TableCell className="font-mono text-[11px] whitespace-nowrap">
-                                                    {prop.property_number}
-                                                </TableCell>
-                                                <TableCell className="text-[11px] text-muted-foreground">
-                                                    {prop.category?.name}
-                                                </TableCell>
-                                                <TableCell className="max-w-[200px]">
-                                                    <div
-                                                        className="truncate font-semibold"
-                                                        title={`${prop.brand} - ${prop.model}`}
-                                                    >
-                                                        {prop.brand} -{' '}
-                                                        {prop.model}
-                                                    </div>
-                                                    <div
-                                                        className="truncate font-mono text-[11px] text-muted-foreground"
-                                                        title={`S/N: ${prop.serial_number}`}
-                                                    >
-                                                        S/N:{' '}
-                                                        {prop.serial_number}
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell className="text-right font-medium whitespace-nowrap">
-                                                    {formatCurrency(
-                                                        prop.unit_cost,
-                                                    )}
-                                                </TableCell>
-                                                <TableCell className="text-[11px] leading-tight font-medium">
-                                                    {prop.active_assignment ? (
-                                                        <div className="flex flex-col gap-0.5">
-                                                            <span>
-                                                                {prop
-                                                                    .active_assignment
-                                                                    .assignee
-                                                                    ?.name || (
-                                                                    <span className="font-semibold">
-                                                                        {
-                                                                            prop
-                                                                                .active_assignment
-                                                                                .non_system_name
-                                                                        }
-                                                                    </span>
-                                                                )}
-                                                            </span>
-                                                            {!prop
-                                                                .active_assignment
-                                                                .assignee && (
-                                                                <span className="w-fit rounded border border-amber-200/50 bg-amber-50 px-1 py-0.5 text-[10px] text-amber-600 dark:bg-amber-950/30">
-                                                                    External (
-                                                                    {
-                                                                        prop
-                                                                            .active_assignment
-                                                                            .non_system_department
-                                                                    }
-                                                                    )
-                                                                </span>
-                                                            )}
-                                                            {prop.active_sub_assignment && (
-                                                                <div className="mt-1 flex flex-col gap-0.5 rounded-md border border-blue-200/50 bg-blue-50 p-1.5 dark:bg-blue-950/30">
-                                                                    <span className="text-[10px] font-semibold tracking-wider text-blue-700 uppercase dark:text-blue-400">
-                                                                        Sub-Assigned
-                                                                        To (MR)
-                                                                    </span>
-                                                                    <span className="text-xs text-blue-900 dark:text-blue-300">
-                                                                        {prop
-                                                                            .active_sub_assignment
-                                                                            .assignee
-                                                                            ?.name ||
-                                                                            prop
-                                                                                .active_sub_assignment
-                                                                                .non_system_name}
-                                                                    </span>
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    ) : (
-                                                        <span className="text-muted-foreground italic">
-                                                            None Assigned
-                                                        </span>
-                                                    )}
-                                                </TableCell>
-                                                <TableCell className="font-mono text-[10px] whitespace-nowrap text-indigo-500">
-                                                    {prop.active_assignment ? (
-                                                        <div className="flex flex-col gap-1">
-                                                            <div className="flex items-center gap-1">
-                                                                <Clipboard className="h-3.5 w-3.5 text-indigo-500" />
-                                                                {
-                                                                    prop
-                                                                        .active_assignment
-                                                                        .document_number
-                                                                }
-                                                            </div>
-                                                            {prop.active_sub_assignment && (
-                                                                <div className="flex items-center gap-1 text-[10px] text-blue-600 dark:text-blue-400">
-                                                                    <Clipboard className="h-3 w-3" />
-                                                                    {
-                                                                        prop
-                                                                            .active_sub_assignment
-                                                                            .mr_number
-                                                                    }
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    ) : (
-                                                        '-'
-                                                    )}
-                                                </TableCell>
-                                                <TableCell className="text-center capitalize">
-                                                    <Badge
-                                                        variant={
-                                                            prop.condition ===
-                                                                'new' ||
-                                                            prop.condition ===
-                                                                'good'
-                                                                ? 'default'
-                                                                : 'destructive'
-                                                        }
-                                                        className="px-1.5 py-0 text-[10px]"
-                                                    >
-                                                        {prop.condition.replace(
-                                                            /_/g,
-                                                            ' ',
-                                                        )}
-                                                    </Badge>
-                                                </TableCell>
-                                                <TableCell className="text-center capitalize">
-                                                    <Badge
-                                                        variant="outline"
-                                                        className="px-1.5 py-0 text-[10px]"
-                                                    >
-                                                        {prop.status}
-                                                    </Badge>
-                                                </TableCell>
-                                                {canManage && (
-                                                    <TableCell className="text-right whitespace-nowrap">
-                                                        <DropdownMenu>
-                                                            <DropdownMenuTrigger
-                                                                asChild
-                                                            >
-                                                                <Button
-                                                                    variant="ghost"
-                                                                    className="h-8 w-8 p-0"
-                                                                >
-                                                                    <span className="sr-only">
-                                                                        Open
-                                                                        menu
-                                                                    </span>
-                                                                    <MoreHorizontal className="h-4 w-4" />
-                                                                </Button>
-                                                            </DropdownMenuTrigger>
-                                                            <DropdownMenuContent align="end">
-                                                                <DropdownMenuLabel>
-                                                                    Actions
-                                                                </DropdownMenuLabel>
-                                                                <Can permission="property.assign">
-                                                                    {prop.status ===
-                                                                        'available' && (
-                                                                        <DropdownMenuItem
-                                                                            onClick={() =>
-                                                                                openAssignModal(
-                                                                                    prop,
-                                                                                )
-                                                                            }
-                                                                        >
-                                                                            <UserCheck className="mr-2 h-4 w-4 text-sky-500" />{' '}
-                                                                            Assign
-                                                                            Equipment
-                                                                        </DropdownMenuItem>
-                                                                    )}
-                                                                </Can>
-                                                                <Can permission="property.transfer">
-                                                                    {(prop.status ===
-                                                                        'assigned' ||
-                                                                        prop.status ===
-                                                                            'transferred') && (
-                                                                        <DropdownMenuItem
-                                                                            onClick={() =>
-                                                                                openTransferModal(
-                                                                                    prop,
-                                                                                )
-                                                                            }
-                                                                        >
-                                                                            <RefreshCw className="mr-2 h-4 w-4 text-amber-500" />{' '}
-                                                                            Transfer
-                                                                            Property
-                                                                            (PTR)
-                                                                        </DropdownMenuItem>
-                                                                    )}
-                                                                </Can>
-                                                                {(hasAnyPermission(
-                                                                    [
-                                                                        'property.transfer',
-                                                                    ],
-                                                                ) ||
-                                                                    isDeptHead) && (
-                                                                    <>
-                                                                        {(prop.status ===
-                                                                            'assigned' ||
-                                                                            prop.status ===
-                                                                                'transferred') &&
-                                                                            !prop.active_sub_assignment && (
-                                                                                <DropdownMenuItem
-                                                                                    onClick={() =>
-                                                                                        openSubAssignModal(
-                                                                                            prop,
-                                                                                        )
-                                                                                    }
-                                                                                >
-                                                                                    <UserCheck className="mr-2 h-4 w-4 text-blue-500" />{' '}
-                                                                                    Issue
-                                                                                    Memo
-                                                                                    Receipt
-                                                                                    (MR)
-                                                                                </DropdownMenuItem>
-                                                                            )}
-                                                                        {prop.active_sub_assignment && (
-                                                                            <DropdownMenuItem
-                                                                                onClick={() =>
-                                                                                    openReturnSubAssignModal(
-                                                                                        prop,
-                                                                                    )
-                                                                                }
-                                                                            >
-                                                                                <RefreshCw className="mr-2 h-4 w-4 text-emerald-500" />{' '}
-                                                                                Return
-                                                                                Memo
-                                                                                Receipt
-                                                                            </DropdownMenuItem>
-                                                                        )}
-                                                                    </>
-                                                                )}
-                                                                <Can permission="property.dispose">
-                                                                    {prop.status !==
-                                                                        'disposed' && (
-                                                                        <>
-                                                                            <DropdownMenuSeparator />
-                                                                            <DropdownMenuItem
-                                                                                className="text-destructive focus:text-destructive"
-                                                                                onClick={() =>
-                                                                                    openDisposeModal(
-                                                                                        prop,
-                                                                                    )
-                                                                                }
-                                                                            >
-                                                                                <Trash2 className="mr-2 h-4 w-4" />{' '}
-                                                                                Dispose
-                                                                                Property
-                                                                            </DropdownMenuItem>
-                                                                        </>
-                                                                    )}
-                                                                </Can>
-                                                            </DropdownMenuContent>
-                                                        </DropdownMenu>
-                                                    </TableCell>
-                                                )}
-                                            </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
-                                <div className="mt-4">
-                                    <SimplePagination
-                                        links={properties.links}
-                                    />
-                                </div>
-                            </div>
+                            <PropertyTable
+                                properties={properties}
+                                selectedPropIds={selectedPropIds}
+                                setSelectedPropIds={setSelectedPropIds}
+                                canManage={canManage}
+                                isDeptHead={isDeptHead}
+                                openAssignModal={openAssignModal}
+                                openTransferModal={openTransferModal}
+                                openSubAssignModal={openSubAssignModal}
+                                openReturnSubAssignModal={openReturnSubAssignModal}
+                                openDisposeModal={openDisposeModal}
+                            />
                         )}
                     </CardContent>
                 </Card>
 
-                {/* Dialog: Assign Property */}
-                <Dialog open={isAssignOpen} onOpenChange={setIsAssignOpen}>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>
-                                Assign Equipment Accountability
-                            </DialogTitle>
-                            <DialogDescription>
-                                Assign this equipment to an employee. The
-                                document routing is determined automatically.
-                            </DialogDescription>
-                        </DialogHeader>
-                        {selectedProp && (
-                            <form
-                                onSubmit={handleAssignSubmit}
-                                className="space-y-4"
-                            >
-                                <div className="mb-2 flex items-start gap-2.5 rounded-lg bg-muted/40 p-3 text-xs text-muted-foreground">
-                                    <ShieldCheck className="mt-0.5 h-4 w-4 text-indigo-500" />
-                                    <div>
-                                        <strong>
-                                            Automatic Document Determination:
-                                        </strong>
-                                        <p className="mt-0.5">
-                                            Cost:{' '}
-                                            <strong>
-                                                {formatCurrency(
-                                                    selectedProp.unit_cost,
-                                                )}
-                                            </strong>
-                                            .
-                                            {selectedProp.unit_cost >= 50000 ? (
-                                                <span className="mt-0.5 block font-semibold text-emerald-600">
-                                                    Cost is ≥ ₱50k. System will
-                                                    generate a Property
-                                                    Acknowledgment Receipt (PAR)
-                                                    for PPE.
-                                                </span>
-                                            ) : (
-                                                <span className="mt-0.5 block font-semibold text-amber-600">
-                                                    Cost is &lt; ₱50k. System
-                                                    will generate an Inventory
-                                                    Custodian Slip (ICS) for
-                                                    semi-expendables.
-                                                </span>
-                                            )}
-                                        </p>
-                                    </div>
-                                </div>
+                {/* Modals & Dialogs */}
+                {isAddOpen && (
+                    <AddPropertyDialog
+                        isOpen={isAddOpen}
+                        onClose={() => setIsAddOpen(false)}
+                        categories={categories}
+                    />
+                )}
 
-                                <div className="space-y-3">
-                                    <Label className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-                                        Assignee Type
-                                    </Label>
-                                    <div className="grid grid-cols-2 gap-2">
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                assignForm.setData((data) => ({
-                                                    ...data,
-                                                    is_non_system: false,
-                                                    non_system_name: '',
-                                                    non_system_department: '',
-                                                }));
-                                            }}
-                                            className={`flex flex-col items-center gap-1 rounded-lg border-2 p-3 text-xs font-semibold transition-all ${
-                                                !assignForm.data.is_non_system
-                                                    ? 'border-indigo-600 bg-indigo-50/50 text-indigo-600 dark:border-indigo-400 dark:bg-indigo-950/20 dark:text-indigo-400'
-                                                    : 'border-border bg-card text-muted-foreground hover:bg-muted/50'
-                                            }`}
-                                        >
-                                            <span>Registered Employee</span>
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                assignForm.setData((data) => ({
-                                                    ...data,
-                                                    is_non_system: true,
-                                                    assigned_to: '',
-                                                }));
-                                            }}
-                                            className={`flex flex-col items-center gap-1 rounded-lg border-2 p-3 text-xs font-semibold transition-all ${
-                                                assignForm.data.is_non_system
-                                                    ? 'border-indigo-600 bg-indigo-50/50 text-indigo-600 dark:border-indigo-400 dark:bg-indigo-950/20 dark:text-indigo-400'
-                                                    : 'border-border bg-card text-muted-foreground hover:bg-muted/50'
-                                            }`}
-                                        >
-                                            <span>
-                                                Non-System / External User
-                                            </span>
-                                        </button>
-                                    </div>
-                                </div>
+                {isAssignOpen && selectedProp && (
+                    <AssignDialog
+                        isOpen={isAssignOpen}
+                        onClose={() => setIsAssignOpen(false)}
+                        property={selectedProp}
+                        employees={employees}
+                    />
+                )}
 
-                                {!assignForm.data.is_non_system ? (
-                                    <div className="space-y-1">
-                                        <Label htmlFor="assignee">
-                                            Employee
-                                        </Label>
-                                        <SmartSelect
-                                            options={employees.map((e) => ({
-                                                value: String(e.id),
-                                                label: `${e.name} (${e.position})`,
-                                            }))}
-                                            value={
-                                                assignForm.data.assigned_to
-                                                    ? String(
-                                                          assignForm.data
-                                                              .assigned_to,
-                                                      )
-                                                    : undefined
-                                            }
-                                            onValueChange={(val) =>
-                                                assignForm.setData(
-                                                    'assigned_to',
-                                                    val,
-                                                )
-                                            }
-                                            placeholder="Select Employee"
-                                            className="w-full"
-                                            disabled={
-                                                assignForm.data.is_non_system
-                                            }
-                                        />
-                                        {assignForm.errors.assigned_to && (
-                                            <p className="text-xs text-destructive">
-                                                {assignForm.errors.assigned_to}
-                                            </p>
-                                        )}
-                                    </div>
-                                ) : (
-                                    <div className="space-y-3">
-                                        <div className="space-y-1">
-                                            <Label
-                                                htmlFor="non_system_name"
-                                                required
-                                            >
-                                                Full Name
-                                            </Label>
-                                            <Input
-                                                id="non_system_name"
-                                                type="text"
-                                                placeholder="e.g., Juan dela Cruz"
-                                                value={
-                                                    assignForm.data
-                                                        .non_system_name
-                                                }
-                                                onChange={(e) =>
-                                                    assignForm.setData(
-                                                        'non_system_name',
-                                                        e.target.value,
-                                                    )
-                                                }
-                                                required={
-                                                    assignForm.data
-                                                        .is_non_system
-                                                }
-                                            />
-                                            {assignForm.errors
-                                                .non_system_name && (
-                                                <p className="text-xs text-destructive">
-                                                    {
-                                                        assignForm.errors
-                                                            .non_system_name
-                                                    }
-                                                </p>
-                                            )}
-                                        </div>
-                                        <div className="space-y-1">
-                                            <Label
-                                                htmlFor="non_system_department"
-                                                required
-                                            >
-                                                Department / Office / Agency
-                                            </Label>
-                                            <Input
-                                                id="non_system_department"
-                                                type="text"
-                                                placeholder="e.g., DICT Regional Office"
-                                                value={
-                                                    assignForm.data
-                                                        .non_system_department
-                                                }
-                                                onChange={(e) =>
-                                                    assignForm.setData(
-                                                        'non_system_department',
-                                                        e.target.value,
-                                                    )
-                                                }
-                                                required={
-                                                    assignForm.data
-                                                        .is_non_system
-                                                }
-                                            />
-                                            {assignForm.errors
-                                                .non_system_department && (
-                                                <p className="text-xs text-destructive">
-                                                    {
-                                                        assignForm.errors
-                                                            .non_system_department
-                                                    }
-                                                </p>
-                                            )}
-                                        </div>
-                                    </div>
-                                )}
+                {isBatchAssignOpen && (
+                    <BatchAssignDialog
+                        isOpen={isBatchAssignOpen}
+                        onClose={() => setIsBatchAssignOpen(false)}
+                        selectedPropIds={selectedPropIds}
+                        setSelectedPropIds={setSelectedPropIds}
+                        employees={employees}
+                    />
+                )}
 
-                                <div className="space-y-1">
-                                    <Label htmlFor="rem" required>
-                                        Remarks
-                                    </Label>
-                                    <textarea
-                                        id="rem"
-                                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-hidden"
-                                        value={assignForm.data.remarks}
-                                        onChange={(e) =>
-                                            assignForm.setData(
-                                                'remarks',
-                                                e.target.value,
-                                            )
-                                        }
-                                    />
-                                </div>
+                {isTransferOpen && selectedProp && (
+                    <TransferDialog
+                        isOpen={isTransferOpen}
+                        onClose={() => setIsTransferOpen(false)}
+                        property={selectedProp}
+                        employees={employees}
+                        offices={offices}
+                    />
+                )}
 
-                                <div className="flex justify-end gap-2 pt-2">
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        onClick={() => setIsAssignOpen(false)}
-                                    >
-                                        Cancel
-                                    </Button>
-                                    <Button
-                                        type="submit"
-                                        disabled={assignForm.processing}
-                                    >
-                                        Confirm Assignment
-                                    </Button>
-                                </div>
-                            </form>
-                        )}
-                    </DialogContent>
-                </Dialog>
+                {isDisposeOpen && selectedProp && (
+                    <DisposeDialog
+                        isOpen={isDisposeOpen}
+                        onClose={() => setIsDisposeOpen(false)}
+                        property={selectedProp}
+                    />
+                )}
 
-                {/* Dialog: Batch Assign Property */}
-                <Dialog
-                    open={isBatchAssignOpen}
-                    onOpenChange={setIsBatchAssignOpen}
-                >
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>
-                                Batch Assign Equipment Accountability
-                            </DialogTitle>
-                            <DialogDescription>
-                                Assign {selectedPropIds.length} properties to an
-                                employee. PAR and ICS documents will be
-                                automatically generated and grouped.
-                            </DialogDescription>
-                        </DialogHeader>
-                        <form
-                            onSubmit={handleBatchAssignSubmit}
-                            className="space-y-4"
-                        >
-                            <div className="space-y-3">
-                                <Label className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-                                    Assignee Type
-                                </Label>
-                                <div className="grid grid-cols-2 gap-2">
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            batchAssignForm.setData((data) => ({
-                                                ...data,
-                                                is_non_system: false,
-                                                non_system_name: '',
-                                                non_system_department: '',
-                                            }));
-                                        }}
-                                        className={`flex flex-col items-center gap-1 rounded-lg border-2 p-3 text-xs font-semibold transition-all ${
-                                            !batchAssignForm.data.is_non_system
-                                                ? 'border-indigo-600 bg-indigo-50/50 text-indigo-600 dark:border-indigo-400 dark:bg-indigo-950/20 dark:text-indigo-400'
-                                                : 'border-border bg-card text-muted-foreground hover:bg-muted/50'
-                                        }`}
-                                    >
-                                        <span>Registered Employee</span>
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            batchAssignForm.setData((data) => ({
-                                                ...data,
-                                                is_non_system: true,
-                                                assigned_to: '',
-                                            }));
-                                        }}
-                                        className={`flex flex-col items-center gap-1 rounded-lg border-2 p-3 text-xs font-semibold transition-all ${
-                                            batchAssignForm.data.is_non_system
-                                                ? 'border-indigo-600 bg-indigo-50/50 text-indigo-600 dark:border-indigo-400 dark:bg-indigo-950/20 dark:text-indigo-400'
-                                                : 'border-border bg-card text-muted-foreground hover:bg-muted/50'
-                                        }`}
-                                    >
-                                        <span>Non-System / External User</span>
-                                    </button>
-                                </div>
-                            </div>
+                {isSubAssignOpen && selectedProp && (
+                    <SubAssignDialog
+                        isOpen={isSubAssignOpen}
+                        onClose={() => setIsSubAssignOpen(false)}
+                        property={selectedProp}
+                        employees={employees}
+                        current_employee={current_employee}
+                    />
+                )}
 
-                            {!batchAssignForm.data.is_non_system ? (
-                                <div className="space-y-1">
-                                    <Label htmlFor="batch_assignee">
-                                        Employee
-                                    </Label>
-                                    <SmartSelect
-                                        options={employees.map((e) => ({
-                                            value: String(e.id),
-                                            label: `${e.name} (${e.position})`,
-                                        }))}
-                                        value={
-                                            batchAssignForm.data.assigned_to
-                                                ? String(
-                                                      batchAssignForm.data
-                                                          .assigned_to,
-                                                  )
-                                                : undefined
-                                        }
-                                        onValueChange={(val) =>
-                                            batchAssignForm.setData(
-                                                'assigned_to',
-                                                val,
-                                            )
-                                        }
-                                        placeholder="Select Employee"
-                                        className="w-full"
-                                        disabled={
-                                            batchAssignForm.data.is_non_system
-                                        }
-                                    />
-                                    {batchAssignForm.errors.assigned_to && (
-                                        <p className="text-xs text-destructive">
-                                            {batchAssignForm.errors.assigned_to}
-                                        </p>
-                                    )}
-                                </div>
-                            ) : (
-                                <div className="space-y-3">
-                                    <div className="space-y-1">
-                                        <Label
-                                            htmlFor="batch_non_system_name"
-                                            required
-                                        >
-                                            Full Name
-                                        </Label>
-                                        <Input
-                                            id="batch_non_system_name"
-                                            type="text"
-                                            placeholder="e.g., Juan dela Cruz"
-                                            value={
-                                                batchAssignForm.data
-                                                    .non_system_name
-                                            }
-                                            onChange={(e) =>
-                                                batchAssignForm.setData(
-                                                    'non_system_name',
-                                                    e.target.value,
-                                                )
-                                            }
-                                            required={
-                                                batchAssignForm.data
-                                                    .is_non_system
-                                            }
-                                        />
-                                        {batchAssignForm.errors
-                                            .non_system_name && (
-                                            <p className="text-xs text-destructive">
-                                                {
-                                                    batchAssignForm.errors
-                                                        .non_system_name
-                                                }
-                                            </p>
-                                        )}
-                                    </div>
-                                    <div className="space-y-1">
-                                        <Label
-                                            htmlFor="batch_non_system_department"
-                                            required
-                                        >
-                                            Department / Office / Agency
-                                        </Label>
-                                        <Input
-                                            id="batch_non_system_department"
-                                            type="text"
-                                            placeholder="e.g., DICT Regional Office"
-                                            value={
-                                                batchAssignForm.data
-                                                    .non_system_department
-                                            }
-                                            onChange={(e) =>
-                                                batchAssignForm.setData(
-                                                    'non_system_department',
-                                                    e.target.value,
-                                                )
-                                            }
-                                            required={
-                                                batchAssignForm.data
-                                                    .is_non_system
-                                            }
-                                        />
-                                        {batchAssignForm.errors
-                                            .non_system_department && (
-                                            <p className="text-xs text-destructive">
-                                                {
-                                                    batchAssignForm.errors
-                                                        .non_system_department
-                                                }
-                                            </p>
-                                        )}
-                                    </div>
-                                </div>
-                            )}
-
-                            <div className="space-y-1">
-                                <Label htmlFor="batch_rem" required>
-                                    Remarks
-                                </Label>
-                                <textarea
-                                    id="batch_rem"
-                                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-hidden"
-                                    value={batchAssignForm.data.remarks}
-                                    onChange={(e) =>
-                                        batchAssignForm.setData(
-                                            'remarks',
-                                            e.target.value,
-                                        )
-                                    }
-                                />
-                            </div>
-
-                            <div className="flex justify-end gap-2 pt-2">
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    onClick={() => setIsBatchAssignOpen(false)}
-                                >
-                                    Cancel
-                                </Button>
-                                <Button
-                                    type="submit"
-                                    disabled={batchAssignForm.processing}
-                                >
-                                    Confirm Batch Assignment
-                                </Button>
-                            </div>
-                        </form>
-                    </DialogContent>
-                </Dialog>
-
-                {/* Dialog: Transfer Property */}
-                <Dialog open={isTransferOpen} onOpenChange={setIsTransferOpen}>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>
-                                Transfer Accountable Property (PTR)
-                            </DialogTitle>
-                            <DialogDescription>
-                                Record a Property Transfer Report (PTR) to
-                                transfer the asset.
-                            </DialogDescription>
-                        </DialogHeader>
-                        {selectedProp && (
-                            <form
-                                onSubmit={handleTransferSubmit}
-                                className="space-y-4"
-                            >
-                                <div className="space-y-1">
-                                    <Label htmlFor="new_assignee">
-                                        Recipient Employee
-                                    </Label>
-                                    <SmartSelect
-                                        options={employees.map((e) => ({
-                                            value: String(e.id),
-                                            label: `${e.name} (${e.position})`,
-                                        }))}
-                                        value={
-                                            transferForm.data.to_employee_id
-                                                ? String(
-                                                      transferForm.data
-                                                          .to_employee_id,
-                                                  )
-                                                : undefined
-                                        }
-                                        onValueChange={(val) =>
-                                            transferForm.setData(
-                                                'to_employee_id',
-                                                val,
-                                            )
-                                        }
-                                        placeholder="Select Recipient"
-                                        className="w-full"
-                                    />
-                                </div>
-
-                                <div className="space-y-1">
-                                    <Label htmlFor="office" required>
-                                        Target Office
-                                    </Label>
-                                    <SmartSelect
-                                        options={offices.map((o) => ({
-                                            value: String(o.id),
-                                            label: o.name,
-                                        }))}
-                                        value={
-                                            transferForm.data.office_id
-                                                ? String(
-                                                      transferForm.data
-                                                          .office_id,
-                                                  )
-                                                : undefined
-                                        }
-                                        onValueChange={(val) =>
-                                            transferForm.setData(
-                                                'office_id',
-                                                val,
-                                            )
-                                        }
-                                        placeholder="Select Office"
-                                        className="w-full"
-                                    />
-                                </div>
-
-                                <div className="space-y-1">
-                                    <Label htmlFor="reason" required>
-                                        Reason for Transfer
-                                    </Label>
-                                    <textarea
-                                        id="reason"
-                                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-hidden"
-                                        value={transferForm.data.reason}
-                                        onChange={(e) =>
-                                            transferForm.setData(
-                                                'reason',
-                                                e.target.value,
-                                            )
-                                        }
-                                        required
-                                    />
-                                </div>
-
-                                <div className="flex justify-end gap-2 pt-2">
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        onClick={() => setIsTransferOpen(false)}
-                                    >
-                                        Cancel
-                                    </Button>
-                                    <Button
-                                        type="submit"
-                                        disabled={transferForm.processing}
-                                    >
-                                        Authorize Transfer (PTR)
-                                    </Button>
-                                </div>
-                            </form>
-                        )}
-                    </DialogContent>
-                </Dialog>
-
-                {/* Dialog: Dispose Property */}
-                <Dialog open={isDisposeOpen} onOpenChange={setIsDisposeOpen}>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>
-                                Dispose / Condemn Equipment (IIRUP)
-                            </DialogTitle>
-                            <DialogDescription>
-                                Declare this property as unserviceable and
-                                execute disposal protocols.
-                            </DialogDescription>
-                        </DialogHeader>
-                        {selectedProp && (
-                            <form
-                                onSubmit={handleDisposeSubmit}
-                                className="space-y-4"
-                            >
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-1">
-                                        <Label htmlFor="method" required>
-                                            Disposal Method
-                                        </Label>
-                                        <Select
-                                            value={String(
-                                                disposeForm.data
-                                                    .disposal_method,
-                                            )}
-                                            onValueChange={(val) =>
-                                                disposeForm.setData(
-                                                    'disposal_method',
-                                                    val as any,
-                                                )
-                                            }
-                                            required
-                                        >
-                                            <SelectTrigger className="w-full">
-                                                <SelectValue placeholder="Select Method" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="destruction">
-                                                    Destruction
-                                                </SelectItem>
-                                                <SelectItem value="auction">
-                                                    Public Auction
-                                                </SelectItem>
-                                                <SelectItem value="transfer">
-                                                    Transfer to other Agency
-                                                </SelectItem>
-                                                <SelectItem value="donation">
-                                                    Donation
-                                                </SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                    <div className="space-y-1">
-                                        <Label htmlFor="disp_reason" required>
-                                            Reason
-                                        </Label>
-                                        <Select
-                                            value={String(
-                                                disposeForm.data.reason,
-                                            )}
-                                            onValueChange={(val) =>
-                                                disposeForm.setData(
-                                                    'reason',
-                                                    val as any,
-                                                )
-                                            }
-                                            required
-                                        >
-                                            <SelectTrigger className="w-full">
-                                                <SelectValue placeholder="Select Reason" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="broken">
-                                                    Broken / Unrepairable
-                                                </SelectItem>
-                                                <SelectItem value="obsolete">
-                                                    Obsolete / Outdated
-                                                </SelectItem>
-                                                <SelectItem value="lost">
-                                                    Lost / Stolen
-                                                </SelectItem>
-                                                <SelectItem value="condemned">
-                                                    Condemned
-                                                </SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-1">
-                                        <Label htmlFor="appraise" required>
-                                            Appraised Value
-                                        </Label>
-                                        <Input
-                                            id="appraise"
-                                            type="number"
-                                            value={
-                                                disposeForm.data.appraised_value
-                                            }
-                                            onChange={(e) =>
-                                                disposeForm.setData(
-                                                    'appraised_value',
-                                                    parseFloat(e.target.value),
-                                                )
-                                            }
-                                        />
-                                    </div>
-                                    <div className="space-y-1">
-                                        <Label htmlFor="proc">
-                                            Sales Proceeds (if Auctioned)
-                                        </Label>
-                                        <Input
-                                            id="proc"
-                                            type="number"
-                                            value={disposeForm.data.proceeds}
-                                            onChange={(e) =>
-                                                disposeForm.setData(
-                                                    'proceeds',
-                                                    parseFloat(e.target.value),
-                                                )
-                                            }
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="flex justify-end gap-2 pt-2">
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        onClick={() => setIsDisposeOpen(false)}
-                                    >
-                                        Cancel
-                                    </Button>
-                                    <Button
-                                        type="submit"
-                                        disabled={disposeForm.processing}
-                                        className="bg-rose-600 text-white hover:bg-rose-700"
-                                    >
-                                        Execute Disposal
-                                    </Button>
-                                </div>
-                            </form>
-                        )}
-                    </DialogContent>
-                </Dialog>
-
-                {/* Dialog: Issue Memorandum Receipt (Sub-Assign) */}
-                <Dialog
-                    open={isSubAssignOpen}
-                    onOpenChange={setIsSubAssignOpen}
-                >
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>
-                                Issue Memorandum Receipt (MR)
-                            </DialogTitle>
-                            <DialogDescription>
-                                Internally track custody of this property within
-                                your department.
-                            </DialogDescription>
-                        </DialogHeader>
-                        {selectedProp && (
-                            <form
-                                onSubmit={handleSubAssignSubmit}
-                                className="space-y-4"
-                            >
-                                <div className="space-y-3">
-                                    <Label className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-                                        MR Assignee Type
-                                    </Label>
-                                    <div className="grid grid-cols-2 gap-2">
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                subAssignForm.setData(
-                                                    (data) => ({
-                                                        ...data,
-                                                        is_non_system: false,
-                                                        non_system_name: '',
-                                                        non_system_department:
-                                                            '',
-                                                    }),
-                                                );
-                                            }}
-                                            className={`flex flex-col items-center gap-1 rounded-lg border-2 p-3 text-xs font-semibold transition-all ${
-                                                !subAssignForm.data
-                                                    .is_non_system
-                                                    ? 'border-blue-600 bg-blue-50/50 text-blue-600 dark:border-blue-400 dark:bg-blue-950/20 dark:text-blue-400'
-                                                    : 'border-border bg-card text-muted-foreground hover:bg-muted/50'
-                                            }`}
-                                        >
-                                            <span>Registered Employee</span>
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                subAssignForm.setData(
-                                                    (data) => ({
-                                                        ...data,
-                                                        is_non_system: true,
-                                                        issued_to: '',
-                                                    }),
-                                                );
-                                            }}
-                                            className={`flex flex-col items-center gap-1 rounded-lg border-2 p-3 text-xs font-semibold transition-all ${
-                                                subAssignForm.data.is_non_system
-                                                    ? 'border-blue-600 bg-blue-50/50 text-blue-600 dark:border-blue-400 dark:bg-blue-950/20 dark:text-blue-400'
-                                                    : 'border-border bg-card text-muted-foreground hover:bg-muted/50'
-                                            }`}
-                                        >
-                                            <span>Non-System User</span>
-                                        </button>
-                                    </div>
-                                </div>
-
-                                {!subAssignForm.data.is_non_system ? (
-                                    <div className="space-y-1">
-                                        <Label htmlFor="mr_assignee">
-                                            Employee
-                                        </Label>
-                                        <Select
-                                            value={String(
-                                                subAssignForm.data.issued_to,
-                                            )}
-                                            onValueChange={(val) =>
-                                                subAssignForm.setData(
-                                                    'issued_to',
-                                                    val,
-                                                )
-                                            }
-                                            required={
-                                                !subAssignForm.data
-                                                    .is_non_system
-                                            }
-                                        >
-                                            <SelectTrigger className="w-full">
-                                                <SelectValue placeholder="Select Employee" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {employees
-                                                    .filter(
-                                                        (e) =>
-                                                            current_employee &&
-                                                            e.department_id ===
-                                                                current_employee.department_id,
-                                                    )
-                                                    .map((e) => (
-                                                        <SelectItem
-                                                            key={e.id}
-                                                            value={String(e.id)}
-                                                        >
-                                                            {e.name} (
-                                                            {e.position})
-                                                        </SelectItem>
-                                                    ))}
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                ) : (
-                                    <div className="space-y-3">
-                                        <div className="space-y-1">
-                                            <Label
-                                                htmlFor="mr_non_system_name"
-                                                required
-                                            >
-                                                Full Name
-                                            </Label>
-                                            <Input
-                                                id="mr_non_system_name"
-                                                type="text"
-                                                value={
-                                                    subAssignForm.data
-                                                        .non_system_name
-                                                }
-                                                onChange={(e) =>
-                                                    subAssignForm.setData(
-                                                        'non_system_name',
-                                                        e.target.value,
-                                                    )
-                                                }
-                                                required={
-                                                    subAssignForm.data
-                                                        .is_non_system
-                                                }
-                                            />
-                                        </div>
-                                        <p className="mt-2 text-xs text-muted-foreground">
-                                            <em>
-                                                Note: Department will
-                                                automatically be set to your
-                                                current department.
-                                            </em>
-                                        </p>
-                                    </div>
-                                )}
-
-                                <div className="space-y-1">
-                                    <Label htmlFor="mr_rem">Remarks</Label>
-                                    <textarea
-                                        id="mr_rem"
-                                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-hidden"
-                                        value={subAssignForm.data.remarks}
-                                        onChange={(e) =>
-                                            subAssignForm.setData(
-                                                'remarks',
-                                                e.target.value,
-                                            )
-                                        }
-                                    />
-                                </div>
-
-                                <div className="flex justify-end gap-2 pt-2">
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        onClick={() =>
-                                            setIsSubAssignOpen(false)
-                                        }
-                                    >
-                                        Cancel
-                                    </Button>
-                                    <Button
-                                        type="submit"
-                                        disabled={subAssignForm.processing}
-                                        className="bg-blue-600 text-white hover:bg-blue-700"
-                                    >
-                                        Issue MR
-                                    </Button>
-                                </div>
-                            </form>
-                        )}
-                    </DialogContent>
-                </Dialog>
-
-                {/* Dialog: Return Memorandum Receipt */}
-                <Dialog
-                    open={isReturnSubAssignOpen}
-                    onOpenChange={setIsReturnSubAssignOpen}
-                >
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>
-                                Return Memorandum Receipt (MR)
-                            </DialogTitle>
-                            <DialogDescription>
-                                Mark the property as returned to the Department
-                                Custodian.
-                            </DialogDescription>
-                        </DialogHeader>
-                        {selectedProp && selectedProp.active_sub_assignment && (
-                            <form
-                                onSubmit={handleReturnSubAssignSubmit}
-                                className="space-y-4"
-                            >
-                                <div className="mb-2 rounded border border-blue-200/50 bg-blue-50 p-3 dark:bg-blue-950/30">
-                                    <p className="text-sm font-semibold text-blue-900 dark:text-blue-300">
-                                        Returning MR from:
-                                    </p>
-                                    <p className="mt-1 text-xs text-blue-800 dark:text-blue-400">
-                                        {selectedProp.active_sub_assignment
-                                            .assignee?.name ||
-                                            selectedProp.active_sub_assignment
-                                                .non_system_name}
-                                    </p>
-                                </div>
-                                <div className="space-y-1">
-                                    <Label htmlFor="ret_mr_rem">
-                                        Return Remarks / Condition Notes
-                                    </Label>
-                                    <textarea
-                                        id="ret_mr_rem"
-                                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-hidden"
-                                        value={returnSubAssignForm.data.remarks}
-                                        onChange={(e) =>
-                                            returnSubAssignForm.setData(
-                                                'remarks',
-                                                e.target.value,
-                                            )
-                                        }
-                                    />
-                                </div>
-                                <div className="flex justify-end gap-2 pt-2">
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        onClick={() =>
-                                            setIsReturnSubAssignOpen(false)
-                                        }
-                                    >
-                                        Cancel
-                                    </Button>
-                                    <Button
-                                        type="submit"
-                                        disabled={
-                                            returnSubAssignForm.processing
-                                        }
-                                        className="bg-emerald-600 text-white hover:bg-emerald-700"
-                                    >
-                                        Confirm Return
-                                    </Button>
-                                </div>
-                            </form>
-                        )}
-                    </DialogContent>
-                </Dialog>
+                {isReturnSubAssignOpen && selectedProp && (
+                    <ReturnSubAssignDialog
+                        isOpen={isReturnSubAssignOpen}
+                        onClose={() => setIsReturnSubAssignOpen(false)}
+                        property={selectedProp}
+                    />
+                )}
             </div>
         </>
     );

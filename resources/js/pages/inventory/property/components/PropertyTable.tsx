@@ -1,0 +1,283 @@
+import { Clipboard, MoreHorizontal, UserCheck, RefreshCw, Trash2 } from 'lucide-react';
+import { Can } from '@/components/can';
+import { SimplePagination } from '@/components/simple-pagination';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
+import { formatCurrency } from '@/lib/utils';
+import { Property } from '../index';
+
+interface PropertyTableProps {
+    properties: {
+        data: Property[];
+        links: any[];
+    };
+    selectedPropIds: number[];
+    setSelectedPropIds: React.Dispatch<React.SetStateAction<number[]>>;
+    canManage: boolean;
+    isDeptHead: boolean;
+    openAssignModal: (prop: Property) => void;
+    openTransferModal: (prop: Property) => void;
+    openSubAssignModal: (prop: Property) => void;
+    openReturnSubAssignModal: (prop: Property) => void;
+    openDisposeModal: (prop: Property) => void;
+}
+
+export function PropertyTable({
+    properties,
+    selectedPropIds,
+    setSelectedPropIds,
+    canManage,
+    isDeptHead,
+    openAssignModal,
+    openTransferModal,
+    openSubAssignModal,
+    openReturnSubAssignModal,
+    openDisposeModal,
+}: PropertyTableProps) {
+    return (
+        <div className="overflow-x-auto">
+            <Table className="text-xs">
+                <TableHeader>
+                    <TableRow>
+                        <TableHead className="w-10 text-center">
+                            <input
+                                type="checkbox"
+                                className="rounded border-gray-300"
+                                checked={
+                                    properties.data.length > 0 &&
+                                    properties.data.every(
+                                        (p) =>
+                                            selectedPropIds.includes(p.id) ||
+                                            p.status !== 'available',
+                                    )
+                                }
+                                onChange={(e) => {
+                                    if (e.target.checked) {
+                                        const availableIds = properties.data
+                                            .filter((p) => p.status === 'available')
+                                            .map((p) => p.id);
+                                        setSelectedPropIds((prev) =>
+                                            Array.from(new Set([...prev, ...availableIds])),
+                                        );
+                                    } else {
+                                        const idsToRemove = properties.data.map((p) => p.id);
+                                        setSelectedPropIds((prev) =>
+                                            prev.filter((id) => !idsToRemove.includes(id)),
+                                        );
+                                    }
+                                }}
+                            />
+                        </TableHead>
+                        <TableHead className="whitespace-nowrap">Property No.</TableHead>
+                        <TableHead className="hidden md:table-cell">Category</TableHead>
+                        <TableHead className="w-[180px]">Equipment Details</TableHead>
+                        <TableHead className="text-right whitespace-nowrap">Cost</TableHead>
+                        <TableHead className="hidden md:table-cell">Accountable Officer</TableHead>
+                        <TableHead className="hidden lg:table-cell whitespace-nowrap">Doc Reference</TableHead>
+                        <TableHead className="hidden lg:table-cell text-center whitespace-nowrap">Condition</TableHead>
+                        <TableHead className="text-center whitespace-nowrap">Status</TableHead>
+                        {canManage && (
+                            <TableHead className="text-right whitespace-nowrap">Actions</TableHead>
+                        )}
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {properties.data.map((prop) => (
+                        <TableRow key={prop.id}>
+                            <TableCell className="text-center">
+                                {prop.status === 'available' && (
+                                    <input
+                                        type="checkbox"
+                                        className="rounded border-gray-300"
+                                        checked={selectedPropIds.includes(prop.id)}
+                                        onChange={(e) => {
+                                            if (e.target.checked) {
+                                                setSelectedPropIds((prev) => [...prev, prop.id]);
+                                            } else {
+                                                setSelectedPropIds((prev) =>
+                                                    prev.filter((id) => id !== prop.id),
+                                                );
+                                            }
+                                        }}
+                                    />
+                                )}
+                            </TableCell>
+                            <TableCell className="font-mono text-[11px] whitespace-nowrap">
+                                {prop.property_number}
+                            </TableCell>
+                            <TableCell className="hidden md:table-cell text-[11px] text-muted-foreground">
+                                {prop.category?.name}
+                            </TableCell>
+                            <TableCell className="max-w-[200px]">
+                                <div
+                                    className="truncate font-semibold"
+                                    title={`${prop.brand} - ${prop.model}`}
+                                >
+                                    {prop.brand} - {prop.model}
+                                </div>
+                                <div
+                                    className="truncate font-mono text-[11px] text-muted-foreground"
+                                    title={`S/N: ${prop.serial_number}`}
+                                >
+                                    S/N: {prop.serial_number}
+                                </div>
+                            </TableCell>
+                            <TableCell className="text-right font-medium whitespace-nowrap">
+                                {formatCurrency(prop.unit_cost)}
+                            </TableCell>
+                            <TableCell className="hidden md:table-cell text-[11px] leading-tight font-medium">
+                                {prop.active_assignment ? (
+                                    <div className="flex flex-col gap-0.5">
+                                        <span>
+                                            {prop.active_assignment.assignee?.name || (
+                                                <span className="font-semibold">
+                                                    {prop.active_assignment.non_system_name}
+                                                </span>
+                                            )}
+                                        </span>
+                                        {!prop.active_assignment.assignee && (
+                                            <span className="w-fit rounded border border-amber-200/50 bg-amber-50 px-1 py-0.5 text-[10px] text-amber-600 dark:bg-amber-950/30">
+                                                External ({prop.active_assignment.non_system_department})
+                                            </span>
+                                        )}
+                                        {prop.active_sub_assignment && (
+                                            <div className="mt-1 flex flex-col gap-0.5 rounded-md border border-blue-200/50 bg-blue-50 p-1.5 dark:bg-blue-950/30">
+                                                <span className="text-[10px] font-semibold tracking-wider text-blue-700 uppercase dark:text-blue-400">
+                                                    Sub-Assigned To (MR)
+                                                </span>
+                                                <span className="text-xs text-blue-900 dark:text-blue-300">
+                                                    {prop.active_sub_assignment.assignee?.name ||
+                                                        prop.active_sub_assignment.non_system_name}
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <span className="text-muted-foreground italic">None Assigned</span>
+                                )}
+                            </TableCell>
+                            <TableCell className="hidden lg:table-cell font-mono text-[10px] whitespace-nowrap text-indigo-500">
+                                {prop.active_assignment ? (
+                                    <div className="flex flex-col gap-1">
+                                        <div className="flex items-center gap-1">
+                                            <Clipboard className="h-3.5 w-3.5 text-indigo-500" />
+                                            {prop.active_assignment.document_number}
+                                        </div>
+                                        {prop.active_sub_assignment && (
+                                            <div className="flex items-center gap-1 text-[10px] text-blue-600 dark:text-blue-400">
+                                                <Clipboard className="h-3 w-3" />
+                                                {prop.active_sub_assignment.mr_number}
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : (
+                                    '-'
+                                )}
+                            </TableCell>
+                            <TableCell className="hidden lg:table-cell text-center capitalize">
+                                <Badge
+                                    variant={
+                                        prop.condition === 'new' || prop.condition === 'good'
+                                            ? 'default'
+                                            : 'destructive'
+                                    }
+                                    className="px-1.5 py-0 text-[10px]"
+                                >
+                                    {prop.condition.replace(/_/g, ' ')}
+                                </Badge>
+                            </TableCell>
+                            <TableCell className="text-center capitalize">
+                                <Badge variant="outline" className="px-1.5 py-0 text-[10px]">
+                                    {prop.status}
+                                </Badge>
+                            </TableCell>
+                            {canManage && (
+                                <TableCell className="text-right whitespace-nowrap">
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="ghost" className="h-8 w-8 p-0">
+                                                <span className="sr-only">Open menu</span>
+                                                <MoreHorizontal className="h-4 w-4" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end">
+                                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                            <Can permission="property.assign">
+                                                {prop.status === 'available' && (
+                                                    <DropdownMenuItem onClick={() => openAssignModal(prop)}>
+                                                        <UserCheck className="mr-2 h-4 w-4 text-sky-500" />{' '}
+                                                        Assign Equipment
+                                                    </DropdownMenuItem>
+                                                )}
+                                            </Can>
+                                            <Can permission="property.transfer">
+                                                {(prop.status === 'assigned' ||
+                                                    prop.status === 'transferred') && (
+                                                    <DropdownMenuItem onClick={() => openTransferModal(prop)}>
+                                                        <RefreshCw className="mr-2 h-4 w-4 text-amber-500" />{' '}
+                                                        Transfer Property (PTR)
+                                                    </DropdownMenuItem>
+                                                )}
+                                            </Can>
+                                            {(canManage || isDeptHead) && (
+                                                <>
+                                                    {(prop.status === 'assigned' ||
+                                                        prop.status === 'transferred') &&
+                                                        !prop.active_sub_assignment && (
+                                                            <DropdownMenuItem onClick={() => openSubAssignModal(prop)}>
+                                                                <UserCheck className="mr-2 h-4 w-4 text-blue-500" />{' '}
+                                                                Issue Memo Receipt (MR)
+                                                            </DropdownMenuItem>
+                                                        )}
+                                                    {prop.active_sub_assignment && (
+                                                        <DropdownMenuItem onClick={() => openReturnSubAssignModal(prop)}>
+                                                            <RefreshCw className="mr-2 h-4 w-4 text-emerald-500" />{' '}
+                                                            Return Memo Receipt
+                                                        </DropdownMenuItem>
+                                                    )}
+                                                </>
+                                            )}
+                                            <Can permission="property.dispose">
+                                                {prop.status !== 'disposed' && (
+                                                    <>
+                                                        <DropdownMenuSeparator />
+                                                        <DropdownMenuItem
+                                                            className="text-destructive focus:text-destructive"
+                                                            onClick={() => openDisposeModal(prop)}
+                                                        >
+                                                            <Trash2 className="mr-2 h-4 w-4" />{' '}
+                                                            Dispose Property
+                                                        </DropdownMenuItem>
+                                                    </>
+                                                )}
+                                            </Can>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                </TableCell>
+                            )}
+                        </TableRow>
+                    ))}
+                </TableBody>
+            </Table>
+            <div className="mt-4">
+                <SimplePagination links={properties.links} />
+            </div>
+        </div>
+    );
+}

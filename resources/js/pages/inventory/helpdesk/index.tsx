@@ -23,8 +23,10 @@ import {
     Loader2,
     Paperclip,
     X,
+    Inbox,
+    FileX,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
@@ -43,6 +45,13 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import {
+    Sheet,
+    SheetContent,
+    SheetDescription,
+    SheetHeader,
+    SheetTitle,
+} from '@/components/ui/sheet';
 
 import {
     store as helpdeskStore,
@@ -203,6 +212,14 @@ export default function HelpdeskIndex({ tickets, isAdmin }: Props) {
     const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
     const [zoomedImage, setZoomedImage] = useState<string | null>(null);
     const [scrollKey, setScrollKey] = useState(0);
+    const [isMobile, setIsMobile] = useState(false);
+
+    useEffect(() => {
+        const checkMobile = () => setIsMobile(window.innerWidth < 1024);
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
 
     // Form for ticket creation
     const {
@@ -280,6 +297,134 @@ export default function HelpdeskIndex({ tickets, isAdmin }: Props) {
             status: ticket.status,
             admin_notes: ticket.admin_notes || '',
         });
+    };
+
+    const renderActionPanel = () => {
+        if (!selectedTicket) {
+            return (
+                <div className="rounded-lg border border-dashed bg-card p-6 py-12 text-center text-xs text-muted-foreground">
+                    Select a support ticket from the list to review details and perform updates.
+                </div>
+            );
+        }
+
+        return (
+            <Card className="border bg-card">
+                <CardHeader className="p-5 pb-3">
+                    <div className="flex items-center justify-between">
+                        <CardTitle className="text-sm font-semibold">
+                            Modify Ticket #{selectedTicket.id}
+                        </CardTitle>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 text-xs text-muted-foreground"
+                            onClick={() => setSelectedTicket(null)}
+                        >
+                            Cancel
+                        </Button>
+                    </div>
+                    <CardDescription className="text-xs">
+                        Assign a resolution status and add internal/public notes.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="p-5 pt-0">
+                    <form onSubmit={handleUpdateTicket} className="space-y-4">
+                        <div className="mt-1 space-y-1 text-xs">
+                            <p className="font-bold text-foreground">
+                                Subject:{' '}
+                                <span className="font-normal text-muted-foreground">
+                                    {selectedTicket.title}
+                                </span>
+                            </p>
+                            <p className="font-bold text-foreground">
+                                Submitted by:{' '}
+                                <span className="font-normal text-muted-foreground">
+                                    {selectedTicket.user?.name} ({selectedTicket.user?.email})
+                                </span>
+                            </p>
+                        </div>
+
+                        {selectedTicket.attachment_url && (
+                            <div className="mt-3 text-xs">
+                                <p className="mb-1 font-bold text-foreground">
+                                    Attachment:
+                                </p>
+                                {isImage(selectedTicket.attachment_path) ? (
+                                    <div className="group relative max-w-full overflow-hidden rounded-lg border border-border bg-neutral-100 dark:bg-neutral-900">
+                                        <img
+                                            src={selectedTicket.attachment_url}
+                                            alt="Attachment Preview"
+                                            className="max-h-32 w-full cursor-zoom-in object-cover transition-transform duration-200 group-hover:scale-105"
+                                            onClick={() => setZoomedImage(selectedTicket.attachment_url)}
+                                        />
+                                    </div>
+                                ) : (
+                                    <a
+                                        href={selectedTicket.attachment_url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex w-full items-center justify-between rounded-md bg-neutral-100 px-3 py-2 text-xs font-semibold text-neutral-700 transition-colors hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
+                                    >
+                                        <span className="flex items-center gap-2">
+                                            <FileText className="size-4 text-indigo-600 dark:text-indigo-400" />
+                                            <span>View / Download PDF Document</span>
+                                        </span>
+                                        <ArrowRight className="size-3 text-muted-foreground" />
+                                    </a>
+                                )}
+                            </div>
+                        )}
+
+                        <div className="my-3 border-t border-border/40"></div>
+
+                        <div className="space-y-1.5">
+                            <Label htmlFor="admin-status" className="text-xs">
+                                Resolution Status
+                            </Label>
+                            <Select
+                                value={adminData.status}
+                                onValueChange={(val) => setAdminData('status', val)}
+                            >
+                                <SelectTrigger id="admin-status" className="w-full">
+                                    <SelectValue placeholder="Select Status" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="open">Open</SelectItem>
+                                    <SelectItem value="in_progress">In Progress</SelectItem>
+                                    <SelectItem value="resolved">Resolved</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <InputError message={adminErrors.status} />
+                        </div>
+
+                        <div className="space-y-1.5">
+                            <Label htmlFor="admin-notes" className="text-xs">
+                                Internal / Resolution Notes
+                            </Label>
+                            <textarea
+                                id="admin-notes"
+                                rows={5}
+                                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-hidden"
+                                placeholder="Provide help desk response or resolution steps..."
+                                value={adminData.admin_notes}
+                                onChange={(e) => setAdminData('admin_notes', e.target.value)}
+                            />
+                            <InputError message={adminErrors.admin_notes} />
+                        </div>
+
+                        <Button type="submit" className="w-full" disabled={updatingTicket}>
+                            {updatingTicket ? (
+                                <Loader2 className="mr-2 size-4 animate-spin" />
+                            ) : (
+                                <Check className="mr-2 size-4" />
+                            )}
+                            Update Ticket Status
+                        </Button>
+                    </form>
+                </CardContent>
+            </Card>
+        );
     };
 
     const getStatusBadge = (status: Ticket['status']) => {
@@ -734,8 +879,14 @@ export default function HelpdeskIndex({ tickets, isAdmin }: Props) {
                                             !isAdmin ||
                                             t.user_id === auth.user.id,
                                     ).length === 0 ? (
-                                        <div className="rounded-lg border border-dashed py-12 text-center text-xs text-muted-foreground">
-                                            No support tickets submitted yet.
+                                        <div className="flex flex-col items-center justify-center py-12 text-center rounded-lg border border-dashed bg-card/50 p-6">
+                                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                                                <Inbox className="h-6 w-6" />
+                                            </div>
+                                            <h3 className="mt-4 text-sm font-semibold">No support tickets</h3>
+                                            <p className="mt-2 text-xs text-muted-foreground max-w-sm">
+                                                You have not submitted any helpdesk support requests yet.
+                                            </p>
                                         </div>
                                     ) : (
                                         <InfiniteScroll
@@ -906,9 +1057,14 @@ export default function HelpdeskIndex({ tickets, isAdmin }: Props) {
 
                                 <div className="space-y-4">
                                     {tickets.data.length === 0 ? (
-                                        <div className="rounded-lg border border-dashed py-12 text-center text-xs text-muted-foreground">
-                                            No support tickets submitted in
-                                            GIMS.
+                                        <div className="flex flex-col items-center justify-center py-12 text-center rounded-lg border border-dashed bg-card/50 p-6">
+                                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                                                <FileX className="h-6 w-6" />
+                                            </div>
+                                            <h3 className="mt-4 text-sm font-semibold">Queue is clear</h3>
+                                            <p className="mt-2 text-xs text-muted-foreground max-w-sm">
+                                                No support tickets have been filed in the GIMS registry.
+                                            </p>
                                         </div>
                                     ) : (
                                         <InfiniteScroll
@@ -1021,211 +1177,31 @@ export default function HelpdeskIndex({ tickets, isAdmin }: Props) {
                             </div>
 
                             {/* Resolution Details Form */}
-                            <div className="sticky top-6 space-y-4">
+                            <div className="hidden lg:block sticky top-6 space-y-4">
                                 <h3 className="flex items-center gap-2 text-base font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
                                     <UserCheck className="size-5 text-indigo-600 dark:text-indigo-400" />
                                     Ticket Action Panel
                                 </h3>
-
-                                {selectedTicket ? (
-                                    <Card className="border bg-card">
-                                        <CardHeader className="p-5 pb-3">
-                                            <div className="flex items-center justify-between">
-                                                <CardTitle className="text-sm">
-                                                    Modify Ticket #
-                                                    {selectedTicket.id}
-                                                </CardTitle>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    className="h-7 text-xs text-muted-foreground"
-                                                    onClick={() =>
-                                                        setSelectedTicket(null)
-                                                    }
-                                                >
-                                                    Cancel
-                                                </Button>
-                                            </div>
-                                            <CardDescription className="text-xs">
-                                                Assign a resolution status and
-                                                add internal/public notes.
-                                            </CardDescription>
-                                        </CardHeader>
-                                        <CardContent className="p-5 pt-0">
-                                            <form
-                                                onSubmit={handleUpdateTicket}
-                                                className="space-y-4"
-                                            >
-                                                <div className="mt-1 space-y-1 text-xs">
-                                                    <p className="font-bold text-foreground">
-                                                        Subject:{' '}
-                                                        <span className="font-normal text-muted-foreground">
-                                                            {
-                                                                selectedTicket.title
-                                                            }
-                                                        </span>
-                                                    </p>
-                                                    <p className="font-bold text-foreground">
-                                                        Submitted by:{' '}
-                                                        <span className="font-normal text-muted-foreground">
-                                                            {
-                                                                selectedTicket
-                                                                    .user?.name
-                                                            }{' '}
-                                                            (
-                                                            {
-                                                                selectedTicket
-                                                                    .user?.email
-                                                            }
-                                                            )
-                                                        </span>
-                                                    </p>
-                                                </div>
-
-                                                {selectedTicket.attachment_url && (
-                                                    <div className="mt-3 text-xs">
-                                                        <p className="mb-1 font-bold text-foreground">
-                                                            Attachment:
-                                                        </p>
-                                                        {isImage(
-                                                            selectedTicket.attachment_path,
-                                                        ) ? (
-                                                            <div className="group relative max-w-full overflow-hidden rounded-lg border border-border bg-neutral-100 dark:bg-neutral-900">
-                                                                <img
-                                                                    src={
-                                                                        selectedTicket.attachment_url
-                                                                    }
-                                                                    alt="Attachment Preview"
-                                                                    className="max-h-32 w-full cursor-zoom-in object-cover transition-transform duration-200 group-hover:scale-105"
-                                                                    onClick={() =>
-                                                                        setZoomedImage(
-                                                                            selectedTicket.attachment_url,
-                                                                        )
-                                                                    }
-                                                                />
-                                                            </div>
-                                                        ) : (
-                                                            <a
-                                                                href={
-                                                                    selectedTicket.attachment_url
-                                                                }
-                                                                target="_blank"
-                                                                rel="noopener noreferrer"
-                                                                className="inline-flex w-full items-center justify-between rounded-md bg-neutral-100 px-3 py-2 text-xs font-semibold text-neutral-700 transition-colors hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
-                                                            >
-                                                                <span className="flex items-center gap-2">
-                                                                    <FileText className="size-4 text-indigo-600 dark:text-indigo-400" />
-                                                                    <span>
-                                                                        View /
-                                                                        Download
-                                                                        PDF
-                                                                    </span>
-                                                                </span>
-                                                                <ArrowRight className="size-3 text-muted-foreground" />
-                                                            </a>
-                                                        )}
-                                                    </div>
-                                                )}
-
-                                                <div className="my-3 border-t border-border/40"></div>
-
-                                                <div className="space-y-1.5">
-                                                    <Label
-                                                        htmlFor="admin-status"
-                                                        className="text-xs"
-                                                    >
-                                                        Resolution Status
-                                                    </Label>
-                                                    <Select
-                                                        value={adminData.status}
-                                                        onValueChange={(val) =>
-                                                            setAdminData(
-                                                                'status',
-                                                                val,
-                                                            )
-                                                        }
-                                                    >
-                                                        <SelectTrigger
-                                                            id="admin-status"
-                                                            className="w-full"
-                                                        >
-                                                            <SelectValue placeholder="Select Status" />
-                                                        </SelectTrigger>
-                                                        <SelectContent>
-                                                            <SelectItem value="open">
-                                                                Open
-                                                            </SelectItem>
-                                                            <SelectItem value="in_progress">
-                                                                In Progress
-                                                            </SelectItem>
-                                                            <SelectItem value="resolved">
-                                                                Resolved
-                                                            </SelectItem>
-                                                        </SelectContent>
-                                                    </Select>
-                                                    <InputError
-                                                        message={
-                                                            adminErrors.status
-                                                        }
-                                                    />
-                                                </div>
-
-                                                <div className="space-y-1.5">
-                                                    <Label
-                                                        htmlFor="admin-notes"
-                                                        className="text-xs"
-                                                    >
-                                                        Internal / Resolution
-                                                        Notes
-                                                    </Label>
-                                                    <textarea
-                                                        id="admin-notes"
-                                                        rows={5}
-                                                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-hidden"
-                                                        placeholder="Provide help desk response or resolution steps..."
-                                                        value={
-                                                            adminData.admin_notes
-                                                        }
-                                                        onChange={(e) =>
-                                                            setAdminData(
-                                                                'admin_notes',
-                                                                e.target.value,
-                                                            )
-                                                        }
-                                                    />
-                                                    <InputError
-                                                        message={
-                                                            adminErrors.admin_notes
-                                                        }
-                                                    />
-                                                </div>
-
-                                                <Button
-                                                    type="submit"
-                                                    className="w-full"
-                                                    disabled={updatingTicket}
-                                                >
-                                                    {updatingTicket ? (
-                                                        <Loader2 className="mr-2 size-4 animate-spin" />
-                                                    ) : (
-                                                        <Check className="mr-2 size-4" />
-                                                    )}
-                                                    Update Ticket Status
-                                                </Button>
-                                            </form>
-                                        </CardContent>
-                                    </Card>
-                                ) : (
-                                    <div className="rounded-lg border border-dashed bg-card p-6 py-12 text-center text-xs text-muted-foreground">
-                                        Select a support ticket from the list to
-                                        review details and perform updates.
-                                    </div>
-                                )}
+                                {renderActionPanel()}
                             </div>
                         </div>
                     )}
                 </div>
             </div>
+
+            {isMobile && selectedTicket && (
+                <Sheet open={selectedTicket !== null} onOpenChange={(open) => !open && setSelectedTicket(null)}>
+                    <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto pt-10">
+                        <SheetHeader className="p-0 mb-4">
+                            <SheetTitle>Ticket Action Panel</SheetTitle>
+                            <SheetDescription>
+                                Resolve or update ticket #{selectedTicket.id}
+                            </SheetDescription>
+                        </SheetHeader>
+                        {renderActionPanel()}
+                    </SheetContent>
+                </Sheet>
+            )}
 
             {zoomedImage && (
                 <div

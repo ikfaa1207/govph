@@ -2,24 +2,31 @@
 
 namespace App\Http\Controllers\Inventory;
 
+use App\Actions\PhysicalCount\ApprovePhysicalCountAction;
+use App\Actions\PhysicalCount\CreatePhysicalCountAction;
+use App\Actions\PhysicalCount\UpdatePhysicalCountAction;
 use App\Enums\PhysicalCountStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Employee;
 use App\Models\Item;
 use App\Models\PhysicalCount;
-use App\Models\PhysicalCountCommittee;
 use App\Models\PhysicalCountItem;
 use App\Models\Property;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class PhysicalCountController extends Controller
 {
+    public function __construct(
+        protected CreatePhysicalCountAction $createAction,
+        protected UpdatePhysicalCountAction $updateAction,
+        protected ApprovePhysicalCountAction $approveAction
+    ) {}
+
     public function index(): Response
     {
         $user = Auth::user();
@@ -50,7 +57,7 @@ class PhysicalCountController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $request->validate([
+        $validated = $request->validate([
             'type' => ['required', 'in:RPCPPE,RPCI'],
             'as_of_date' => ['required', 'date'],
             'chairperson_id' => ['required', 'exists:employees,id'],
@@ -62,81 +69,12 @@ class PhysicalCountController extends Controller
         $user = Auth::user();
         $employee = $user->getEmployeeOrAbort('Employee profile not found.');
 
-        DB::beginTransaction();
         try {
-            $count = PhysicalCount::create([
-                'type' => $request->type,
-                'as_of_date' => $request->as_of_date,
-                'status' => PhysicalCountStatus::Draft,
-                'created_by' => $employee->id,
-            ]);
-
-            $count->committees()->create([
-                'employee_id' => $request->input('chairperson_id'),
-                'role' => 'chairperson',
-            ]);
-
-            $count->committees()->create([
-                'employee_id' => $request->input('head_of_agency_id'),
-                'role' => 'head_of_agency',
-            ]);
-
-            foreach ($request->input('member_ids') as $memberId) {
-                $count->committees()->create([
-                    'employee_id' => $memberId,
-                    'role' => 'member',
-                ]);
-            }
-
-            if ($count->type === 'RPCPPE') {
-                $properties = Property::where('status', '!=', 'disposed')->get();
-                $itemsToInsert = [];
-                foreach ($properties as $property) {
-                    $itemsToInsert[] = [
-                        'physical_count_id' => $count->id,
-                        'property_id' => $property->id,
-                        'item_id' => null,
-                        'recorded_qty' => 1,
-                        'actual_qty' => null,
-                        'shortage_qty' => null,
-                        'overage_qty' => null,
-                        'remarks' => null,
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ];
-                }
-                PhysicalCountItem::insert($itemsToInsert);
-            } else {
-                $items = Item::all();
-                // For RPCI, the quantity is the sum of stock across departments, or just a 0 if we don't track total stock easily in one column. Let's assume we sum current_stock from department_items.
-                // Wait, govph uses `department_items` for consumable stock per department, and maybe `StockTransaction` for central.
-                // For simplicity, let's just create an entry per Item.
-                $itemsToInsert = [];
-                foreach ($items as $item) {
-                    $totalStock = DB::table('department_items')->where('item_id', $item->id)->sum('current_stock') ?: 0;
-                    $itemsToInsert[] = [
-                        'physical_count_id' => $count->id,
-                        'property_id' => null,
-                        'item_id' => $item->id,
-                        'recorded_qty' => $totalStock,
-                        'actual_qty' => null,
-                        'shortage_qty' => null,
-                        'overage_qty' => null,
-                        'remarks' => null,
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ];
-                }
-                PhysicalCountItem::insert($itemsToInsert);
-            }
-
-            DB::commit();
+            $count = $this->createAction->execute($employee, $validated);
             Inertia::flash('toast', ['type' => 'success', 'message' => 'Physical count initiated.']);
 
             return redirect()->route('inventory.physical-counts.show', $count);
         } catch (\Exception $e) {
-            DB::rollBack();
-
             return redirect()->back()->withErrors(['error' => 'Failed to initiate count: '.$e->getMessage()]);
         }
     }
@@ -183,7 +121,7 @@ class PhysicalCountController extends Controller
             return redirect()->back()->withErrors(['error' => 'Cannot update a finalized count.']);
         }
 
-        $request->validate([
+        $validated = $request->validate([
             'items' => ['required', 'array'],
             'items.*.id' => ['required', 'exists:physical_count_items,id'],
             'items.*.actual_qty' => ['nullable', 'numeric', 'min:0'],
@@ -209,65 +147,22 @@ class PhysicalCountController extends Controller
             }
         }
 
-        DB::beginTransaction();
         try {
-            foreach ($request->input('items') as $itemData) {
-                $countItem = PhysicalCountItem::where('id', $itemData['id'])
-                    ->where('physical_count_id', $physicalCount->id)
-                    ->first();
-
-                if ($countItem) {
-                    $actualQty = $itemData['actual_qty'];
-                    if ($actualQty !== null && $actualQty !== '') {
-                        $actualQty = (float) $actualQty;
-                        $recordedQty = (float) $countItem->recorded_qty;
-
-                        $countItem->actual_qty = $actualQty;
-                        if ($actualQty < $recordedQty) {
-                            $countItem->shortage_qty = $recordedQty - $actualQty;
-                            $countItem->overage_qty = 0;
-                        } elseif ($actualQty > $recordedQty) {
-                            $countItem->overage_qty = $actualQty - $recordedQty;
-                            $countItem->shortage_qty = 0;
-                        } else {
-                            $countItem->shortage_qty = 0;
-                            $countItem->overage_qty = 0;
-                        }
-                    } else {
-                        $countItem->actual_qty = null;
-                        $countItem->shortage_qty = null;
-                        $countItem->overage_qty = null;
-                    }
-
-                    $countItem->remarks = $itemData['remarks'] ?? null;
-                    $countItem->save();
-                }
-            }
+            $this->updateAction->execute($physicalCount, [
+                'items' => $validated['items'],
+                'action' => $request->input('action'),
+            ]);
 
             if ($request->input('action') === 'submit_for_review') {
-                $physicalCount->status = PhysicalCountStatus::PendingReview;
-                $physicalCount->save();
-
-                // Reset committee approval statuses for the new review cycle
-                $physicalCount->committees()->update([
-                    'status' => 'pending',
-                    'remarks' => null,
-                    'approved_at' => null,
-                ]);
-
-                DB::commit();
                 Inertia::flash('toast', ['type' => 'success', 'message' => 'Physical count submitted for committee review.']);
 
                 return redirect()->route('inventory.physical-counts.index');
             }
 
-            DB::commit();
             Inertia::flash('toast', ['type' => 'success', 'message' => 'Physical count progress saved.']);
 
             return redirect()->back();
         } catch (\Exception $e) {
-            DB::rollBack();
-
             return redirect()->back()->withErrors(['error' => 'Failed to save count: '.$e->getMessage()]);
         }
     }
@@ -278,7 +173,7 @@ class PhysicalCountController extends Controller
             return redirect()->back()->withErrors(['error' => 'This count is not pending review.']);
         }
 
-        $request->validate([
+        $validated = $request->validate([
             'status' => ['required', 'in:approved,rejected'],
             'remarks' => ['nullable', 'string'],
         ]);
@@ -286,32 +181,14 @@ class PhysicalCountController extends Controller
         $user = Auth::user();
         $employee = $user->getEmployeeOrAbort('Employee profile not found.');
 
-        /** @var PhysicalCountCommittee|null $committee */
-        $committee = $physicalCount->committees()->where('employee_id', $employee->id)->first();
+        try {
+            $this->approveAction->execute($physicalCount, $employee, $validated);
+            Inertia::flash('toast', ['type' => 'success', 'message' => 'Your review has been submitted.']);
 
-        if (! $committee) {
-            return redirect()->back()->withErrors(['error' => 'You are not assigned to this committee.']);
+            return redirect()->back();
+        } catch (\Exception $e) {
+            return redirect()->back()->withErrors(['error' => $e->getMessage()]);
         }
-
-        $committee->update([
-            'status' => $request->input('status'),
-            'remarks' => $request->input('remarks'),
-            'approved_at' => now(),
-        ]);
-
-        if ($request->input('status') === 'approved') {
-            $allApproved = $physicalCount->committees()->where('status', '!=', 'approved')->doesntExist();
-            if ($allApproved) {
-                $physicalCount->update(['status' => PhysicalCountStatus::Finalized]);
-            }
-        } else {
-            // If rejected, return to draft so creator can fix it
-            $physicalCount->update(['status' => PhysicalCountStatus::Draft]);
-        }
-
-        Inertia::flash('toast', ['type' => 'success', 'message' => 'Your review has been submitted.']);
-
-        return redirect()->back();
     }
 
     public function export(PhysicalCount $physicalCount): StreamedResponse
