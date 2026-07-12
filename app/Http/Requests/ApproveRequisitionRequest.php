@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\RequisitionItem;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -25,7 +26,24 @@ class ApproveRequisitionRequest extends FormRequest
         return [
             'items' => ['required', 'array'],
             'items.*.id' => ['required', 'exists:requisition_items,id'],
-            'items.*.quantity_approved' => ['required', 'integer', 'min:0'],
+            'items.*.quantity_approved' => [
+                'required',
+                'integer',
+                'min:0',
+                function (string $attribute, mixed $value, \Closure $fail) {
+                    preg_match('/items\.(\d+)\.quantity_approved/', $attribute, $matches);
+                    if (! isset($matches[1])) {
+                        return;
+                    }
+                    $index = $matches[1];
+                    $itemId = $this->input("items.{$index}.id");
+
+                    $requisitionItem = RequisitionItem::find($itemId);
+                    if ($requisitionItem && $value > $requisitionItem->quantity_requested) {
+                        $fail("The approved quantity cannot exceed the requested quantity ({$requisitionItem->quantity_requested}).");
+                    }
+                },
+            ],
         ];
     }
 }

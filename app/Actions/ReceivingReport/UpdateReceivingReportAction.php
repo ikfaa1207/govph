@@ -9,6 +9,7 @@ use App\Models\ReceivingReportItem;
 use App\Services\Audit\AuditLogger;
 use App\Services\Valuation\ValuationService;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class UpdateReceivingReportAction
 {
@@ -50,6 +51,14 @@ class UpdateReceivingReportAction
             // Load relations for accurate old state tracking
             $report->load('items');
             $oldState = $report->toArray();
+
+            // Check for PO supplier mismatch
+            $existingPo = PurchaseOrder::where('po_number', $data['po_number'])->first();
+            if ($existingPo && (int) $existingPo->supplier_id !== (int) $data['supplier_id']) {
+                throw ValidationException::withMessages([
+                    'po_number' => ['The Purchase Order number already exists but is associated with a different supplier.'],
+                ]);
+            }
 
             // Find or update Purchase Order
             $po = PurchaseOrder::firstOrCreate(
@@ -114,14 +123,33 @@ class UpdateReceivingReportAction
                 $rejectedQty = max(0, $receivedQty - $acceptedQty);
                 $unitCost = (float) $itemData['unit_cost'];
 
+                $hasStockChanges = false;
+                $needsReversal = false;
+                $needsRecord = false;
+
                 if (isset($itemData['id'])) {
                     // Updating an existing item
                     $existingLineId = (int) $itemData['id'];
                     /** @var ReceivingReportItem $existingLine */
                     $existingLine = ReceivingReportItem::findOrFail($existingLineId);
 
-                    // Reverse old stock-in only if old status was finalized
+                    // Check if quantity or cost actually changed
+                    $hasStockChanges = ($existingLine->quantity_accepted !== $acceptedQty) ||
+                                       ((float) $existingLine->unit_cost !== $unitCost);
+
                     if ($oldStatus === 'finalized' && $existingLine->quantity_accepted > 0) {
+                        if ($status !== 'finalized' || $hasStockChanges) {
+                            $needsReversal = true;
+                        }
+                    }
+
+                    if ($status === 'finalized' && $acceptedQty > 0) {
+                        if ($oldStatus !== 'finalized' || $hasStockChanges) {
+                            $needsRecord = true;
+                        }
+                    }
+
+                    if ($needsReversal) {
                         $this->valuationService->reverseStockIn(
                             $item,
                             $existingLine->quantity_accepted,
@@ -157,10 +185,14 @@ class UpdateReceivingReportAction
                         'expiration_date' => $itemData['expiration_date'] ?? null,
                         'rejection_reason' => $itemData['rejection_reason'] ?? null,
                     ]);
+
+                    if ($status === 'finalized' && $acceptedQty > 0) {
+                        $needsRecord = true;
+                    }
                 }
 
-                // Apply new stock-in only if new status is finalized
-                if ($status === 'finalized' && $acceptedQty > 0) {
+                // Apply new stock-in only if needed
+                if ($needsRecord) {
                     $this->valuationService->recordStockIn(
                         $item,
                         $acceptedQty,

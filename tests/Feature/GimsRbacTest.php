@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\RequisitionStatus;
 use App\Models\AuditLog;
 use App\Models\Category;
 use App\Models\Department;
@@ -820,4 +821,160 @@ test('users with inventory.create permission can create units of measurement inl
         'abbreviation' => 'mt',
     ]);
     $responseDup->assertSessionHasErrors(['name', 'abbreviation']);
+});
+
+test('requisition approved quantity cannot exceed requested quantity', function () {
+    $office = Office::create(['code' => 'O-TEST-REQ', 'name' => 'Test Office']);
+    $dept = Department::create(['office_id' => $office->id, 'code' => 'D-TEST-REQ', 'name' => 'Test Dept']);
+    $unit = Unit::create(['name' => 'Piece', 'abbreviation' => 'pc']);
+    $category = Category::create(['name' => 'Office Supplies', 'code' => 'SUPP', 'is_ppe' => false]);
+    $item = Item::create([
+        'item_code' => 'ITEM-BOND-99',
+        'name' => 'Bond Paper',
+        'category_id' => $category->id,
+        'unit_id' => $unit->id,
+        'unit_cost' => 100.00,
+        'reorder_level' => 10,
+        'maximum_stock' => 100,
+    ]);
+
+    $employeeUser = User::factory()->employee()->create(['name' => 'Staff', 'email' => 'staff99@example.com']);
+    $employee = Employee::create(['user_id' => $employeeUser->id, 'employee_id' => 'E99', 'name' => 'Staff', 'position' => 'Staff', 'office_id' => $office->id, 'department_id' => $dept->id]);
+
+    $headUser = User::factory()->deptHead()->create(['name' => 'Head', 'email' => 'head99@example.com']);
+    $head = Employee::create(['user_id' => $headUser->id, 'employee_id' => 'E98', 'name' => 'Head', 'position' => 'Head', 'office_id' => $office->id, 'department_id' => $dept->id]);
+
+    $permCreate = Permission::create(['name' => 'request.create', 'module' => 'requisition']);
+    $permApprove = Permission::create(['name' => 'request.approve', 'module' => 'requisition']);
+    $headUser->givePermissionTo($permApprove);
+
+    // Create requisition requesting 5 items
+    $requisition = Requisition::create([
+        'ris_number' => 'RIS-TEST-OVERAPP',
+        'requesting_employee_id' => $employee->id,
+        'department_id' => $dept->id,
+        'status' => RequisitionStatus::PendingDeptHead,
+        'department_head_id' => $head->id,
+    ]);
+    $requisitionItem = RequisitionItem::create([
+        'requisition_id' => $requisition->id,
+        'item_id' => $item->id,
+        'quantity_requested' => 5,
+        'quantity_approved' => 0,
+        'quantity_issued' => 0,
+    ]);
+
+    $this->actingAs($headUser);
+
+    // Try approving 10 (exceeds 5 requested)
+    $response = $this->post(route('inventory.requisitions.approve', $requisition->id), [
+        'items' => [
+            ['id' => $requisitionItem->id, 'quantity_approved' => 10],
+        ],
+    ]);
+
+    $response->assertSessionHasErrors(['items.0.quantity_approved']);
+
+    // Approve 5 (valid)
+    $responseOk = $this->post(route('inventory.requisitions.approve', $requisition->id), [
+        'items' => [
+            ['id' => $requisitionItem->id, 'quantity_approved' => 5],
+        ],
+    ]);
+    $responseOk->assertRedirect();
+    expect($requisitionItem->fresh()->quantity_approved)->toBe(5);
+});
+
+test('requisition issued quantity cannot exceed approved quantity', function () {
+    $office = Office::create(['code' => 'O-TEST-ISS', 'name' => 'Test Office']);
+    $dept = Department::create(['office_id' => $office->id, 'code' => 'D-TEST-ISS', 'name' => 'Test Dept']);
+    $unit = Unit::create(['name' => 'Piece', 'abbreviation' => 'pc']);
+    $category = Category::create(['name' => 'Office Supplies', 'code' => 'SUPP', 'is_ppe' => false]);
+    $item = Item::create([
+        'item_code' => 'ITEM-BOND-88',
+        'name' => 'Bond Paper',
+        'category_id' => $category->id,
+        'unit_id' => $unit->id,
+        'unit_cost' => 100.00,
+        'reorder_level' => 10,
+        'maximum_stock' => 100,
+    ]);
+    $item->current_stock = 50;
+    $item->save();
+
+    $employeeUser = User::factory()->employee()->create(['name' => 'Staff', 'email' => 'staff88@example.com']);
+    $employee = Employee::create(['user_id' => $employeeUser->id, 'employee_id' => 'E88', 'name' => 'Staff', 'position' => 'Staff', 'office_id' => $office->id, 'department_id' => $dept->id]);
+
+    $supplyUser = User::factory()->supplyOfficer()->create(['name' => 'Supply', 'email' => 'supply88@example.com']);
+    $supply = Employee::create(['user_id' => $supplyUser->id, 'employee_id' => 'E87', 'name' => 'Supply', 'position' => 'Supply', 'office_id' => $office->id, 'department_id' => $dept->id]);
+
+    $permIssue = Permission::create(['name' => 'warehouse.issue', 'module' => 'requisition']);
+    $supplyUser->givePermissionTo($permIssue);
+
+    $requisition = Requisition::create([
+        'ris_number' => 'RIS-TEST-OVERISS',
+        'requesting_employee_id' => $employee->id,
+        'department_id' => $dept->id,
+        'status' => RequisitionStatus::PendingSupply,
+    ]);
+    $requisitionItem = RequisitionItem::create([
+        'requisition_id' => $requisition->id,
+        'item_id' => $item->id,
+        'quantity_requested' => 5,
+        'quantity_approved' => 3,
+        'quantity_issued' => 0,
+    ]);
+
+    $this->actingAs($supplyUser);
+
+    // Try issuing 4 (exceeds 3 approved)
+    $response = $this->post(route('inventory.requisitions.issue', $requisition->id), [
+        'items' => [
+            ['id' => $requisitionItem->id, 'quantity_issued' => 4],
+        ],
+    ]);
+
+    $response->assertSessionHasErrors(['items.0.quantity_issued']);
+
+    // Issue 2 (valid)
+    $responseOk = $this->post(route('inventory.requisitions.issue', $requisition->id), [
+        'items' => [
+            ['id' => $requisitionItem->id, 'quantity_issued' => 2],
+        ],
+    ]);
+    $responseOk->assertRedirect();
+    expect($requisitionItem->fresh()->quantity_issued)->toBe(2);
+});
+
+test('requisition can be rejected by department head', function () {
+    $office = Office::create(['code' => 'O-TEST-REJ', 'name' => 'Test Office']);
+    $dept = Department::create(['office_id' => $office->id, 'code' => 'D-TEST-REJ', 'name' => 'Test Dept']);
+
+    $employeeUser = User::factory()->employee()->create(['name' => 'Staff', 'email' => 'staff77@example.com']);
+    $employee = Employee::create(['user_id' => $employeeUser->id, 'employee_id' => 'E77', 'name' => 'Staff', 'position' => 'Staff', 'office_id' => $office->id, 'department_id' => $dept->id]);
+
+    $headUser = User::factory()->deptHead()->create(['name' => 'Head', 'email' => 'head77@example.com']);
+    $head = Employee::create(['user_id' => $headUser->id, 'employee_id' => 'E76', 'name' => 'Head', 'position' => 'Head', 'office_id' => $office->id, 'department_id' => $dept->id]);
+
+    $permApprove = Permission::create(['name' => 'request.approve', 'module' => 'requisition']);
+    $headUser->givePermissionTo($permApprove);
+
+    $requisition = Requisition::create([
+        'ris_number' => 'RIS-TEST-REJ',
+        'requesting_employee_id' => $employee->id,
+        'department_id' => $dept->id,
+        'status' => RequisitionStatus::PendingDeptHead,
+        'department_head_id' => $head->id,
+    ]);
+
+    $this->actingAs($headUser);
+
+    $response = $this->post(route('inventory.requisitions.reject', $requisition->id), [
+        'remarks' => 'Not enough budget for this request.',
+    ]);
+
+    $response->assertRedirect();
+    $requisition->refresh();
+    expect($requisition->status)->toBe(RequisitionStatus::RejectedDeptHead);
+    expect($requisition->remarks)->toBe('Not enough budget for this request.');
 });

@@ -2,6 +2,7 @@
 
 namespace App\Services\Valuation;
 
+use App\Exceptions\InsufficientStockException;
 use App\Models\Item;
 use App\Models\StockTransaction;
 use Illuminate\Support\Facades\DB;
@@ -68,6 +69,14 @@ class ValuationService
             // Lock the item row to ensure consistent unit cost read
             $lockedItem = Item::where('id', $item->id)->lockForUpdate()->first();
 
+            if (! $lockedItem) {
+                throw new \RuntimeException('Item not found');
+            }
+
+            if ($lockedItem->current_stock < $quantity) {
+                throw new InsufficientStockException($lockedItem, $quantity, $lockedItem->current_stock);
+            }
+
             $issuedUnitCost = (float) $lockedItem->unit_cost;
 
             // Deduct stock and persist
@@ -91,7 +100,7 @@ class ValuationService
 
     /**
      * Reverse a previous stock-in transaction.
-     * Reduces the stock by the given quantity, and subtracts the exact total value of that transaction 
+     * Reduces the stock by the given quantity, and subtracts the exact total value of that transaction
      * from the moving average calculation to restore the unit cost prior to that specific stock-in.
      */
     public function reverseStockIn(
@@ -108,7 +117,7 @@ class ValuationService
             $currentCost = (float) $lockedItem->unit_cost;
 
             $newQuantity = $currentQty - $quantity;
-            
+
             // To properly reverse moving average:
             // (CurrentTotalValue - ReversedTotalValue) / NewQuantity
             if ($newQuantity > 0) {

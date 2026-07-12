@@ -9,6 +9,7 @@ use App\Models\ReceivingReportItem;
 use App\Services\Audit\AuditLogger;
 use App\Services\Valuation\ValuationService;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class CreateReceivingReportAction
 {
@@ -45,6 +46,14 @@ class CreateReceivingReportAction
         $status = $data['status'] ?? 'finalized';
 
         return DB::transaction(function () use ($data, $status) {
+            // Check for PO supplier mismatch
+            $existingPo = PurchaseOrder::where('po_number', $data['po_number'])->first();
+            if ($existingPo && (int) $existingPo->supplier_id !== (int) $data['supplier_id']) {
+                throw ValidationException::withMessages([
+                    'po_number' => ['The Purchase Order number already exists but is associated with a different supplier.'],
+                ]);
+            }
+
             // Find or create Purchase Order
             $po = PurchaseOrder::firstOrCreate(
                 ['po_number' => $data['po_number']],

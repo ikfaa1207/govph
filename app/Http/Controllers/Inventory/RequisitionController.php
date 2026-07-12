@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Inventory;
 
 use App\Enums\RequisitionStatus;
-use App\Exceptions\InsufficientStockException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ApproveRequisitionRequest;
 use App\Http\Requests\StoreRequisitionRequest;
@@ -160,7 +159,27 @@ class RequisitionController extends Controller
         $request->validate([
             'items' => ['required', 'array'],
             'items.*.id' => ['required', 'exists:requisition_items,id'],
-            'items.*.quantity_issued' => ['required', 'integer', 'min:0'],
+            'items.*.quantity_issued' => [
+                'required',
+                'integer',
+                'min:0',
+                function (string $attribute, mixed $value, \Closure $fail) use ($request) {
+                    preg_match('/items\.(\d+)\.quantity_issued/', $attribute, $matches);
+                    if (! isset($matches[1])) {
+                        return;
+                    }
+                    $index = $matches[1];
+                    $itemId = $request->input("items.{$index}.id");
+
+                    $requisitionItem = RequisitionItem::find($itemId);
+                    if ($requisitionItem) {
+                        $remaining = $requisitionItem->quantity_approved - $requisitionItem->quantity_issued;
+                        if ($value > $remaining) {
+                            $fail("The issued quantity cannot exceed the remaining approved quantity ({$remaining}).");
+                        }
+                    }
+                },
+            ],
         ]);
 
         $issueNumber = $this->sequences->next('ISSUE');
@@ -187,11 +206,6 @@ class RequisitionController extends Controller
 
                 if ($qtyIssued > 0) {
                     $item = $dbItem->item;
-                    $available = $item->current_stock;
-
-                    if ($available < $qtyIssued) {
-                        throw new InsufficientStockException($item, $qtyIssued, $available);
-                    }
 
                     $cost = $this->valuationService->recordStockOut(
                         $item,
@@ -233,6 +247,28 @@ class RequisitionController extends Controller
         });
 
         return back()->with('success', 'Items issued successfully.');
+    }
+
+    /**
+     * Reject requisition (by Dept Head / Admin).
+     */
+    public function reject(Request $request, Requisition $requisition): RedirectResponse
+    {
+        Gate::authorize('requisition.approve', $requisition);
+
+        $request->validate([
+            'remarks' => ['required', 'string', 'max:1000'],
+        ]);
+
+        DB::transaction(function () use ($request, $requisition) {
+            $requisition->status = RequisitionStatus::RejectedDeptHead;
+            $requisition->remarks = $request->input('remarks');
+            $requisition->save();
+
+            AuditLogger::log('REJECT_RIS', $requisition, null, $requisition->toArray());
+        });
+
+        return back()->with('success', 'Requisition rejected successfully.');
     }
 
     /**

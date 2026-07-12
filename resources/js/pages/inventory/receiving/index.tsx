@@ -133,6 +133,7 @@ export default function ReceivingIndex({
     // Suppliers local state to allow inline additions
     const [suppliers, setSuppliers] = useState(initialSuppliers);
     const [isAddSupplierOpen, setIsAddSupplierOpen] = useState(false);
+    const [isConfirmFinalizeOpen, setIsConfirmFinalizeOpen] = useState(false);
 
     // Form logic
     const { data, setData, post, put, processing, errors, reset, transform } = useForm({
@@ -250,8 +251,18 @@ export default function ReceivingIndex({
                 );
                 return;
             }
+            setIsConfirmFinalizeOpen(true);
+        } else {
+            executeSubmit('draft');
         }
+    };
 
+    const confirmFinalize = () => {
+        setIsConfirmFinalizeOpen(false);
+        executeSubmit('finalized');
+    };
+
+    const executeSubmit = (targetStatus: 'draft' | 'finalized') => {
         transform((data) => ({
             ...data,
             status: targetStatus,
@@ -287,7 +298,7 @@ export default function ReceivingIndex({
                 },
                 onError: () => {
                     toast.error(
-                        'Failed to create receiving report. Check validation errors.',
+                        'Failed to save receiving report. Check validation errors.',
                     );
                 },
             });
@@ -353,6 +364,14 @@ export default function ReceivingIndex({
             })
             .catch(() => toast.error('Failed to fetch history logs.'));
     };
+
+    const totalReceivedValue = data.items.reduce((sum, item) => {
+        return sum + (Number(item.quantity_received) || 0) * (Number(item.unit_cost) || 0);
+    }, 0);
+
+    const totalAcceptedValue = data.items.reduce((sum, item) => {
+        return sum + (Number(item.quantity_accepted) || 0) * (Number(item.unit_cost) || 0);
+    }, 0);
 
     return (
         <>
@@ -944,19 +963,28 @@ export default function ReceivingIndex({
                                                 </tbody>
                                             </table>
                                         </div>
-
-                                        <div className="flex justify-start">
-                                            <Button
-                                                type="button"
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={handleAddItemRow}
-                                                className="-ml-2 gap-1.5 text-primary hover:bg-primary/10 hover:text-primary"
-                                            >
-                                                <PlusCircle className="h-4 w-4" />
-                                                Add Item
-                                            </Button>
-                                        </div>
+                                         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mt-2 gap-4 border-t pt-3">
+                                             <Button
+                                                 type="button"
+                                                 variant="ghost"
+                                                 size="sm"
+                                                 onClick={handleAddItemRow}
+                                                 className="-ml-2 gap-1.5 text-primary hover:bg-primary/10 hover:text-primary"
+                                             >
+                                                 <PlusCircle className="h-4 w-4" />
+                                                 Add Item
+                                             </Button>
+                                             <div className="flex flex-wrap gap-4 text-xs font-semibold">
+                                                 <div className="text-muted-foreground bg-muted/30 border border-muted-foreground/10 px-3 py-1.5 rounded-md">
+                                                     Total Received: <span className="font-bold text-foreground">{formatCurrency(totalReceivedValue)}</span>
+                                                 </div>
+                                                 {data.status === 'finalized' && (
+                                                     <div className="text-muted-foreground bg-emerald-500/5 border border-emerald-500/10 px-3 py-1.5 rounded-md">
+                                                         Total Accepted: <span className="font-bold text-emerald-600">{formatCurrency(totalAcceptedValue)}</span>
+                                                     </div>
+                                                 )}
+                                             </div>
+                                         </div>
                                     </div>
 
                                     {/* Remarks */}
@@ -1012,6 +1040,34 @@ export default function ReceivingIndex({
                                         </Button>
                                     </div>
                                 </form>
+                            </DialogContent>
+                        </Dialog>
+
+                        {/* Dialog: Confirm Finalization */}
+                        <Dialog open={isConfirmFinalizeOpen} onOpenChange={setIsConfirmFinalizeOpen}>
+                            <DialogContent className="sm:max-w-md">
+                                <DialogHeader>
+                                    <DialogTitle>Confirm Finalization</DialogTitle>
+                                    <DialogDescription>
+                                        This will finalize the Receiving Report and instantly update warehouse stock quantities. This action is irreversible and cannot be reverted to draft.
+                                    </DialogDescription>
+                                </DialogHeader>
+                                <div className="flex justify-end gap-2 border-t pt-4">
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={() => setIsConfirmFinalizeOpen(false)}
+                                    >
+                                        Cancel
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        onClick={confirmFinalize}
+                                        className="bg-blue-600 text-white hover:bg-blue-700"
+                                    >
+                                        Confirm & Stock In
+                                    </Button>
+                                </div>
                             </DialogContent>
                         </Dialog>
                     </div>

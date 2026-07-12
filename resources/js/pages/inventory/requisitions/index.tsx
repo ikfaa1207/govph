@@ -164,6 +164,7 @@ export default function RequisitionsIndex({
     const [isRequestOpen, setIsRequestOpen] = useState(false);
     const [selectedReq, setSelectedReq] = useState<Requisition | null>(null);
     const [isApproveOpen, setIsApproveOpen] = useState(false);
+    const [isRejectOpen, setIsRejectOpen] = useState(false);
     const [isIssueOpen, setIsIssueOpen] = useState(false);
     const [showSummaryPreview, setShowSummaryPreview] = useState(false);
 
@@ -176,6 +177,11 @@ export default function RequisitionsIndex({
     // Form for Dept Head Approval
     const approveForm = useForm({
         items: [] as Array<{ id: number; quantity_approved: number }>,
+    });
+
+    // Form for Dept Head Rejection
+    const rejectForm = useForm({
+        remarks: '',
     });
 
     // Form for Supply Officer Issuance
@@ -238,6 +244,30 @@ export default function RequisitionsIndex({
             },
             onError: () => {
                 toast.error('Failed to approve requisition.');
+            },
+        });
+    };
+
+    const openRejectDialog = (req: Requisition) => {
+        setSelectedReq(req);
+        rejectForm.setData('remarks', '');
+        setIsRejectOpen(true);
+    };
+
+    const handleRejectSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+
+        if (!selectedReq) {
+            return;
+        }
+
+        rejectForm.post(`/inventory/requisitions/${selectedReq.id}/reject`, {
+            onSuccess: () => {
+                setIsRejectOpen(false);
+                toast.success('Requisition has been rejected.');
+            },
+            onError: () => {
+                toast.error('Failed to reject requisition.');
             },
         });
     };
@@ -734,7 +764,19 @@ export default function RequisitionsIndex({
                                                 </CardTitle>
                                                 <Badge
                                                     variant="outline"
-                                                    className="capitalize"
+                                                    className={`capitalize font-medium ${
+                                                        req.status === 'pending_dept_head'
+                                                            ? 'bg-amber-500/10 text-amber-500 border-amber-500/30'
+                                                            : req.status === 'rejected_dept_head'
+                                                            ? 'bg-destructive/10 text-destructive border-destructive/30 animate-pulse'
+                                                            : req.status === 'pending_supply'
+                                                            ? 'bg-blue-500/10 text-blue-500 border-blue-500/30'
+                                                            : req.status === 'issued'
+                                                            ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/30'
+                                                            : req.status === 'partially_issued'
+                                                            ? 'bg-indigo-500/10 text-indigo-500 border-indigo-500/30'
+                                                            : 'bg-muted text-muted-foreground border-muted-foreground/30'
+                                                    }`}
                                                 >
                                                     {req.status.replace(
                                                         /_/g,
@@ -775,18 +817,33 @@ export default function RequisitionsIndex({
                                             {canUserApproveReq(req) &&
                                                 req.status ===
                                                     'pending_dept_head' && (
-                                                    <Button
-                                                        size="sm"
-                                                        className="gap-1 bg-indigo-600 hover:bg-indigo-700"
-                                                        onClick={() =>
-                                                            openApproveDialog(
-                                                                req,
-                                                            )
-                                                        }
-                                                    >
-                                                        <ClipboardCheck className="h-4 w-4" />
-                                                        Approve RIS
-                                                    </Button>
+                                                    <>
+                                                        <Button
+                                                            size="sm"
+                                                            className="gap-1 bg-indigo-600 hover:bg-indigo-700"
+                                                            onClick={() =>
+                                                                openApproveDialog(
+                                                                    req,
+                                                                )
+                                                            }
+                                                        >
+                                                            <ClipboardCheck className="h-4 w-4" />
+                                                            Approve RIS
+                                                        </Button>
+                                                        <Button
+                                                            size="sm"
+                                                            variant="destructive"
+                                                            className="gap-1"
+                                                            onClick={() =>
+                                                                openRejectDialog(
+                                                                    req,
+                                                                )
+                                                            }
+                                                        >
+                                                            <X className="h-4 w-4" />
+                                                            Reject RIS
+                                                        </Button>
+                                                    </>
                                                 )}
                                             {canIssue &&
                                                 (req.status ===
@@ -1275,6 +1332,51 @@ export default function RequisitionsIndex({
                                         className="bg-emerald-600 text-white hover:bg-emerald-700"
                                     >
                                         Confirm Issuance
+                                    </Button>
+                                </div>
+                            </form>
+                        )}
+                    </DialogContent>
+                </Dialog>
+                {/* Dialog: Dept Head Rejection Forms */}
+                <Dialog open={isRejectOpen} onOpenChange={setIsRejectOpen}>
+                    <DialogContent className="flex max-h-[90vh] flex-col sm:max-w-md">
+                        <DialogHeader>
+                            <DialogTitle>Reject Requisition Slip (RIS)</DialogTitle>
+                            <DialogDescription>
+                                Please specify the reason for rejecting this requisition.
+                            </DialogDescription>
+                        </DialogHeader>
+                        {selectedReq && (
+                            <form onSubmit={handleRejectSubmit} className="space-y-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="remarks">Rejection Reason</Label>
+                                    <textarea
+                                        id="remarks"
+                                        className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                                        value={rejectForm.data.remarks}
+                                        onChange={(e) => rejectForm.setData('remarks', e.target.value)}
+                                        placeholder="Enter reason for rejection..."
+                                        required
+                                    />
+                                    {rejectForm.errors.remarks && (
+                                        <p className="text-xs text-destructive">{rejectForm.errors.remarks}</p>
+                                    )}
+                                </div>
+                                <div className="flex justify-end gap-2 border-t pt-4">
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={() => setIsRejectOpen(false)}
+                                    >
+                                        Cancel
+                                    </Button>
+                                    <Button
+                                        type="submit"
+                                        disabled={rejectForm.processing}
+                                        variant="destructive"
+                                    >
+                                        Reject Request
                                     </Button>
                                 </div>
                             </form>

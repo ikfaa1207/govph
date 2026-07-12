@@ -43,6 +43,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('inventory/requisitions', [RequisitionController::class, 'index'])->name('inventory.requisitions.index');
     Route::post('inventory/requisitions', [RequisitionController::class, 'store'])->name('inventory.requisitions.store');
     Route::post('inventory/requisitions/{requisition}/approve', [RequisitionController::class, 'approve'])->name('inventory.requisitions.approve');
+    Route::post('inventory/requisitions/{requisition}/reject', [RequisitionController::class, 'reject'])->name('inventory.requisitions.reject');
     Route::post('inventory/requisitions/{requisition}/issue', [RequisitionController::class, 'issue'])->name('inventory.requisitions.issue');
     Route::get('inventory/requisitions/{requisition}/print', [RequisitionController::class, 'print'])->name('inventory.requisitions.print');
 

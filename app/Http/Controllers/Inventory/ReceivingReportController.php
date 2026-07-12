@@ -15,6 +15,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -93,7 +94,7 @@ class ReceivingReportController extends Controller
 
         // If no specific inspectors are set up yet in the system, we should allow any employee who is NOT a receiver as a fallback for the demo,
         // but since we want strict enforcement, we pass the inspectors list.
-        if ($inspectors->isEmpty()) {
+        if ($inspectors->isEmpty() && app()->environment('local', 'testing')) {
             // Fallback for development/testing if no one has the role yet
             $inspectors = Employee::whereNotIn('id', $receivers->pluck('id'))->get();
         }
@@ -141,7 +142,22 @@ class ReceivingReportController extends Controller
             'items' => ['required', 'array', 'min:1'],
             'items.*.item_id' => ['required', 'exists:items,id'],
             'items.*.quantity_received' => ['required', 'integer', 'min:1'],
-            'items.*.quantity_accepted' => [$status === 'finalized' ? 'required' : 'nullable', 'integer', 'min:0'],
+            'items.*.quantity_accepted' => [
+                $status === 'finalized' ? 'required' : 'nullable',
+                'integer',
+                'min:0',
+                function (string $attribute, mixed $value, \Closure $fail) use ($request) {
+                    preg_match('/items\.(\d+)\.quantity_accepted/', $attribute, $matches);
+                    if (! isset($matches[1])) {
+                        return;
+                    }
+                    $index = $matches[1];
+                    $receivedQty = (int) $request->input("items.{$index}.quantity_received");
+                    if ($value > $receivedQty) {
+                        $fail("The accepted quantity cannot exceed the received quantity ({$receivedQty}).");
+                    }
+                },
+            ],
             'items.*.unit_cost' => ['required', 'numeric', 'min:0'],
             'items.*.batch_number' => ['nullable', 'string', 'max:255'],
             'items.*.expiration_date' => ['nullable', 'date'],
@@ -152,6 +168,8 @@ class ReceivingReportController extends Controller
             $this->createAction->execute($validated);
 
             return redirect()->back()->with('success', $status === 'finalized' ? 'Receiving report created and stock updated successfully.' : 'Receiving report draft saved successfully.');
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (\Exception $e) {
             return redirect()->back()->withErrors(['error' => 'Failed to create receiving report: '.$e->getMessage()]);
         }
@@ -197,7 +215,22 @@ class ReceivingReportController extends Controller
             'items.*.id' => ['nullable', 'integer'], // track existing items
             'items.*.item_id' => ['required', 'exists:items,id'],
             'items.*.quantity_received' => ['required', 'integer', 'min:1'],
-            'items.*.quantity_accepted' => [$status === 'finalized' ? 'required' : 'nullable', 'integer', 'min:0'],
+            'items.*.quantity_accepted' => [
+                $status === 'finalized' ? 'required' : 'nullable',
+                'integer',
+                'min:0',
+                function (string $attribute, mixed $value, \Closure $fail) use ($request) {
+                    preg_match('/items\.(\d+)\.quantity_accepted/', $attribute, $matches);
+                    if (! isset($matches[1])) {
+                        return;
+                    }
+                    $index = $matches[1];
+                    $receivedQty = (int) $request->input("items.{$index}.quantity_received");
+                    if ($value > $receivedQty) {
+                        $fail("The accepted quantity cannot exceed the received quantity ({$receivedQty}).");
+                    }
+                },
+            ],
             'items.*.unit_cost' => ['required', 'numeric', 'min:0'],
             'items.*.batch_number' => ['nullable', 'string', 'max:255'],
             'items.*.expiration_date' => ['nullable', 'date'],
@@ -208,6 +241,8 @@ class ReceivingReportController extends Controller
             $this->updateAction->execute($report, $validated);
 
             return redirect()->back()->with('success', 'Receiving report updated successfully.');
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (\Exception $e) {
             return redirect()->back()->withErrors(['error' => 'Failed to update receiving report: '.$e->getMessage()]);
         }
