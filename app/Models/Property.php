@@ -35,6 +35,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
     'category_id',
     'condition',
     'status',
+    'receiving_report_item_id',
 ])]
 class Property extends Model
 {
@@ -118,5 +119,28 @@ class Property extends Model
     public function activeSubAssignment(): HasOne
     {
         return $this->hasOne(PropertySubAssignment::class)->whereNull('returned_date');
+    }
+
+    /**
+     * Get the semi-expendable classification based on cost (Circular No. 2022-004).
+     */
+    public function getSemiExpendableClassificationAttribute(): ?string
+    {
+        $cost = (float) $this->unit_cost;
+        if ($cost >= 50000.00) {
+            return null;
+        }
+
+        return $cost <= 5000.00 ? 'Low-Valued Semi-Expendable' : 'High-Valued Semi-Expendable';
+    }
+
+    /**
+     * Get the receiving report item line that spawned this property.
+     *
+     * @return BelongsTo<ReceivingReportItem, $this>
+     */
+    public function receivingReportItem(): BelongsTo
+    {
+        return $this->belongsTo(ReceivingReportItem::class);
     }
 }

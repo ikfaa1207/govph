@@ -49,7 +49,7 @@ class PropertyController extends Controller
         $seesGlobalInventory = Gate::allows('warehouse.issue')
             || Gate::allows('audit.view');
 
-        $query = Property::with(['category', 'activeAssignment.assignee', 'activeSubAssignment.assignee']);
+        $query = Property::with(['category', 'activeAssignment.assignee', 'activeSubAssignment.assignee', 'receivingReportItem.receivingReport']);
 
         if (! $seesGlobalInventory && $employee) {
             $query->whereHas('activeAssignment.assignee', function ($q) use ($employee) {
@@ -230,6 +230,8 @@ class PropertyController extends Controller
             'appraised_value' => ['nullable', 'numeric', 'min:0'],
             'proceeds' => ['nullable', 'numeric', 'min:0'],
             'witness_by' => ['required', 'string', 'max:255'],
+            'inspected_by' => ['nullable', 'exists:employees,id'],
+            'jev_reference' => ['nullable', 'string', 'max:255'],
             'approved_by' => [
                 'required',
                 'exists:employees,id',

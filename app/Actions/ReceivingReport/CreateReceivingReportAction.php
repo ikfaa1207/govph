@@ -2,6 +2,7 @@
 
 namespace App\Actions\ReceivingReport;
 
+use App\Actions\Property\SpawnPropertiesFromReceivingReport;
 use App\Models\Item;
 use App\Models\PurchaseOrder;
 use App\Models\ReceivingReport;
@@ -13,7 +14,10 @@ use Illuminate\Validation\ValidationException;
 
 class CreateReceivingReportAction
 {
-    public function __construct(protected ValuationService $valuationService) {}
+    public function __construct(
+        protected ValuationService $valuationService,
+        protected SpawnPropertiesFromReceivingReport $spawnPropertiesAction
+    ) {}
 
     /**
      * Create a new receiving report and record stock-in if finalized.
@@ -92,7 +96,7 @@ class CreateReceivingReportAction
                 $unitCost = (float) $itemData['unit_cost'];
 
                 // Create receiving report item line record
-                ReceivingReportItem::create([
+                $reportLine = ReceivingReportItem::create([
                     'receiving_report_id' => $receivingReport->id,
                     'item_id' => $itemId,
                     'quantity_received' => $receivedQty,
@@ -114,6 +118,8 @@ class CreateReceivingReportAction
                         $receivingReport->id,
                         "Received via IAR #{$receivingReport->iar_number}"
                     );
+
+                    $this->spawnPropertiesAction->execute($reportLine, $acceptedQty);
                 }
             }
 

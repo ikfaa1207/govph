@@ -38,6 +38,8 @@ export function DisposeDialog({ isOpen, onClose, property, employees, current_em
         proceeds: 0,
         approved_by: '',
         witness_by: '',
+        inspected_by: '',
+        jev_reference: '',
     });
 
     const eligibleApprovers = employees.filter((emp) => emp.id !== current_employee?.id);
@@ -180,6 +182,47 @@ export function DisposeDialog({ isOpen, onClose, property, employees, current_em
                                 />
                                 {form.errors.witness_by && (
                                     <p className="text-xs text-destructive">{form.errors.witness_by}</p>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-1">
+                                <Label htmlFor="inspected_by">
+                                    Technical Inspector
+                                </Label>
+                                <Select
+                                    value={String(form.data.inspected_by)}
+                                    onValueChange={(val) => form.setData('inspected_by', val)}
+                                >
+                                    <SelectTrigger className="w-full">
+                                        <SelectValue placeholder="Select Inspector" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {employees.map((emp) => (
+                                            <SelectItem key={emp.id} value={String(emp.id)}>
+                                                {emp.name} ({emp.position || 'Staff'})
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                {form.errors.inspected_by && (
+                                    <p className="text-xs text-destructive">{form.errors.inspected_by}</p>
+                                )}
+                            </div>
+                            <div className="space-y-1">
+                                <Label htmlFor="jev_reference">
+                                    Accounting JEV Reference
+                                </Label>
+                                <Input
+                                    id="jev_reference"
+                                    type="text"
+                                    placeholder="JEV-2026-XXXX"
+                                    value={form.data.jev_reference}
+                                    onChange={(e) => form.setData('jev_reference', e.target.value)}
+                                />
+                                {form.errors.jev_reference && (
+                                    <p className="text-xs text-destructive">{form.errors.jev_reference}</p>
                                 )}
                             </div>
                         </div>

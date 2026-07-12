@@ -83,6 +83,8 @@ export default function PhysicalCountsIndex({ counts, employees }: Props) {
         chairperson_id: '',
         head_of_agency_id: '',
         member_ids: [''],
+        coa_representative_id: '',
+        coa_representative_absent_reason: '',
     });
 
     const addMemberSlot = () => {
@@ -164,7 +166,7 @@ export default function PhysicalCountsIndex({ counts, employees }: Props) {
                         </p>
                     </div>
 
-                    <Can permission="physical-count.create">
+                    <Can permission="reports.view">
                         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
                             <DialogTrigger asChild>
                                 <Button className="gap-2">
@@ -304,6 +306,43 @@ export default function PhysicalCountsIndex({ counts, employees }: Props) {
                                                             form.errors
                                                                 .head_of_agency_id
                                                         }
+                                                    </p>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="space-y-1.5">
+                                                <Label>COA Representative (Optional)</Label>
+                                                <SmartSelect
+                                                    options={employeeOptions}
+                                                    value={form.data.coa_representative_id}
+                                                    onValueChange={(v) => {
+                                                        form.setData('coa_representative_id', v);
+                                                        if (v) {
+                                                            form.setData('coa_representative_absent_reason', '');
+                                                        }
+                                                    }}
+                                                    placeholder="Select COA Representative"
+                                                    searchPlaceholder="Search employees..."
+                                                />
+                                                {form.errors.coa_representative_id && (
+                                                    <p className="text-xs text-destructive">
+                                                        {form.errors.coa_representative_id}
+                                                    </p>
+                                                )}
+                                            </div>
+                                            <div className="space-y-1.5">
+                                                <Label>COA Absent Reason (if unassigned)</Label>
+                                                <Input
+                                                    placeholder="e.g. Schedule conflict"
+                                                    value={form.data.coa_representative_absent_reason}
+                                                    onChange={(e) => form.setData('coa_representative_absent_reason', e.target.value)}
+                                                    disabled={!!form.data.coa_representative_id}
+                                                />
+                                                {form.errors.coa_representative_absent_reason && (
+                                                    <p className="text-xs text-destructive">
+                                                        {form.errors.coa_representative_absent_reason}
                                                     </p>
                                                 )}
                                             </div>

@@ -69,7 +69,15 @@ class PhysicalCountController extends Controller
             'head_of_agency_id' => ['required', 'exists:employees,id'],
             'member_ids' => ['required', 'array', 'min:1'],
             'member_ids.*' => ['exists:employees,id'],
+            'coa_representative_id' => ['nullable', 'exists:employees,id'],
+            'coa_representative_absent_reason' => ['nullable', 'string', 'max:500'],
         ]);
+
+        if (empty($validated['coa_representative_id']) && empty($validated['coa_representative_absent_reason'])) {
+            return redirect()->back()->withErrors([
+                'coa_representative_absent_reason' => 'A COA Representative is required, or a documented reason for their absence must be provided.',
+            ])->withInput();
+        }
 
         $user = Auth::user();
         $employee = $user->getEmployeeOrAbort('Employee profile not found.');
@@ -224,6 +232,12 @@ class PhysicalCountController extends Controller
                         continue;
                     }
 
+                    $remarks = $item->remarks;
+                    $classification = $prop->semi_expendable_classification;
+                    if ($classification) {
+                        $remarks = trim(($remarks ? $remarks.' ' : '').'['.$classification.']');
+                    }
+
                     fputcsv($file, [
                         $prop->category->name ?? 'Unknown',
                         $prop->model.' '.$prop->brand,
@@ -236,7 +250,7 @@ class PhysicalCountController extends Controller
                         number_format((float) $item->shortage_qty * (float) $prop->unit_cost, 2, '.', ''),
                         $item->overage_qty,
                         number_format((float) $item->overage_qty * (float) $prop->unit_cost, 2, '.', ''),
-                        $item->remarks,
+                        $remarks,
                     ]);
                 }
             } else {

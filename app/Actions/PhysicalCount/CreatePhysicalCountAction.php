@@ -31,6 +31,8 @@ class CreatePhysicalCountAction
                 'as_of_date' => $data['as_of_date'],
                 'status' => PhysicalCountStatus::Draft,
                 'created_by' => $creator->id,
+                'coa_representative_id' => $data['coa_representative_id'] ?? null,
+                'coa_representative_absent_reason' => $data['coa_representative_absent_reason'] ?? null,
             ]);
 
             $count->committees()->create([
@@ -42,6 +44,13 @@ class CreatePhysicalCountAction
                 'employee_id' => $data['head_of_agency_id'],
                 'role' => 'head_of_agency',
             ]);
+
+            if (! empty($data['coa_representative_id'])) {
+                $count->committees()->create([
+                    'employee_id' => $data['coa_representative_id'],
+                    'role' => 'coa_representative',
+                ]);
+            }
 
             foreach ($data['member_ids'] as $memberId) {
                 $count->committees()->create([

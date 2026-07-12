@@ -17,6 +17,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'proceeds',
     'witness_by',
     'approved_by',
+    'inspected_by',
+    'jev_reference',
     'status',
 ])]
 class Disposal extends Model
@@ -41,5 +43,15 @@ class Disposal extends Model
     public function approver(): BelongsTo
     {
         return $this->belongsTo(Employee::class, 'approved_by');
+    }
+
+    /**
+     * Get the Technical Inspector who inspected the unserviceable property.
+     *
+     * @return BelongsTo<Employee, $this>
+     */
+    public function inspector(): BelongsTo
+    {
+        return $this->belongsTo(Employee::class, 'inspected_by');
     }
 }

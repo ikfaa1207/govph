@@ -24,6 +24,8 @@ use Illuminate\Support\Carbon;
     'as_of_date',
     'status',
     'created_by',
+    'coa_representative_id',
+    'coa_representative_absent_reason',
 ])]
 class PhysicalCount extends Model
 {
@@ -47,5 +49,10 @@ class PhysicalCount extends Model
     public function committees(): HasMany
     {
         return $this->hasMany(PhysicalCountCommittee::class);
+    }
+
+    public function coaRepresentative(): BelongsTo
+    {
+        return $this->belongsTo(Employee::class, 'coa_representative_id');
     }
 }

@@ -63,6 +63,7 @@ interface PhysicalCount {
     creator?: {
         name: string;
     };
+    coa_representative_absent_reason?: string | null;
     committees?: {
         id: number;
         employee_id: number;
@@ -352,6 +353,11 @@ export default function PhysicalCountShow({
                                 {physicalCount.status.toUpperCase()}
                             </span>
                         </p>
+                        {physicalCount.coa_representative_absent_reason && (
+                            <p className="mt-2 text-xs text-amber-600 dark:text-amber-400 bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/50 dark:border-amber-900/30 px-3 py-1.5 rounded-md inline-block">
+                                <strong>COA Audit Representative Absent:</strong> {physicalCount.coa_representative_absent_reason}
+                            </p>
+                        )}
                     </div>
 
                     {Object.keys(form.errors).length > 0 && (

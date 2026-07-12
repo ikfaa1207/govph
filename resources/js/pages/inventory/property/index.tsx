@@ -67,6 +67,17 @@ export interface Property {
         };
         non_system_name?: string | null;
     };
+    receiving_report_item_id?: number | null;
+    receiving_report_item?: {
+        id: number;
+        receiving_report?: {
+            id: number;
+            iar_number: string | null;
+            purchase_order?: {
+                po_number: string;
+            };
+        };
+    };
 }
 
 interface PropertyIndexProps {

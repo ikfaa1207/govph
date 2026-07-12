@@ -47,6 +47,8 @@ class DisposeProperty
                 'proceeds' => $data['proceeds'] ?? 0.00,
                 'witness_by' => $data['witness_by'],
                 'approved_by' => $data['approved_by'],
+                'inspected_by' => $data['inspected_by'] ?? null,
+                'jev_reference' => $data['jev_reference'] ?? null,
                 'status' => 'completed',
             ]);
 

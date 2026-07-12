@@ -40,6 +40,7 @@ interface DashboardProps {
     recentIssuances: Array<any>;
     recentReceiving: Array<any>;
     pendingRequests: Array<any>;
+    complianceAlerts?: Array<{ type: string; title: string; message: string; }>;
 }
 
 export default function Dashboard({
@@ -47,6 +48,7 @@ export default function Dashboard({
     recentIssuances,
     recentReceiving,
     pendingRequests,
+    complianceAlerts = [],
 }: DashboardProps) {
     const breadcrumbs = [{ title: 'GIMS Dashboard', href: '/dashboard' }];
     setLayoutProps({ breadcrumbs });
@@ -67,6 +69,23 @@ export default function Dashboard({
                         </p>
                     </div>
                 </div>
+
+                {complianceAlerts.length > 0 && (
+                    <div className="space-y-4">
+                        {complianceAlerts.map((alert, idx) => (
+                            <div
+                                key={idx}
+                                className="flex items-start gap-3 rounded-lg border border-amber-200/60 bg-amber-50/50 p-4 text-amber-900 dark:border-amber-900/30 dark:bg-amber-950/20 dark:text-amber-200"
+                            >
+                                <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
+                                <div>
+                                    <h5 className="font-semibold text-sm">{alert.title}</h5>
+                                    <p className="text-xs mt-1 text-amber-800 dark:text-amber-300">{alert.message}</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
 
                 {/* Metrics Cards Grid */}
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

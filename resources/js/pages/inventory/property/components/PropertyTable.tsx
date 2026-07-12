@@ -204,6 +204,15 @@ export function PropertyTable({
                                 >
                                     S/N: {prop.serial_number}
                                 </div>
+                                {prop.receiving_report_item?.receiving_report && (
+                                    <div
+                                        className="mt-0.5 truncate text-[10px] text-indigo-600 dark:text-indigo-400 font-medium"
+                                        title={`IAR: ${prop.receiving_report_item.receiving_report.iar_number || 'N/A'}`}
+                                    >
+                                        IAR: {prop.receiving_report_item.receiving_report.iar_number} 
+                                        {prop.receiving_report_item.receiving_report.purchase_order?.po_number && ` (PO: ${prop.receiving_report_item.receiving_report.purchase_order.po_number})`}
+                                    </div>
+                                )}
                             </TableCell>
                             <TableCell className="text-right font-medium whitespace-nowrap">
                                 {formatCurrency(prop.unit_cost)}

@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers\Inventory;
 
+use App\Enums\PhysicalCountStatus;
 use App\Http\Controllers\Controller;
 use App\Models\DepartmentItem;
 use App\Models\Issuance;
 use App\Models\Item;
+use App\Models\PhysicalCount;
 use App\Models\Property;
 use App\Models\ReceivingReport;
 use App\Models\Requisition;
@@ -106,6 +108,22 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
+        $complianceAlerts = [];
+        $currentYear = (int) date('Y');
+        $prevYearDec31 = ($currentYear - 1).'-12-31';
+        $hasPrevYearCount = PhysicalCount::where('as_of_date', $prevYearDec31)
+            ->where('status', PhysicalCountStatus::Finalized)
+            ->exists();
+
+        $currentMonth = (int) date('n');
+        if (! $hasPrevYearCount && in_array($currentMonth, [11, 12, 1, 2], true)) {
+            $complianceAlerts[] = [
+                'type' => 'warning',
+                'title' => 'Statutory Compliance Deadline',
+                'message' => 'The Annual Physical Count (RPCPPE & RPCI) as of December 31 is due for submission by January 31. No finalized count for '.($currentYear - 1).' was found.',
+            ];
+        }
+
         return Inertia::render('inventory/dashboard', [
             'stats' => [
                 'inventoryType' => $seesGlobalInventory || ! $employee ? 'Central Supply' : 'Department',
@@ -120,6 +138,7 @@ class DashboardController extends Controller
             'recentIssuances' => $recentIssuances,
             'recentReceiving' => $recentReceiving,
             'pendingRequests' => $pendingRequests,
+            'complianceAlerts' => $complianceAlerts,
         ]);
     }
 }

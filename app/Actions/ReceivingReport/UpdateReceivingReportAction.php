@@ -2,7 +2,9 @@
 
 namespace App\Actions\ReceivingReport;
 
+use App\Actions\Property\SpawnPropertiesFromReceivingReport;
 use App\Models\Item;
+use App\Models\Property;
 use App\Models\PurchaseOrder;
 use App\Models\ReceivingReport;
 use App\Models\ReceivingReportItem;
@@ -13,7 +15,10 @@ use Illuminate\Validation\ValidationException;
 
 class UpdateReceivingReportAction
 {
-    public function __construct(protected ValuationService $valuationService) {}
+    public function __construct(
+        protected ValuationService $valuationService,
+        protected SpawnPropertiesFromReceivingReport $spawnPropertiesAction
+    ) {}
 
     /**
      * Update an existing receiving report and adjust stock inventory.
@@ -95,6 +100,7 @@ class UpdateReceivingReportAction
             // Handle deleted items: reverse stock and delete (only if old state was finalized)
             foreach ($report->items as $existingItem) {
                 if (! in_array($existingItem->id, $payloadItemIds)) {
+                    Property::where('receiving_report_item_id', $existingItem->id)->delete();
                     if ($oldStatus === 'finalized' && $existingItem->quantity_accepted > 0) {
                         $existingItemId = (int) $existingItem->item_id;
                         /** @var Item $item */
@@ -172,9 +178,11 @@ class UpdateReceivingReportAction
                         'rejection_reason' => $itemData['rejection_reason'] ?? null,
                     ]);
 
+                    $this->spawnPropertiesAction->execute($existingLine, $status === 'finalized' ? $acceptedQty : 0);
+
                 } else {
                     // Creating new item line
-                    ReceivingReportItem::create([
+                    $newLine = ReceivingReportItem::create([
                         'receiving_report_id' => $report->id,
                         'item_id' => $itemId,
                         'quantity_received' => $receivedQty,
@@ -189,6 +197,8 @@ class UpdateReceivingReportAction
                     if ($status === 'finalized' && $acceptedQty > 0) {
                         $needsRecord = true;
                     }
+
+                    $this->spawnPropertiesAction->execute($newLine, $status === 'finalized' ? $acceptedQty : 0);
                 }
 
                 // Apply new stock-in only if needed

@@ -7,6 +7,7 @@ use App\Models\Item;
 use App\Models\Location;
 use App\Models\Office;
 use App\Models\Permission;
+use App\Models\Property;
 use App\Models\PurchaseOrder;
 use App\Models\ReceivingReport;
 use App\Models\ReceivingReportItem;
@@ -739,4 +740,129 @@ test('updating finalized report without changing stock quantity or cost does not
 
     // Count transactions again. Should be identical since quantity/cost did not change.
     expect(StockTransaction::count())->toBe($initialCount);
+});
+
+test('finalizing IAR with PPE item auto spawns Property records', function () {
+    $user = User::factory()->create();
+    $user->givePermissionTo('warehouse.receive');
+
+    $office = Office::create(['code' => 'O-1', 'name' => 'Office 1']);
+    $dept = Department::create(['office_id' => $office->id, 'code' => 'D-1', 'name' => 'Dept 1']);
+
+    $employee = Employee::create([
+        'user_id' => $user->id,
+        'employee_id' => 'EMP-001',
+        'name' => 'Staff 1',
+        'position' => 'Receiver',
+        'office_id' => $office->id,
+        'department_id' => $dept->id,
+    ]);
+
+    $employee2 = Employee::create([
+        'employee_id' => 'EMP-002',
+        'name' => 'Staff 2',
+        'position' => 'Inspector',
+        'office_id' => $office->id,
+        'department_id' => $dept->id,
+    ]);
+
+    $supplier = Supplier::create([
+        'name' => 'Test Supplier',
+        'contact_person' => 'Supplier Contact',
+        'contact_number' => '12345678',
+        'tin' => '111-222',
+        'address' => 'Supplier Address',
+    ]);
+
+    $warehouse = Warehouse::create([
+        'name' => 'Main Warehouse',
+        'code' => 'WH-MAIN',
+        'address' => 'Warehouse Address',
+    ]);
+
+    $location = Location::create([
+        'warehouse_id' => $warehouse->id,
+        'name' => 'Aisle A',
+        'code' => 'LOC-A',
+    ]);
+
+    $category = Category::create([
+        'name' => 'IT Equipment',
+        'code' => 'IT-EQ',
+        'is_ppe' => true,
+    ]);
+
+    $unit = Unit::create([
+        'name' => 'Unit',
+        'abbreviation' => 'pcs',
+    ]);
+
+    $item = Item::create([
+        'item_code' => 'ITM-LAPTOP',
+        'name' => 'ASUS Laptop',
+        'category_id' => $category->id,
+        'unit_id' => $unit->id,
+        'unit_cost' => 45000.00,
+        'reorder_level' => 5,
+        'maximum_stock' => 50,
+        'status' => 'active',
+    ]);
+
+    // 1. Create a finalized report with 3 accepted laptops
+    $response = $this->actingAs($user)->post(route('inventory.receiving.store'), [
+        'status' => 'finalized',
+        'po_number' => 'PO-PPE-123',
+        'supplier_id' => $supplier->id,
+        'po_date' => '2026-06-01',
+        'iar_number' => 'IAR-PPE-123',
+        'invoice_number' => 'INV-PPE-123',
+        'delivery_receipt_number' => 'DR-PPE-123',
+        'received_date' => '2026-06-29',
+        'received_by' => $employee->id,
+        'inspected_by' => $employee2->id,
+        'items' => [
+            [
+                'item_id' => $item->id,
+                'quantity_received' => 3,
+                'quantity_accepted' => 3,
+                'unit_cost' => 45000.00,
+            ],
+        ],
+    ]);
+
+    $response->assertSessionHasNoErrors();
+    $report = ReceivingReport::where('iar_number', 'IAR-PPE-123')->first();
+    $reportItem = $report->items->first();
+
+    // Verify 3 Property records exist and link to this line item
+    $properties = Property::where('receiving_report_item_id', $reportItem->id)->get();
+    expect($properties->count())->toBe(3);
+    expect($properties->first()->unit_cost)->toBe('45000.00');
+    expect($properties->first()->model)->toBe('ASUS Laptop');
+
+    // 2. Edit IAR to reduce accepted count to 2
+    $response2 = $this->actingAs($user)->put(route('inventory.receiving.update', $report->id), [
+        'status' => 'finalized',
+        'po_number' => 'PO-PPE-123',
+        'supplier_id' => $supplier->id,
+        'po_date' => '2026-06-01',
+        'iar_number' => 'IAR-PPE-123',
+        'invoice_number' => 'INV-PPE-123',
+        'delivery_receipt_number' => 'DR-PPE-123',
+        'received_date' => '2026-06-29',
+        'received_by' => $employee->id,
+        'inspected_by' => $employee2->id,
+        'items' => [
+            [
+                'id' => $reportItem->id,
+                'item_id' => $item->id,
+                'quantity_received' => 3,
+                'quantity_accepted' => 2,
+                'unit_cost' => 45000.00,
+            ],
+        ],
+    ]);
+
+    $response2->assertSessionHasNoErrors();
+    expect(Property::where('receiving_report_item_id', $reportItem->id)->count())->toBe(2);
 });
