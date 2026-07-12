@@ -1,6 +1,7 @@
 import { Head, useForm, router, setLayoutProps } from '@inertiajs/react';
 import { Plus, Edit2, Copy, Trash2, Users, MoreHorizontal, Shield } from 'lucide-react';
 import { useState } from 'react';
+import { RowActionsMenu, RowAction } from '@/components/row-actions-menu';
 import { toast } from 'sonner';
 import {
     Accordion,
@@ -479,59 +480,27 @@ export default function RolesIndex({ roles, permissions }: RolesIndexProps) {
                                             </Badge>
                                         </TableCell>
                                         <TableCell className="text-right">
-                                            <DropdownMenu>
-                                                <DropdownMenuTrigger asChild>
-                                                    <Button
-                                                        variant="ghost"
-                                                        className="h-8 w-8 p-0"
-                                                    >
-                                                        <span className="sr-only">
-                                                            Open menu
-                                                        </span>
-                                                        <MoreHorizontal className="h-4 w-4" />
-                                                    </Button>
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end">
-                                                    <DropdownMenuLabel>
-                                                        Actions
-                                                    </DropdownMenuLabel>
-                                                    <DropdownMenuItem
-                                                        onClick={() =>
-                                                            openEditDialog(role)
-                                                        }
-                                                    >
-                                                        <Edit2 className="mr-2 h-4 w-4" />{' '}
-                                                        Edit Permissions
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuItem
-                                                        onClick={() =>
-                                                            openCloneDialog(
-                                                                role,
-                                                            )
-                                                        }
-                                                    >
-                                                        <Copy className="mr-2 h-4 w-4" />{' '}
-                                                        Clone Role
-                                                    </DropdownMenuItem>
-                                                    {role.users.length ===
-                                                        0 && (
-                                                        <>
-                                                            <DropdownMenuSeparator />
-                                                            <DropdownMenuItem
-                                                                className="text-destructive focus:text-destructive"
-                                                                onClick={() =>
-                                                                    handleDeleteRole(
-                                                                        role,
-                                                                    )
-                                                                }
-                                                            >
-                                                                <Trash2 className="mr-2 h-4 w-4" />{' '}
-                                                                Delete Role
-                                                            </DropdownMenuItem>
-                                                        </>
-                                                    )}
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
+                                            <RowActionsMenu
+                                                actions={[
+                                                    {
+                                                        label: 'Edit Permissions',
+                                                        icon: Edit2,
+                                                        onClick: () => openEditDialog(role),
+                                                    },
+                                                    {
+                                                        label: 'Clone Role',
+                                                        icon: Copy,
+                                                        onClick: () => openCloneDialog(role),
+                                                    },
+                                                    {
+                                                        label: 'Delete Role',
+                                                        icon: Trash2,
+                                                        onClick: () => handleDeleteRole(role),
+                                                        show: role.users.length === 0,
+                                                        destructive: true,
+                                                    },
+                                                ]}
+                                            />
                                         </TableCell>
                                     </TableRow>
                                 ))}

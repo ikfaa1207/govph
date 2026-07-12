@@ -1,5 +1,6 @@
 import { Clipboard, MoreHorizontal, UserCheck, RefreshCw, Trash2, Check, User, AlertTriangle } from 'lucide-react';
 import { Can } from '@/components/can';
+import { RowActionsMenu, RowAction } from '@/components/row-actions-menu';
 import { SimplePagination } from '@/components/simple-pagination';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -260,66 +261,52 @@ export function PropertyTable({
                             </TableCell>
                             {canManage && (
                                 <TableCell className="text-right whitespace-nowrap">
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button variant="ghost" className="h-8 w-8 p-0">
-                                                <span className="sr-only">Open menu</span>
-                                                <MoreHorizontal className="h-4 w-4" />
-                                            </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end">
-                                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                            <Can permission="property.assign">
-                                                {prop.status === 'available' && (
-                                                    <DropdownMenuItem onClick={() => openAssignModal(prop)}>
-                                                        <UserCheck className="mr-2 h-4 w-4 text-sky-500" />{' '}
-                                                        Assign Equipment
-                                                    </DropdownMenuItem>
-                                                )}
-                                            </Can>
-                                            <Can permission="property.transfer">
-                                                {(prop.status === 'assigned' ||
-                                                    prop.status === 'transferred') && (
-                                                    <DropdownMenuItem onClick={() => openTransferModal(prop)}>
-                                                        <RefreshCw className="mr-2 h-4 w-4 text-amber-500" />{' '}
-                                                        Transfer Property (PTR)
-                                                    </DropdownMenuItem>
-                                                )}
-                                            </Can>
-                                            {(canManage || isDeptHead) && (
-                                                <>
-                                                    {(prop.status === 'assigned' ||
+                                    <RowActionsMenu
+                                        actions={[
+                                            {
+                                                label: 'Assign Equipment',
+                                                icon: UserCheck,
+                                                onClick: () => openAssignModal(prop),
+                                                permission: 'property.assign',
+                                                show: prop.status === 'available',
+                                            },
+                                            {
+                                                label: 'Transfer Property (PTR)',
+                                                icon: RefreshCw,
+                                                onClick: () => openTransferModal(prop),
+                                                permission: 'property.transfer',
+                                                show:
+                                                    prop.status === 'assigned' ||
+                                                    prop.status === 'transferred',
+                                            },
+                                            {
+                                                label: 'Issue Memo Receipt (MR)',
+                                                icon: UserCheck,
+                                                onClick: () => openSubAssignModal(prop),
+                                                show:
+                                                    (canManage || isDeptHead) &&
+                                                    (prop.status === 'assigned' ||
                                                         prop.status === 'transferred') &&
-                                                        !prop.active_sub_assignment && (
-                                                            <DropdownMenuItem onClick={() => openSubAssignModal(prop)}>
-                                                                <UserCheck className="mr-2 h-4 w-4 text-blue-500" />{' '}
-                                                                Issue Memo Receipt (MR)
-                                                            </DropdownMenuItem>
-                                                        )}
-                                                    {prop.active_sub_assignment && (
-                                                        <DropdownMenuItem onClick={() => openReturnSubAssignModal(prop)}>
-                                                            <RefreshCw className="mr-2 h-4 w-4 text-emerald-500" />{' '}
-                                                            Return Memo Receipt
-                                                        </DropdownMenuItem>
-                                                    )}
-                                                </>
-                                            )}
-                                            <Can permission="property.dispose">
-                                                {prop.status !== 'disposed' && (
-                                                    <>
-                                                        <DropdownMenuSeparator />
-                                                        <DropdownMenuItem
-                                                            className="text-destructive focus:text-destructive"
-                                                            onClick={() => openDisposeModal(prop)}
-                                                        >
-                                                            <Trash2 className="mr-2 h-4 w-4" />{' '}
-                                                            Dispose Property
-                                                        </DropdownMenuItem>
-                                                    </>
-                                                )}
-                                            </Can>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
+                                                    !prop.active_sub_assignment,
+                                            },
+                                            {
+                                                label: 'Return Memo Receipt',
+                                                icon: RefreshCw,
+                                                onClick: () => openReturnSubAssignModal(prop),
+                                                show:
+                                                    (canManage || isDeptHead) &&
+                                                    !!prop.active_sub_assignment,
+                                            },
+                                            {
+                                                label: 'Dispose Property',
+                                                icon: Trash2,
+                                                onClick: () => openDisposeModal(prop),
+                                                permission: 'property.dispose',
+                                                show: prop.status !== 'disposed',
+                                                destructive: true,
+                                            },
+                                        ]}
+                                    />
                                 </TableCell>
                             )}
                         </TableRow>

@@ -18,6 +18,7 @@ import {
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { SimplePagination } from '@/components/simple-pagination';
+import { RowActionsMenu, RowAction } from '@/components/row-actions-menu';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -1204,60 +1205,25 @@ export default function ReceivingIndex({
                                                     {report.receiver_name || 'N/A'}
                                                 </TableCell>
                                                 <TableCell className="text-right">
-                                                    <DropdownMenu>
-                                                        <DropdownMenuTrigger
-                                                            asChild
-                                                        >
-                                                            <Button
-                                                                variant="ghost"
-                                                                className="h-8 w-8 p-0"
-                                                            >
-                                                                <span className="sr-only">
-                                                                    Open menu
-                                                                </span>
-                                                                <MoreHorizontal className="h-4 w-4" />
-                                                            </Button>
-                                                        </DropdownMenuTrigger>
-                                                        <DropdownMenuContent align="end">
-                                                            <DropdownMenuLabel>
-                                                                Actions
-                                                            </DropdownMenuLabel>
-                                                            <DropdownMenuSeparator />
-                                                            <DropdownMenuItem
-                                                                onClick={() =>
-                                                                    openDetails(
-                                                                        report,
-                                                                    )
-                                                                }
-                                                                className="cursor-pointer"
-                                                            >
-                                                                <Eye className="mr-2 h-4 w-4 text-muted-foreground" />
-                                                                View Details
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem
-                                                                onClick={() =>
-                                                                    openEdit(
-                                                                        report,
-                                                                    )
-                                                                }
-                                                                className="cursor-pointer"
-                                                            >
-                                                                <Pencil className="mr-2 h-4 w-4 text-muted-foreground" />
-                                                                Edit Report
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem
-                                                                onClick={() =>
-                                                                    openHistory(
-                                                                        report,
-                                                                    )
-                                                                }
-                                                                className="cursor-pointer"
-                                                            >
-                                                                <History className="mr-2 h-4 w-4 text-muted-foreground" />
-                                                                View History
-                                                            </DropdownMenuItem>
-                                                        </DropdownMenuContent>
-                                                    </DropdownMenu>
+                                                        <RowActionsMenu
+                                                            actions={[
+                                                                {
+                                                                    label: 'View Details',
+                                                                    icon: Eye,
+                                                                    onClick: () => openDetails(report),
+                                                                },
+                                                                {
+                                                                    label: 'Edit Report',
+                                                                    icon: Pencil,
+                                                                    onClick: () => openEdit(report),
+                                                                },
+                                                                {
+                                                                    label: 'View History',
+                                                                    icon: History,
+                                                                    onClick: () => openHistory(report),
+                                                                },
+                                                            ]}
+                                                        />
                                                 </TableCell>
                                             </TableRow>
                                         ))}

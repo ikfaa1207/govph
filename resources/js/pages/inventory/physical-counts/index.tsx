@@ -29,6 +29,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { usePermissions } from '@/hooks/use-permissions';
+import { RowActionsMenu, RowAction } from '@/components/row-actions-menu';
 import type { BreadcrumbItem } from '@/types';
 
 interface PhysicalCount {
@@ -466,54 +467,29 @@ export default function PhysicalCountsIndex({ counts, employees }: Props) {
                                                 ).toLocaleString()}
                                             </TableCell>
                                             <TableCell className="text-right">
-                                                <div className="flex justify-end gap-2">
-                                                    {canDelete && (
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            className="h-8 w-8 shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                                                            onClick={() =>
-                                                                setCountToDelete(
-                                                                    count,
-                                                                )
-                                                            }
-                                                        >
-                                                            <Trash2 className="h-4 w-4" />
-                                                            <span className="sr-only">
-                                                                Delete
-                                                            </span>
-                                                        </Button>
-                                                    )}
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        asChild
-                                                    >
-                                                        <Link
-                                                            href={`/inventory/physical-counts/${count.id}`}
-                                                        >
-                                                            <ListChecks className="mr-2 h-4 w-4" />
-                                                            View / Edit
-                                                        </Link>
-                                                    </Button>
-                                                    {count.status ===
-                                                        'finalized' && (
-                                                        <Button
-                                                            variant="secondary"
-                                                            size="sm"
-                                                            asChild
-                                                        >
-                                                            <a
-                                                                href={`/inventory/physical-counts/${count.id}/export`}
-                                                                target="_blank"
-                                                                rel="noopener noreferrer"
-                                                            >
-                                                                <FileSpreadsheet className="mr-2 h-4 w-4 text-emerald-600" />
-                                                                Export CSV
-                                                            </a>
-                                                        </Button>
-                                                    )}
-                                                </div>
+                                                <RowActionsMenu
+                                                    actions={[
+                                                        {
+                                                            label: 'View / Edit',
+                                                            icon: ListChecks,
+                                                            href: `/inventory/physical-counts/${count.id}`,
+                                                        },
+                                                        {
+                                                            label: 'Export CSV',
+                                                            icon: FileSpreadsheet,
+                                                            href: `/inventory/physical-counts/${count.id}/export`,
+                                                            external: true,
+                                                            show: count.status === 'finalized',
+                                                        },
+                                                        {
+                                                            label: 'Delete',
+                                                            icon: Trash2,
+                                                            onClick: () => setCountToDelete(count),
+                                                            show: canDelete,
+                                                            destructive: true,
+                                                        },
+                                                    ]}
+                                                />
                                             </TableCell>
                                         </TableRow>
                                     );

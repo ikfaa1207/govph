@@ -11,10 +11,13 @@ import {
     AlertOctagon,
     PhilippinePeso,
     Clock,
+    Pencil,
+    Trash2,
 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Can } from '@/components/can';
+import { RowActionsMenu, RowAction } from '@/components/row-actions-menu';
 import { SimplePagination } from '@/components/simple-pagination';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -1629,68 +1632,28 @@ export default function ItemsIndex({
                                                         {item.location}
                                                     </TableCell>
                                                     <TableCell className="text-right whitespace-nowrap">
-                                                        <DropdownMenu>
-                                                            <DropdownMenuTrigger
-                                                                asChild
-                                                            >
-                                                                <Button
-                                                                    variant="ghost"
-                                                                    className="h-8 w-8 p-0"
-                                                                >
-                                                                    <span className="sr-only">
-                                                                        Open
-                                                                        menu
-                                                                    </span>
-                                                                    <MoreHorizontal className="h-4 w-4" />
-                                                                </Button>
-                                                            </DropdownMenuTrigger>
-                                                            <DropdownMenuContent align="end">
-                                                                <DropdownMenuLabel>
-                                                                    Actions
-                                                                </DropdownMenuLabel>
-                                                                <Can permission="inventory.update">
-                                                                    <DropdownMenuItem
-                                                                        onClick={() =>
-                                                                            handleEditItem(
-                                                                                item,
-                                                                            )
-                                                                        }
-                                                                        className="cursor-pointer"
-                                                                    >
-                                                                        <Eye className="mr-2 h-4 w-4 text-emerald-500" />{' '}
-                                                                        Edit
-                                                                        Details
-                                                                    </DropdownMenuItem>
-                                                                </Can>
-                                                                <DropdownMenuItem
-                                                                    asChild
-                                                                >
-                                                                    <Link
-                                                                        href={`/inventory/items/${item.id}`}
-                                                                        className="cursor-pointer"
-                                                                    >
-                                                                        <Eye className="mr-2 h-4 w-4 text-sky-500" />{' '}
-                                                                        View
-                                                                        Ledger
-                                                                        Card
-                                                                    </Link>
-                                                                </DropdownMenuItem>
-                                                                <Can permission="inventory.delete">
-                                                                    <DropdownMenuItem
-                                                                        onClick={() =>
-                                                                            handleArchiveItem(
-                                                                                item,
-                                                                            )
-                                                                        }
-                                                                        className="cursor-pointer text-destructive focus:bg-destructive/10 focus:text-destructive"
-                                                                    >
-                                                                        <Eye className="mr-2 h-4 w-4" />{' '}
-                                                                        Archive
-                                                                        Item
-                                                                    </DropdownMenuItem>
-                                                                </Can>
-                                                            </DropdownMenuContent>
-                                                        </DropdownMenu>
+                                                        <RowActionsMenu
+                                                            actions={[
+                                                                {
+                                                                    label: 'Edit Details',
+                                                                    icon: Pencil,
+                                                                    onClick: () => handleEditItem(item),
+                                                                    permission: 'inventory.update',
+                                                                },
+                                                                {
+                                                                    label: 'View Ledger Card',
+                                                                    icon: Eye,
+                                                                    href: `/inventory/items/${item.id}`,
+                                                                },
+                                                                {
+                                                                    label: 'Archive Item',
+                                                                    icon: Trash2,
+                                                                    onClick: () => handleArchiveItem(item),
+                                                                    permission: 'inventory.delete',
+                                                                    destructive: true,
+                                                                },
+                                                            ]}
+                                                        />
                                                     </TableCell>
                                                 </TableRow>
                                             );

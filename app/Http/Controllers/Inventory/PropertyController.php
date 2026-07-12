@@ -15,6 +15,7 @@ use App\Models\Employee;
 use App\Models\Office;
 use App\Models\Property;
 use App\Models\PropertySubAssignment;
+use App\Services\Audit\AuditLogger;
 use App\Services\DocumentSequenceService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
