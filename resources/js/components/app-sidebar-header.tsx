@@ -47,7 +47,10 @@ export function AppSidebarHeader({
             return 'bg-emerald-500/10 text-emerald-700 border-emerald-500/25 dark:text-emerald-400 dark:bg-emerald-500/15';
         }
 
-        if (normalized.includes('officer') || normalized.includes('custodian')) {
+        if (
+            normalized.includes('officer') ||
+            normalized.includes('custodian')
+        ) {
             return 'bg-indigo-500/10 text-indigo-700 border-indigo-500/25 dark:text-indigo-400 dark:bg-indigo-500/15';
         }
 
@@ -62,21 +65,24 @@ export function AppSidebarHeader({
             </div>
 
             {/* GovPH Global Agency Header Bar */}
-            <div className="hidden md:flex items-center gap-4 text-xs">
-
-
+            <div className="hidden items-center gap-4 text-xs md:flex">
                 {/* Localized Live Clock */}
                 {time && (
-                    <div className="flex items-center gap-1.5 text-muted-foreground font-medium border-r border-border pr-4 h-5">
-                        <Clock className="h-3.5 w-3.5 text-neutral-400 shrink-0" />
-                        <span className="font-mono text-[11px] whitespace-nowrap">{time} PHT</span>
+                    <div className="flex h-5 items-center gap-1.5 border-r border-border pr-4 font-medium text-muted-foreground">
+                        <Clock className="h-3.5 w-3.5 shrink-0 text-neutral-400" />
+                        <span className="font-mono text-[11px] whitespace-nowrap">
+                            {time} PHT
+                        </span>
                     </div>
                 )}
 
                 {/* Security Clearance Badge */}
                 <div className="flex items-center gap-1.5">
-                    <Shield className="h-3.5 w-3.5 text-neutral-400 shrink-0" />
-                    <Badge variant="outline" className={`text-[10px] font-bold px-2 py-0.5 rounded-full capitalize border ${getRoleBadgeStyles(primaryRole)}`}>
+                    <Shield className="h-3.5 w-3.5 shrink-0 text-neutral-400" />
+                    <Badge
+                        variant="outline"
+                        className={`rounded-full border px-2 py-0.5 text-[10px] font-bold capitalize ${getRoleBadgeStyles(primaryRole)}`}
+                    >
                         {primaryRole}
                     </Badge>
                 </div>

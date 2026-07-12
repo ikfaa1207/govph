@@ -18,6 +18,7 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
     'received_by',
     'inspected_by',
     'remarks',
+    'status',
 ])]
 class ReceivingReport extends Model
 {

@@ -1,4 +1,3 @@
-
 import {
     Pagination,
     PaginationContent,
@@ -20,8 +19,8 @@ interface PaginationProps {
 
 export function SimplePagination({ links, className }: PaginationProps) {
     if (!links || links.length <= 3) {
-return null;
-} // Only prev, next, and 1 page means no pagination needed.
+        return null;
+    } // Only prev, next, and 1 page means no pagination needed.
 
     return (
         <Pagination className={className}>
@@ -30,14 +29,17 @@ return null;
                     const isPrevious = link.label.includes('Previous');
                     const isNext = link.label.includes('Next');
                     const isEllipsis = link.label === '...';
-                    
+
                     if (isPrevious) {
                         return (
                             <PaginationItem key={index}>
                                 {link.url ? (
                                     <PaginationPrevious href={link.url} />
                                 ) : (
-                                    <PaginationPrevious href="#" className="pointer-events-none opacity-50" />
+                                    <PaginationPrevious
+                                        href="#"
+                                        className="pointer-events-none opacity-50"
+                                    />
                                 )}
                             </PaginationItem>
                         );
@@ -49,7 +51,10 @@ return null;
                                 {link.url ? (
                                     <PaginationNext href={link.url} />
                                 ) : (
-                                    <PaginationNext href="#" className="pointer-events-none opacity-50" />
+                                    <PaginationNext
+                                        href="#"
+                                        className="pointer-events-none opacity-50"
+                                    />
                                 )}
                             </PaginationItem>
                         );

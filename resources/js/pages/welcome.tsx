@@ -35,39 +35,50 @@ export default function Welcome() {
                             <h1 className="mb-2 text-xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
                                 Government Inventory Management System
                             </h1>
-                            <p className="mb-6 text-sm text-[#706f6c] dark:text-[#A1A09A] leading-relaxed">
-                                GIMS provides a secure, COA-compliant tracking environment for government properties, supplies, and asset distributions. 
+                            <p className="mb-6 text-sm leading-relaxed text-[#706f6c] dark:text-[#A1A09A]">
+                                GIMS provides a secure, COA-compliant tracking
+                                environment for government properties, supplies,
+                                and asset distributions.
                             </p>
                             <ul className="mb-8 flex flex-col space-y-3">
                                 <li className="flex items-center gap-3 text-neutral-700 dark:text-neutral-300">
                                     <span className="flex h-5 w-5 items-center justify-center rounded-full bg-indigo-50 dark:bg-indigo-950/50">
                                         <span className="h-2 w-2 rounded-full bg-indigo-600 dark:bg-indigo-400" />
                                     </span>
-                                    <span>Track property accountability and PPE ledgers</span>
+                                    <span>
+                                        Track property accountability and PPE
+                                        ledgers
+                                    </span>
                                 </li>
                                 <li className="flex items-center gap-3 text-neutral-700 dark:text-neutral-300">
                                     <span className="flex h-5 w-5 items-center justify-center rounded-full bg-indigo-50 dark:bg-indigo-950/50">
                                         <span className="h-2 w-2 rounded-full bg-indigo-600 dark:bg-indigo-400" />
                                     </span>
-                                    <span>Process Requisition and Issue Slips (RIS)</span>
+                                    <span>
+                                        Process Requisition and Issue Slips
+                                        (RIS)
+                                    </span>
                                 </li>
                                 <li className="flex items-center gap-3 text-neutral-700 dark:text-neutral-300">
                                     <span className="flex h-5 w-5 items-center justify-center rounded-full bg-indigo-50 dark:bg-indigo-950/50">
                                         <span className="h-2 w-2 rounded-full bg-indigo-600 dark:bg-indigo-400" />
                                     </span>
-                                    <span>Generate COA compliance reports and audits</span>
+                                    <span>
+                                        Generate COA compliance reports and
+                                        audits
+                                    </span>
                                 </li>
                             </ul>
                             <div className="flex gap-3">
                                 <Link
                                     href={login()}
-                                    className="inline-block rounded-md border border-transparent bg-indigo-600 hover:bg-indigo-700 px-6 py-2 text-sm font-semibold leading-normal text-white transition-colors duration-150"
+                                    className="inline-block rounded-md border border-transparent bg-indigo-600 px-6 py-2 text-sm leading-normal font-semibold text-white transition-colors duration-150 hover:bg-indigo-700"
                                 >
                                     Access Portal
                                 </Link>
                             </div>
                         </div>
-                        <div className="relative -mb-px aspect-[335/364] w-full shrink-0 overflow-hidden rounded-t-lg bg-indigo-50/50 dark:bg-indigo-950/20 lg:mb-0 lg:-ml-px lg:aspect-auto lg:w-[438px] lg:rounded-t-none lg:rounded-r-lg flex items-center justify-center">
+                        <div className="relative -mb-px flex aspect-[335/364] w-full shrink-0 items-center justify-center overflow-hidden rounded-t-lg bg-indigo-50/50 lg:mb-0 lg:-ml-px lg:aspect-auto lg:w-[438px] lg:rounded-t-none lg:rounded-r-lg dark:bg-indigo-950/20">
                             {/* Subtle grid pattern background */}
                             <div
                                 className="absolute inset-0 opacity-[0.07] dark:opacity-[0.12]"
@@ -81,19 +92,31 @@ export default function Welcome() {
                             />
 
                             {/* Outermost large translucent ring */}
-                            <div className="absolute rounded-full border border-indigo-200/60 dark:border-indigo-700/30 bg-indigo-100/10 dark:bg-indigo-900/10" style={{ width: 340, height: 340 }} />
+                            <div
+                                className="absolute rounded-full border border-indigo-200/60 bg-indigo-100/10 dark:border-indigo-700/30 dark:bg-indigo-900/10"
+                                style={{ width: 340, height: 340 }}
+                            />
                             {/* Second ring */}
-                            <div className="absolute rounded-full border border-indigo-300/50 dark:border-indigo-600/30 bg-indigo-100/15 dark:bg-indigo-900/15" style={{ width: 270, height: 270 }} />
+                            <div
+                                className="absolute rounded-full border border-indigo-300/50 bg-indigo-100/15 dark:border-indigo-600/30 dark:bg-indigo-900/15"
+                                style={{ width: 270, height: 270 }}
+                            />
                             {/* Third ring */}
-                            <div className="absolute rounded-full border border-indigo-400/40 dark:border-indigo-500/40 bg-indigo-200/20 dark:bg-indigo-800/20" style={{ width: 206, height: 206 }} />
+                            <div
+                                className="absolute rounded-full border border-indigo-400/40 bg-indigo-200/20 dark:border-indigo-500/40 dark:bg-indigo-800/20"
+                                style={{ width: 206, height: 206 }}
+                            />
                             {/* Fourth inner ring */}
-                            <div className="absolute rounded-full border border-indigo-500/30 dark:border-indigo-400/40 bg-indigo-200/25 dark:bg-indigo-800/25" style={{ width: 152, height: 152 }} />
+                            <div
+                                className="absolute rounded-full border border-indigo-500/30 bg-indigo-200/25 dark:border-indigo-400/40 dark:bg-indigo-800/25"
+                                style={{ width: 152, height: 152 }}
+                            />
 
                             {/* The main icon — centered with shadow */}
                             <img
                                 src="/favicon.png"
                                 alt="GIMS Icon"
-                                className="relative z-10 w-24 h-24 rounded-2xl shadow-2xl shadow-indigo-500/30 dark:shadow-indigo-400/20 ring-4 ring-white/80 dark:ring-white/10"
+                                className="relative z-10 h-24 w-24 rounded-2xl shadow-2xl ring-4 shadow-indigo-500/30 ring-white/80 dark:shadow-indigo-400/20 dark:ring-white/10"
                             />
                         </div>
                     </main>

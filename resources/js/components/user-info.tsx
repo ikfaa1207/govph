@@ -5,7 +5,7 @@ import type { User } from '@/types';
 function formatRole(role: string): string {
     return role
         .split(/[-_]/)
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
         .join(' ');
 }
 
@@ -18,13 +18,14 @@ export function UserInfo({
     showEmail?: boolean;
     showRole?: boolean;
 }) {
-    const primaryRole = user.roles && user.roles.length > 0 ? user.roles[0] : null;
+    const primaryRole =
+        user.roles && user.roles.length > 0 ? user.roles[0] : null;
 
     return (
         <>
-            <DicebearAvatar 
-                seed={user.name} 
-                className="h-8 w-8 overflow-hidden rounded-full border border-neutral-200 dark:border-neutral-700" 
+            <DicebearAvatar
+                seed={user.name}
+                className="h-8 w-8 overflow-hidden rounded-full border border-neutral-200 dark:border-neutral-700"
             />
             <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">{user.name}</span>

@@ -2,16 +2,42 @@ import { Head, useForm, router, setLayoutProps } from '@inertiajs/react';
 import { Plus, Edit2, Copy, Trash2, Users, MoreHorizontal } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import {
+    Accordion,
+    AccordionContent,
+    AccordionItem,
+    AccordionTrigger,
+} from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from '@/components/ui/dialog';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
 
 const formatPermissionName = (name: string) => {
     const map: Record<string, string> = {
@@ -22,11 +48,14 @@ const formatPermissionName = (name: string) => {
     };
 
     if (map[name]) {
-return map[name];
-}
-    
+        return map[name];
+    }
+
     // Fallback: capitalize and replace dots with spaces
-    return name.split('.').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+    return name
+        .split('.')
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
 };
 
 interface Permission {
@@ -52,7 +81,7 @@ interface RolesIndexProps {
 export default function RolesIndex({ roles, permissions }: RolesIndexProps) {
     const breadcrumbs = [
         { title: 'Administration', href: '#' },
-        { title: 'Roles & Permissions', href: '/inventory/admin/roles' }
+        { title: 'Roles & Permissions', href: '/inventory/admin/roles' },
     ];
     setLayoutProps({ breadcrumbs });
 
@@ -92,7 +121,7 @@ export default function RolesIndex({ roles, permissions }: RolesIndexProps) {
             },
             onError: () => {
                 toast.error('Failed to create role.');
-            }
+            },
         });
     };
 
@@ -101,7 +130,7 @@ export default function RolesIndex({ roles, permissions }: RolesIndexProps) {
         editForm.setData({
             name: role.name,
             description: role.description,
-            permissions: role.permissions.map(p => p.id),
+            permissions: role.permissions.map((p) => p.id),
         });
         setIsEditOpen(true);
     };
@@ -110,8 +139,8 @@ export default function RolesIndex({ roles, permissions }: RolesIndexProps) {
         e.preventDefault();
 
         if (!selectedRole) {
-return;
-}
+            return;
+        }
 
         editForm.post(`/inventory/admin/roles/${selectedRole.id}`, {
             onSuccess: () => {
@@ -120,7 +149,7 @@ return;
             },
             onError: () => {
                 toast.error('Failed to update role.');
-            }
+            },
         });
     };
 
@@ -137,8 +166,8 @@ return;
         e.preventDefault();
 
         if (!selectedRole) {
-return;
-}
+            return;
+        }
 
         cloneForm.post(`/inventory/admin/roles/${selectedRole.id}/clone`, {
             onSuccess: () => {
@@ -147,13 +176,15 @@ return;
             },
             onError: () => {
                 toast.error('Failed to clone role.');
-            }
+            },
         });
     };
 
     const handleDeleteRole = (role: Role) => {
         if (role.users.length > 0) {
-            toast.error('Cannot delete role. Some users are currently assigned to it.');
+            toast.error(
+                'Cannot delete role. Some users are currently assigned to it.',
+            );
 
             return;
         }
@@ -175,11 +206,14 @@ return;
             },
             onError: () => {
                 toast.error('Failed to delete role.');
-            }
+            },
         });
     };
 
-    const togglePermissionSelection = (form: typeof addForm | typeof editForm, id: number) => {
+    const togglePermissionSelection = (
+        form: typeof addForm | typeof editForm,
+        id: number,
+    ) => {
         const current = [...form.data.permissions];
         const idx = current.indexOf(id);
 
@@ -196,17 +230,29 @@ return;
         <>
             <Head title="Role Matrix - GIMS" />
 
-            <Dialog open={roleToDelete !== null} onOpenChange={(open) => !open && setRoleToDelete(null)}>
+            <Dialog
+                open={roleToDelete !== null}
+                onOpenChange={(open) => !open && setRoleToDelete(null)}
+            >
                 <DialogContent className="sm:max-w-[425px]">
                     <DialogHeader>
                         <DialogTitle>Delete Role</DialogTitle>
                         <DialogDescription className="pt-2 text-xs">
-                            Are you sure you want to delete the role "{roleToDelete?.name}"? This action cannot be undone.
+                            Are you sure you want to delete the role "
+                            {roleToDelete?.name}"? This action cannot be undone.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="flex justify-end gap-2 pt-4">
-                        <Button variant="outline" onClick={() => setRoleToDelete(null)}>Cancel</Button>
-                        <Button variant="destructive" onClick={confirmDeleteRole}>
+                        <Button
+                            variant="outline"
+                            onClick={() => setRoleToDelete(null)}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            variant="destructive"
+                            onClick={confirmDeleteRole}
+                        >
                             Confirm Delete
                         </Button>
                     </div>
@@ -214,12 +260,16 @@ return;
             </Dialog>
 
             <div className="space-y-6 p-6">
-                
                 {/* Header Section */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <h1 className="text-xl font-bold tracking-tight">Access Control & Role Matrix</h1>
-                        <p className="text-sm text-muted-foreground">Configure permission levels, build custom roles, and map security privileges.</p>
+                        <h1 className="text-xl font-bold tracking-tight">
+                            Access Control & Role Matrix
+                        </h1>
+                        <p className="text-sm text-muted-foreground">
+                            Configure permission levels, build custom roles, and
+                            map security privileges.
+                        </p>
                     </div>
 
                     <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
@@ -229,63 +279,139 @@ return;
                                 Create Custom Role
                             </Button>
                         </DialogTrigger>
-                        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+                        <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
                             <DialogHeader>
                                 <DialogTitle>Create Custom Role</DialogTitle>
-                                <DialogDescription>Give a name, description, and select applicable permissions.</DialogDescription>
+                                <DialogDescription>
+                                    Give a name, description, and select
+                                    applicable permissions.
+                                </DialogDescription>
                             </DialogHeader>
-                            <form onSubmit={handleAddSubmit} className="space-y-4">
+                            <form
+                                onSubmit={handleAddSubmit}
+                                className="space-y-4"
+                            >
                                 <div className="space-y-1">
-                                    <Label htmlFor="rname" required>Role Name</Label>
-                                    <Input id="rname" value={addForm.data.name} onChange={e => addForm.setData('name', e.target.value)} required />
+                                    <Label htmlFor="rname" required>
+                                        Role Name
+                                    </Label>
+                                    <Input
+                                        id="rname"
+                                        value={addForm.data.name}
+                                        onChange={(e) =>
+                                            addForm.setData(
+                                                'name',
+                                                e.target.value,
+                                            )
+                                        }
+                                        required
+                                    />
                                 </div>
                                 <div className="space-y-1">
-                                    <Label htmlFor="rdesc" required>Description</Label>
-                                    <Input id="rdesc" value={addForm.data.description} onChange={e => addForm.setData('description', e.target.value)} />
+                                    <Label htmlFor="rdesc" required>
+                                        Description
+                                    </Label>
+                                    <Input
+                                        id="rdesc"
+                                        value={addForm.data.description}
+                                        onChange={(e) =>
+                                            addForm.setData(
+                                                'description',
+                                                e.target.value,
+                                            )
+                                        }
+                                    />
                                 </div>
 
                                 <div className="space-y-3 border-t border-border pt-4">
-                                    <Label className="text-sm font-bold">Permissions Mapping</Label>
-                                    <Accordion type="multiple" className="w-full">
-                                        {Object.entries(permissions).map(([module, permList]) => (
-                                            <AccordionItem key={module} value={module} className="border bg-card mb-2 rounded-lg px-4 data-[state=open]:bg-muted/10">
-                                                <AccordionTrigger className="hover:no-underline py-3">
-                                                    <span className="text-sm font-bold uppercase tracking-wider text-primary">{module} Module</span>
-                                                </AccordionTrigger>
-                                                <AccordionContent>
-                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 pb-4">
-                                                        {permList.map((perm) => {
-                                                            const isChecked = addForm.data.permissions.includes(perm.id);
+                                    <Label className="text-sm font-bold">
+                                        Permissions Mapping
+                                    </Label>
+                                    <Accordion
+                                        type="multiple"
+                                        className="w-full"
+                                    >
+                                        {Object.entries(permissions).map(
+                                            ([module, permList]) => (
+                                                <AccordionItem
+                                                    key={module}
+                                                    value={module}
+                                                    className="mb-2 rounded-lg border bg-card px-4 data-[state=open]:bg-muted/10"
+                                                >
+                                                    <AccordionTrigger className="py-3 hover:no-underline">
+                                                        <span className="text-sm font-bold tracking-wider text-primary uppercase">
+                                                            {module} Module
+                                                        </span>
+                                                    </AccordionTrigger>
+                                                    <AccordionContent>
+                                                        <div className="grid grid-cols-1 gap-4 pt-2 pb-4 md:grid-cols-2">
+                                                            {permList.map(
+                                                                (perm) => {
+                                                                    const isChecked =
+                                                                        addForm.data.permissions.includes(
+                                                                            perm.id,
+                                                                        );
 
-                                                            return (
-                                                                <div key={perm.id} className="flex items-start space-x-3 rounded-md border p-3 bg-background">
-                                                                    <Switch 
-                                                                        id={`add-perm-${perm.id}`}
-                                                                        checked={isChecked}
-                                                                        onCheckedChange={() => togglePermissionSelection(addForm, perm.id)}
-                                                                    />
-                                                                    <div className="space-y-1 leading-none">
-                                                                        <Label 
-                                                                            htmlFor={`add-perm-${perm.id}`}
-                                                                            className="font-semibold cursor-pointer"
+                                                                    return (
+                                                                        <div
+                                                                            key={
+                                                                                perm.id
+                                                                            }
+                                                                            className="flex items-start space-x-3 rounded-md border bg-background p-3"
                                                                         >
-                                                                            {formatPermissionName(perm.name)}
-                                                                        </Label>
-                                                                        <p className="text-[11px] text-muted-foreground mt-1 leading-snug">{perm.description}</p>
-                                                                    </div>
-                                                                </div>
-                                                            );
-                                                        })}
-                                                    </div>
-                                                </AccordionContent>
-                                            </AccordionItem>
-                                        ))}
+                                                                            <Switch
+                                                                                id={`add-perm-${perm.id}`}
+                                                                                checked={
+                                                                                    isChecked
+                                                                                }
+                                                                                onCheckedChange={() =>
+                                                                                    togglePermissionSelection(
+                                                                                        addForm,
+                                                                                        perm.id,
+                                                                                    )
+                                                                                }
+                                                                            />
+                                                                            <div className="space-y-1 leading-none">
+                                                                                <Label
+                                                                                    htmlFor={`add-perm-${perm.id}`}
+                                                                                    className="cursor-pointer font-semibold"
+                                                                                >
+                                                                                    {formatPermissionName(
+                                                                                        perm.name,
+                                                                                    )}
+                                                                                </Label>
+                                                                                <p className="mt-1 text-[11px] leading-snug text-muted-foreground">
+                                                                                    {
+                                                                                        perm.description
+                                                                                    }
+                                                                                </p>
+                                                                            </div>
+                                                                        </div>
+                                                                    );
+                                                                },
+                                                            )}
+                                                        </div>
+                                                    </AccordionContent>
+                                                </AccordionItem>
+                                            ),
+                                        )}
                                     </Accordion>
                                 </div>
 
                                 <div className="flex justify-end gap-2 pt-2">
-                                    <Button type="button" variant="outline" onClick={() => setIsAddOpen(false)}>Cancel</Button>
-                                    <Button type="submit" disabled={addForm.processing}>Save Role</Button>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={() => setIsAddOpen(false)}
+                                    >
+                                        Cancel
+                                    </Button>
+                                    <Button
+                                        type="submit"
+                                        disabled={addForm.processing}
+                                    >
+                                        Save Role
+                                    </Button>
                                 </div>
                             </form>
                         </DialogContent>
@@ -297,16 +423,23 @@ return;
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead className="w-[30%]">Role / Description</TableHead>
+                                <TableHead className="w-[30%]">
+                                    Role / Description
+                                </TableHead>
                                 <TableHead>Users Assigned</TableHead>
                                 <TableHead>Permissions Count</TableHead>
-                                <TableHead className="text-right">Actions</TableHead>
+                                <TableHead className="text-right">
+                                    Actions
+                                </TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {roles.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
+                                    <TableCell
+                                        colSpan={4}
+                                        className="h-24 text-center text-muted-foreground"
+                                    >
                                         No roles configured yet.
                                     </TableCell>
                                 </TableRow>
@@ -314,41 +447,81 @@ return;
                                 roles.map((role) => (
                                     <TableRow key={role.id}>
                                         <TableCell>
-                                            <div className="font-semibold text-foreground">{role.name}</div>
-                                            <div className="text-xs text-muted-foreground">{role.description || 'No description provided'}</div>
+                                            <div className="font-semibold text-foreground">
+                                                {role.name}
+                                            </div>
+                                            <div className="text-xs text-muted-foreground">
+                                                {role.description ||
+                                                    'No description provided'}
+                                            </div>
                                         </TableCell>
                                         <TableCell>
-                                            <Badge variant="outline" className="flex w-fit items-center gap-1 bg-muted/20">
+                                            <Badge
+                                                variant="outline"
+                                                className="flex w-fit items-center gap-1 bg-muted/20"
+                                            >
                                                 <Users className="h-3 w-3" />
                                                 {role.users.length} Users
                                             </Badge>
                                         </TableCell>
                                         <TableCell>
-                                            <Badge variant="secondary" className="font-mono">
-                                                {role.permissions.length} Configured
+                                            <Badge
+                                                variant="secondary"
+                                                className="font-mono"
+                                            >
+                                                {role.permissions.length}{' '}
+                                                Configured
                                             </Badge>
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <DropdownMenu>
                                                 <DropdownMenuTrigger asChild>
-                                                    <Button variant="ghost" className="h-8 w-8 p-0">
-                                                        <span className="sr-only">Open menu</span>
+                                                    <Button
+                                                        variant="ghost"
+                                                        className="h-8 w-8 p-0"
+                                                    >
+                                                        <span className="sr-only">
+                                                            Open menu
+                                                        </span>
                                                         <MoreHorizontal className="h-4 w-4" />
                                                     </Button>
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="end">
-                                                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                                    <DropdownMenuItem onClick={() => openEditDialog(role)}>
-                                                        <Edit2 className="mr-2 h-4 w-4" /> Edit Permissions
+                                                    <DropdownMenuLabel>
+                                                        Actions
+                                                    </DropdownMenuLabel>
+                                                    <DropdownMenuItem
+                                                        onClick={() =>
+                                                            openEditDialog(role)
+                                                        }
+                                                    >
+                                                        <Edit2 className="mr-2 h-4 w-4" />{' '}
+                                                        Edit Permissions
                                                     </DropdownMenuItem>
-                                                    <DropdownMenuItem onClick={() => openCloneDialog(role)}>
-                                                        <Copy className="mr-2 h-4 w-4" /> Clone Role
+                                                    <DropdownMenuItem
+                                                        onClick={() =>
+                                                            openCloneDialog(
+                                                                role,
+                                                            )
+                                                        }
+                                                    >
+                                                        <Copy className="mr-2 h-4 w-4" />{' '}
+                                                        Clone Role
                                                     </DropdownMenuItem>
-                                                    {role.users.length === 0 && (
+                                                    {role.users.length ===
+                                                        0 && (
                                                         <>
                                                             <DropdownMenuSeparator />
-                                                            <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => handleDeleteRole(role)}>
-                                                                <Trash2 className="mr-2 h-4 w-4" /> Delete Role
+                                                            <DropdownMenuItem
+                                                                className="text-destructive focus:text-destructive"
+                                                                onClick={() =>
+                                                                    handleDeleteRole(
+                                                                        role,
+                                                                    )
+                                                                }
+                                                            >
+                                                                <Trash2 className="mr-2 h-4 w-4" />{' '}
+                                                                Delete Role
                                                             </DropdownMenuItem>
                                                         </>
                                                     )}
@@ -364,66 +537,142 @@ return;
 
                 {/* Dialog: Edit Permissions */}
                 <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-                    <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+                    <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
                         <DialogHeader>
-                            <DialogTitle>Configure Role Permissions</DialogTitle>
-                            <DialogDescription>Toggle access rights for the role: {selectedRole?.name}.</DialogDescription>
+                            <DialogTitle>
+                                Configure Role Permissions
+                            </DialogTitle>
+                            <DialogDescription>
+                                Toggle access rights for the role:{' '}
+                                {selectedRole?.name}.
+                            </DialogDescription>
                         </DialogHeader>
                         {selectedRole && (
-                            <form onSubmit={handleEditSubmit} className="space-y-4">
+                            <form
+                                onSubmit={handleEditSubmit}
+                                className="space-y-4"
+                            >
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-1">
                                         <Label htmlFor="ename">Role Name</Label>
-                                        <Input id="ename" value={editForm.data.name} onChange={e => editForm.setData('name', e.target.value)} required />
+                                        <Input
+                                            id="ename"
+                                            value={editForm.data.name}
+                                            onChange={(e) =>
+                                                editForm.setData(
+                                                    'name',
+                                                    e.target.value,
+                                                )
+                                            }
+                                            required
+                                        />
                                     </div>
                                     <div className="space-y-1">
-                                        <Label htmlFor="edesc" required>Description</Label>
-                                        <Input id="edesc" value={editForm.data.description} onChange={e => editForm.setData('description', e.target.value)} />
+                                        <Label htmlFor="edesc" required>
+                                            Description
+                                        </Label>
+                                        <Input
+                                            id="edesc"
+                                            value={editForm.data.description}
+                                            onChange={(e) =>
+                                                editForm.setData(
+                                                    'description',
+                                                    e.target.value,
+                                                )
+                                            }
+                                        />
                                     </div>
                                 </div>
 
                                 <div className="space-y-3 border-t border-border pt-4">
-                                    <Label className="text-sm font-bold">Permissions Mapping</Label>
-                                    <Accordion type="multiple" className="w-full">
-                                        {Object.entries(permissions).map(([module, permList]) => (
-                                            <AccordionItem key={module} value={module} className="border bg-card mb-2 rounded-lg px-4 data-[state=open]:bg-muted/10">
-                                                <AccordionTrigger className="hover:no-underline py-3">
-                                                    <span className="text-sm font-bold uppercase tracking-wider text-primary">{module} Module</span>
-                                                </AccordionTrigger>
-                                                <AccordionContent>
-                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 pb-4">
-                                                        {permList.map((perm) => {
-                                                            const isChecked = editForm.data.permissions.includes(perm.id);
+                                    <Label className="text-sm font-bold">
+                                        Permissions Mapping
+                                    </Label>
+                                    <Accordion
+                                        type="multiple"
+                                        className="w-full"
+                                    >
+                                        {Object.entries(permissions).map(
+                                            ([module, permList]) => (
+                                                <AccordionItem
+                                                    key={module}
+                                                    value={module}
+                                                    className="mb-2 rounded-lg border bg-card px-4 data-[state=open]:bg-muted/10"
+                                                >
+                                                    <AccordionTrigger className="py-3 hover:no-underline">
+                                                        <span className="text-sm font-bold tracking-wider text-primary uppercase">
+                                                            {module} Module
+                                                        </span>
+                                                    </AccordionTrigger>
+                                                    <AccordionContent>
+                                                        <div className="grid grid-cols-1 gap-4 pt-2 pb-4 md:grid-cols-2">
+                                                            {permList.map(
+                                                                (perm) => {
+                                                                    const isChecked =
+                                                                        editForm.data.permissions.includes(
+                                                                            perm.id,
+                                                                        );
 
-                                                            return (
-                                                                <div key={perm.id} className="flex items-start space-x-3 rounded-md border p-3 bg-background">
-                                                                    <Switch 
-                                                                        id={`edit-perm-${perm.id}`}
-                                                                        checked={isChecked}
-                                                                        onCheckedChange={() => togglePermissionSelection(editForm, perm.id)}
-                                                                    />
-                                                                    <div className="space-y-1 leading-none">
-                                                                        <Label 
-                                                                            htmlFor={`edit-perm-${perm.id}`}
-                                                                            className="font-semibold cursor-pointer"
+                                                                    return (
+                                                                        <div
+                                                                            key={
+                                                                                perm.id
+                                                                            }
+                                                                            className="flex items-start space-x-3 rounded-md border bg-background p-3"
                                                                         >
-                                                                            {formatPermissionName(perm.name)}
-                                                                        </Label>
-                                                                        <p className="text-[11px] text-muted-foreground mt-1 leading-snug">{perm.description}</p>
-                                                                    </div>
-                                                                </div>
-                                                            );
-                                                        })}
-                                                    </div>
-                                                </AccordionContent>
-                                            </AccordionItem>
-                                        ))}
+                                                                            <Switch
+                                                                                id={`edit-perm-${perm.id}`}
+                                                                                checked={
+                                                                                    isChecked
+                                                                                }
+                                                                                onCheckedChange={() =>
+                                                                                    togglePermissionSelection(
+                                                                                        editForm,
+                                                                                        perm.id,
+                                                                                    )
+                                                                                }
+                                                                            />
+                                                                            <div className="space-y-1 leading-none">
+                                                                                <Label
+                                                                                    htmlFor={`edit-perm-${perm.id}`}
+                                                                                    className="cursor-pointer font-semibold"
+                                                                                >
+                                                                                    {formatPermissionName(
+                                                                                        perm.name,
+                                                                                    )}
+                                                                                </Label>
+                                                                                <p className="mt-1 text-[11px] leading-snug text-muted-foreground">
+                                                                                    {
+                                                                                        perm.description
+                                                                                    }
+                                                                                </p>
+                                                                            </div>
+                                                                        </div>
+                                                                    );
+                                                                },
+                                                            )}
+                                                        </div>
+                                                    </AccordionContent>
+                                                </AccordionItem>
+                                            ),
+                                        )}
                                     </Accordion>
                                 </div>
 
                                 <div className="flex justify-end gap-2 pt-2">
-                                    <Button type="button" variant="outline" onClick={() => setIsEditOpen(false)}>Cancel</Button>
-                                    <Button type="submit" disabled={editForm.processing}>Save Permissions</Button>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={() => setIsEditOpen(false)}
+                                    >
+                                        Cancel
+                                    </Button>
+                                    <Button
+                                        type="submit"
+                                        disabled={editForm.processing}
+                                    >
+                                        Save Permissions
+                                    </Button>
                                 </div>
                             </form>
                         )}
@@ -435,27 +684,62 @@ return;
                     <DialogContent>
                         <DialogHeader>
                             <DialogTitle>Clone Custom Role</DialogTitle>
-                            <DialogDescription>Create a new role with identical permissions to {selectedRole?.name}.</DialogDescription>
+                            <DialogDescription>
+                                Create a new role with identical permissions to{' '}
+                                {selectedRole?.name}.
+                            </DialogDescription>
                         </DialogHeader>
                         {selectedRole && (
-                            <form onSubmit={handleCloneSubmit} className="space-y-4">
+                            <form
+                                onSubmit={handleCloneSubmit}
+                                className="space-y-4"
+                            >
                                 <div className="space-y-1">
                                     <Label htmlFor="cname">New Role Name</Label>
-                                    <Input id="cname" value={cloneForm.data.name} onChange={e => cloneForm.setData('name', e.target.value)} required />
+                                    <Input
+                                        id="cname"
+                                        value={cloneForm.data.name}
+                                        onChange={(e) =>
+                                            cloneForm.setData(
+                                                'name',
+                                                e.target.value,
+                                            )
+                                        }
+                                        required
+                                    />
                                 </div>
                                 <div className="space-y-1">
                                     <Label htmlFor="cdesc">Description</Label>
-                                    <Input id="cdesc" value={cloneForm.data.description} onChange={e => cloneForm.setData('description', e.target.value)} />
+                                    <Input
+                                        id="cdesc"
+                                        value={cloneForm.data.description}
+                                        onChange={(e) =>
+                                            cloneForm.setData(
+                                                'description',
+                                                e.target.value,
+                                            )
+                                        }
+                                    />
                                 </div>
                                 <div className="flex justify-end gap-2 pt-2">
-                                    <Button type="button" variant="outline" onClick={() => setIsCloneOpen(false)}>Cancel</Button>
-                                    <Button type="submit" disabled={cloneForm.processing}>Clone Role</Button>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={() => setIsCloneOpen(false)}
+                                    >
+                                        Cancel
+                                    </Button>
+                                    <Button
+                                        type="submit"
+                                        disabled={cloneForm.processing}
+                                    >
+                                        Clone Role
+                                    </Button>
                                 </div>
                             </form>
                         )}
                     </DialogContent>
                 </Dialog>
-
             </div>
         </>
     );

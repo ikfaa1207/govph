@@ -1,6 +1,15 @@
 import { Link, usePage } from '@inertiajs/react';
 import { BookOpen, FolderGit2 } from 'lucide-react';
-import { LayoutGrid, Package, ClipboardList, Database, FileText, Users, ShieldAlert, Truck } from 'lucide-react';
+import {
+    LayoutGrid,
+    Package,
+    ClipboardList,
+    Database,
+    FileText,
+    Users,
+    ShieldAlert,
+    Truck,
+} from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -87,7 +96,7 @@ export function AppSidebar() {
     const { auth } = usePage<any>().props;
     const permissions = auth?.user?.permissions || [];
 
-    const filteredNavItems = mainNavItems.filter(item => {
+    const filteredNavItems = mainNavItems.filter((item) => {
         if (!item.permission) {
             return true;
         }
@@ -111,9 +120,11 @@ export function AppSidebar() {
         });
     }
 
-    const defaultHomeUrl = permissions.includes('dashboard.view') 
-        ? dashboard.url() 
-        : (filteredNavItems.length > 0 ? filteredNavItems[0].href : '/profile');
+    const defaultHomeUrl = permissions.includes('dashboard.view')
+        ? dashboard.url()
+        : filteredNavItems.length > 0
+          ? filteredNavItems[0].href
+          : '/profile';
 
     return (
         <Sidebar collapsible="icon" variant="inset">

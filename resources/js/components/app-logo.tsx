@@ -8,7 +8,7 @@ export default function AppLogo() {
                 <span className="mb-0.5 truncate leading-tight font-bold text-indigo-600 dark:text-indigo-400">
                     GIMS
                 </span>
-                <span className="truncate text-[10px] text-muted-foreground leading-none font-medium">
+                <span className="truncate text-[10px] leading-none font-medium text-muted-foreground">
                     Gov't Inventory Desk
                 </span>
             </div>

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Inventory;
 
 use App\Http\Controllers\Controller;
+use App\Models\AuditLog;
 use App\Models\Employee;
 use App\Models\Item;
 use App\Models\PurchaseOrder;
@@ -11,6 +12,7 @@ use App\Models\ReceivingReportItem;
 use App\Models\Supplier;
 use App\Services\Audit\AuditLogger;
 use App\Services\Valuation\ValuationService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -68,6 +70,7 @@ class ReceivingReportController extends Controller
                 'inspector_name' => $report->inspector?->name,
                 'items_count' => $report->items->count(),
                 'remarks' => $report->remarks,
+                'status' => $report->status,
                 'items' => $mappedItems,
             ];
         });
@@ -75,8 +78,8 @@ class ReceivingReportController extends Controller
         $stats = [
             'total_reports' => ReceivingReport::count(),
             'recent_deliveries' => ReceivingReport::where('received_date', '>=', now()->subDays(30))->count(),
-            'total_items_received' => \App\Models\ReceivingReportItem::sum('quantity_received'),
-            'total_items_rejected' => \App\Models\ReceivingReportItem::sum('quantity_rejected'),
+            'total_items_received' => ReceivingReportItem::sum('quantity_received'),
+            'total_items_rejected' => ReceivingReportItem::sum('quantity_rejected'),
         ];
 
         $receivers = Employee::whereHas('user.roles', function ($query) {
@@ -87,8 +90,8 @@ class ReceivingReportController extends Controller
             $query->where('name', 'Inspection Officer');
         })->get();
 
-        // If no specific inspectors are set up yet in the system, we should allow any employee who is NOT a receiver as a fallback for the demo, 
-        // but since we want strict enforcement, we pass the inspectors list. 
+        // If no specific inspectors are set up yet in the system, we should allow any employee who is NOT a receiver as a fallback for the demo,
+        // but since we want strict enforcement, we pass the inspectors list.
         if ($inspectors->isEmpty()) {
             // Fallback for development/testing if no one has the role yet
             $inspectors = Employee::whereNotIn('id', $receivers->pluck('id'))->get();
@@ -111,57 +114,74 @@ class ReceivingReportController extends Controller
     {
         Gate::authorize('warehouse.receive');
 
+        $status = $request->input('status', 'finalized');
+
         $validated = $request->validate([
+            'status' => ['nullable', 'in:draft,finalized'],
             'po_number' => ['required', 'string', 'max:255'],
             'supplier_id' => ['required', 'exists:suppliers,id'],
             'po_date' => ['required', 'date'],
-            'iar_number' => ['required', 'string', 'max:255', 'unique:receiving_reports,iar_number'],
+            'iar_number' => [
+                $status === 'finalized' ? 'required' : 'nullable',
+                'string',
+                'max:255',
+                'unique:receiving_reports,iar_number',
+            ],
             'invoice_number' => ['nullable', 'string', 'max:255'],
-            'delivery_receipt_number' => ['required', 'string', 'max:255'],
-            'received_date' => ['required', 'date'],
-            'received_by' => ['required', 'exists:employees,id'],
-            'inspected_by' => ['required', 'exists:employees,id', 'different:received_by'],
+            'delivery_receipt_number' => [$status === 'finalized' ? 'required' : 'nullable', 'string', 'max:255'],
+            'received_date' => [$status === 'finalized' ? 'required' : 'nullable', 'date'],
+            'received_by' => [$status === 'finalized' ? 'required' : 'nullable', 'exists:employees,id'],
+            'inspected_by' => [
+                $status === 'finalized' ? 'required' : 'nullable',
+                'exists:employees,id',
+                $status === 'finalized' ? 'different:received_by' : '',
+            ],
             'remarks' => ['nullable', 'string'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.item_id' => ['required', 'exists:items,id'],
             'items.*.quantity_received' => ['required', 'integer', 'min:1'],
-            'items.*.quantity_accepted' => ['required', 'integer', 'min:0'],
+            'items.*.quantity_accepted' => [$status === 'finalized' ? 'required' : 'nullable', 'integer', 'min:0'],
             'items.*.unit_cost' => ['required', 'numeric', 'min:0'],
             'items.*.batch_number' => ['nullable', 'string', 'max:255'],
             'items.*.expiration_date' => ['nullable', 'date'],
             'items.*.rejection_reason' => ['nullable', 'string'],
         ]);
 
-        DB::transaction(function () use ($validated) {
+        DB::transaction(function () use ($validated, $status) {
             // Find or create Purchase Order
             $po = PurchaseOrder::firstOrCreate(
                 ['po_number' => $validated['po_number']],
                 [
                     'supplier_id' => $validated['supplier_id'],
                     'po_date' => $validated['po_date'],
-                    'status' => 'received',
+                    'status' => $status === 'finalized' ? 'received' : 'draft',
                 ]
             );
+
+            if ($status === 'finalized' && $po->status !== 'received') {
+                $po->update(['status' => 'received']);
+            }
 
             // Create Receiving Report
             $receivingReport = ReceivingReport::create([
                 'purchase_order_id' => $po->id,
-                'iar_number' => $validated['iar_number'],
-                'invoice_number' => $validated['invoice_number'],
-                'delivery_receipt_number' => $validated['delivery_receipt_number'],
-                'received_date' => $validated['received_date'],
-                'received_by' => $validated['received_by'],
-                'inspected_by' => $validated['inspected_by'],
-                'remarks' => $validated['remarks'],
+                'iar_number' => $validated['iar_number'] ?? null,
+                'invoice_number' => $validated['invoice_number'] ?? null,
+                'delivery_receipt_number' => $validated['delivery_receipt_number'] ?? null,
+                'received_date' => $validated['received_date'] ?? null,
+                'received_by' => $validated['received_by'] ?? null,
+                'inspected_by' => $validated['inspected_by'] ?? null,
+                'remarks' => $validated['remarks'] ?? null,
+                'status' => $status,
             ]);
 
-            // Add items and update inventory stock and moving average costs
+            // Add items and update inventory stock and moving average costs if finalized
             foreach ($validated['items'] as $itemData) {
                 $itemId = $itemData['item_id'];
                 $item = Item::where('id', $itemId)->firstOrFail();
 
                 $receivedQty = (int) $itemData['quantity_received'];
-                $acceptedQty = (int) $itemData['quantity_accepted'];
+                $acceptedQty = isset($itemData['quantity_accepted']) ? (int) $itemData['quantity_accepted'] : 0;
                 $rejectedQty = max(0, $receivedQty - $acceptedQty);
                 $unitCost = (float) $itemData['unit_cost'];
 
@@ -178,8 +198,8 @@ class ReceivingReportController extends Controller
                     'rejection_reason' => $itemData['rejection_reason'] ?? null,
                 ]);
 
-                // Record stock in for accepted quantities
-                if ($acceptedQty > 0) {
+                // Record stock in for accepted quantities ONLY if finalized
+                if ($status === 'finalized' && $acceptedQty > 0) {
                     $this->valuationService->recordStockIn(
                         $item,
                         $acceptedQty,
@@ -195,7 +215,7 @@ class ReceivingReportController extends Controller
             AuditLogger::log('CREATE_RECEIVING_REPORT', $receivingReport, null, $receivingReport->toArray());
         });
 
-        return redirect()->back()->with('success', 'Receiving report created and stock updated successfully.');
+        return redirect()->back()->with('success', $status === 'finalized' ? 'Receiving report created and stock updated successfully.' : 'Receiving report draft saved successfully.');
     }
 
     /**
@@ -205,29 +225,49 @@ class ReceivingReportController extends Controller
     {
         Gate::authorize('warehouse.receive');
 
+        $status = $request->input('status', 'finalized');
+
+        if ($report->status === 'finalized' && $status === 'draft') {
+            return redirect()->back()->withErrors([
+                'status' => 'A finalized receiving report cannot be reverted to draft.',
+            ]);
+        }
+
         $validated = $request->validate([
+            'status' => ['nullable', 'in:draft,finalized'],
             'po_number' => ['required', 'string', 'max:255'],
             'supplier_id' => ['required', 'exists:suppliers,id'],
             'po_date' => ['required', 'date'],
-            'iar_number' => ['required', 'string', 'max:255', 'unique:receiving_reports,iar_number,' . $report->id],
+            'iar_number' => [
+                $status === 'finalized' ? 'required' : 'nullable',
+                'string',
+                'max:255',
+                'unique:receiving_reports,iar_number,'.$report->id,
+            ],
             'invoice_number' => ['nullable', 'string', 'max:255'],
-            'delivery_receipt_number' => ['required', 'string', 'max:255'],
-            'received_date' => ['required', 'date'],
-            'received_by' => ['required', 'exists:employees,id'],
-            'inspected_by' => ['required', 'exists:employees,id', 'different:received_by'],
+            'delivery_receipt_number' => [$status === 'finalized' ? 'required' : 'nullable', 'string', 'max:255'],
+            'received_date' => [$status === 'finalized' ? 'required' : 'nullable', 'date'],
+            'received_by' => [$status === 'finalized' ? 'required' : 'nullable', 'exists:employees,id'],
+            'inspected_by' => [
+                $status === 'finalized' ? 'required' : 'nullable',
+                'exists:employees,id',
+                $status === 'finalized' ? 'different:received_by' : '',
+            ],
             'remarks' => ['nullable', 'string'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.id' => ['nullable', 'integer'], // track existing items
             'items.*.item_id' => ['required', 'exists:items,id'],
             'items.*.quantity_received' => ['required', 'integer', 'min:1'],
-            'items.*.quantity_accepted' => ['required', 'integer', 'min:0'],
+            'items.*.quantity_accepted' => [$status === 'finalized' ? 'required' : 'nullable', 'integer', 'min:0'],
             'items.*.unit_cost' => ['required', 'numeric', 'min:0'],
             'items.*.batch_number' => ['nullable', 'string', 'max:255'],
             'items.*.expiration_date' => ['nullable', 'date'],
             'items.*.rejection_reason' => ['nullable', 'string'],
         ]);
 
-        DB::transaction(function () use ($validated, $report) {
+        $oldStatus = $report->status;
+
+        DB::transaction(function () use ($validated, $report, $status, $oldStatus) {
             // Load relations for accurate old state tracking
             $report->load('items');
             $oldState = $report->toArray();
@@ -238,31 +278,38 @@ class ReceivingReportController extends Controller
                 [
                     'supplier_id' => $validated['supplier_id'],
                     'po_date' => $validated['po_date'],
-                    'status' => 'received',
+                    'status' => $status === 'finalized' ? 'received' : 'draft',
                 ]
             );
+
+            if ($status === 'finalized' && $po->status !== 'received') {
+                $po->update(['status' => 'received']);
+            }
 
             // Update Report Details
             $report->update([
                 'purchase_order_id' => $po->id,
-                'iar_number' => $validated['iar_number'],
-                'invoice_number' => $validated['invoice_number'],
-                'delivery_receipt_number' => $validated['delivery_receipt_number'],
-                'received_date' => $validated['received_date'],
-                'received_by' => $validated['received_by'],
-                'inspected_by' => $validated['inspected_by'],
-                'remarks' => $validated['remarks'],
+                'iar_number' => $validated['iar_number'] ?? null,
+                'invoice_number' => $validated['invoice_number'] ?? null,
+                'delivery_receipt_number' => $validated['delivery_receipt_number'] ?? null,
+                'received_date' => $validated['received_date'] ?? null,
+                'received_by' => $validated['received_by'] ?? null,
+                'inspected_by' => $validated['inspected_by'] ?? null,
+                'remarks' => $validated['remarks'] ?? null,
+                'status' => $status,
             ]);
 
             // Track IDs from the payload to delete missing items
-            $payloadItemIds = array_filter(array_map(function($item) { return $item['id'] ?? null; }, $validated['items']));
+            $payloadItemIds = array_filter(array_map(function ($item) {
+                return $item['id'] ?? null;
+            }, $validated['items']));
 
-            // Handle deleted items: reverse stock and delete
+            // Handle deleted items: reverse stock and delete (only if old state was finalized)
             foreach ($report->items as $existingItem) {
-                if (!in_array($existingItem->id, $payloadItemIds)) {
-                    if ($existingItem->quantity_accepted > 0) {
+                if (! in_array($existingItem->id, $payloadItemIds)) {
+                    if ($oldStatus === 'finalized' && $existingItem->quantity_accepted > 0) {
                         $existingItemId = (int) $existingItem->item_id;
-                        /** @var \App\Models\Item $item */
+                        /** @var Item $item */
                         $item = Item::findOrFail($existingItemId);
                         $this->valuationService->reverseStockIn(
                             $item,
@@ -280,22 +327,22 @@ class ReceivingReportController extends Controller
             // Process payload items
             foreach ($validated['items'] as $itemData) {
                 $itemId = (int) $itemData['item_id'];
-                /** @var \App\Models\Item $item */
+                /** @var Item $item */
                 $item = Item::findOrFail($itemId);
 
                 $receivedQty = (int) $itemData['quantity_received'];
-                $acceptedQty = (int) $itemData['quantity_accepted'];
+                $acceptedQty = isset($itemData['quantity_accepted']) ? (int) $itemData['quantity_accepted'] : 0;
                 $rejectedQty = max(0, $receivedQty - $acceptedQty);
                 $unitCost = (float) $itemData['unit_cost'];
 
                 if (isset($itemData['id'])) {
                     // Updating an existing item
                     $existingLineId = (int) $itemData['id'];
-                    /** @var \App\Models\ReceivingReportItem $existingLine */
+                    /** @var ReceivingReportItem $existingLine */
                     $existingLine = ReceivingReportItem::findOrFail($existingLineId);
-                    
-                    // Reverse old stock-in
-                    if ($existingLine->quantity_accepted > 0) {
+
+                    // Reverse old stock-in only if old status was finalized
+                    if ($oldStatus === 'finalized' && $existingLine->quantity_accepted > 0) {
                         $this->valuationService->reverseStockIn(
                             $item,
                             $existingLine->quantity_accepted,
@@ -333,8 +380,8 @@ class ReceivingReportController extends Controller
                     ]);
                 }
 
-                // Apply new stock-in
-                if ($acceptedQty > 0) {
+                // Apply new stock-in only if new status is finalized
+                if ($status === 'finalized' && $acceptedQty > 0) {
                     $this->valuationService->recordStockIn(
                         $item,
                         $acceptedQty,
@@ -361,16 +408,16 @@ class ReceivingReportController extends Controller
     /**
      * Get the audit history for a specific receiving report.
      */
-    public function history(ReceivingReport $report): \Illuminate\Http\JsonResponse
+    public function history(ReceivingReport $report): JsonResponse
     {
         Gate::authorize('warehouse.receive');
-        
-        $history = \App\Models\AuditLog::with('user')
+
+        $history = AuditLog::with('user')
             ->where('model_type', get_class($report))
             ->where('model_id', $report->id)
             ->orderBy('created_at', 'desc')
             ->get();
-            
+
         return response()->json($history);
     }
 }

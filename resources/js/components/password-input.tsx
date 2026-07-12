@@ -14,14 +14,20 @@ export default function PasswordInput({
 }: Omit<ComponentProps<'input'>, 'type'> & { ref?: Ref<HTMLInputElement> }) {
     const [showPassword, setShowPassword] = useState(false);
     const [isFocused, setIsFocused] = useState(false);
-    const [value, setValue] = useState((props.value as string) || (props.defaultValue as string) || '');
+    const [value, setValue] = useState(
+        (props.value as string) || (props.defaultValue as string) || '',
+    );
     const [prevValueProp, setPrevValueProp] = useState(props.value);
 
     const [matchValue, setMatchValue] = useState<string | null>(null);
 
     const isConfirmationField = !!(
-        (props.id && (props.id.includes('confirm') || props.id.includes('confirmation'))) ||
-        (props.name && (props.name.includes('confirm') || props.name.includes('confirmation')))
+        (props.id &&
+            (props.id.includes('confirm') ||
+                props.id.includes('confirmation'))) ||
+        (props.name &&
+            (props.name.includes('confirm') ||
+                props.name.includes('confirmation')))
     );
 
     if (props.value !== prevValueProp) {
@@ -40,9 +46,9 @@ export default function PasswordInput({
         const findPasswordInput = () => {
             const mainInput = document.querySelector(
                 'input[name="password"]:not([id*="confirm"]):not([name*="confirm"]):not([placeholder*="Confirm"]), ' +
-                'input[id="password"]:not([id*="confirm"]):not([name*="confirm"]):not([placeholder*="Confirm"]), ' +
-                'input[name="new_password"]:not([id*="confirm"]):not([name*="confirm"]):not([placeholder*="Confirm"]), ' +
-                'input[id="new_password"]:not([id*="confirm"]):not([name*="confirm"]):not([placeholder*="Confirm"])'
+                    'input[id="password"]:not([id*="confirm"]):not([name*="confirm"]):not([placeholder*="Confirm"]), ' +
+                    'input[name="new_password"]:not([id*="confirm"]):not([name*="confirm"]):not([placeholder*="Confirm"]), ' +
+                    'input[id="new_password"]:not([id*="confirm"]):not([name*="confirm"]):not([placeholder*="Confirm"])',
             ) as HTMLInputElement;
 
             if (mainInput) {
@@ -67,12 +73,24 @@ export default function PasswordInput({
     const requirements = isConfirmationField
         ? [{ label: 'Passwords must match', checked: isMatching }]
         : [
-            { label: 'Minimum 12 characters', checked: value.length >= 12 },
-            { label: 'At least one uppercase letter (A-Z)', checked: /[A-Z]/.test(value) },
-            { label: 'At least one lowercase letter (a-z)', checked: /[a-z]/.test(value) },
-            { label: 'At least one number (0-9)', checked: /[0-9]/.test(value) },
-            { label: 'At least one special character (!@#$%^&*, etc.)', checked: /[^A-Za-z0-9]/.test(value) },
-        ];
+              { label: 'Minimum 12 characters', checked: value.length >= 12 },
+              {
+                  label: 'At least one uppercase letter (A-Z)',
+                  checked: /[A-Z]/.test(value),
+              },
+              {
+                  label: 'At least one lowercase letter (a-z)',
+                  checked: /[a-z]/.test(value),
+              },
+              {
+                  label: 'At least one number (0-9)',
+                  checked: /[0-9]/.test(value),
+              },
+              {
+                  label: 'At least one special character (!@#$%^&*, etc.)',
+                  checked: /[^A-Za-z0-9]/.test(value),
+              },
+          ];
 
     const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
         setIsFocused(true);
@@ -93,7 +111,7 @@ export default function PasswordInput({
     };
 
     return (
-        <div className="space-y-2 w-full">
+        <div className="w-full space-y-2">
             <div className="relative">
                 <Input
                     type={showPassword ? 'text' : 'password'}
@@ -108,7 +126,9 @@ export default function PasswordInput({
                     type="button"
                     onClick={() => setShowPassword((prev) => !prev)}
                     className="absolute inset-y-0 right-0 flex items-center rounded-r-md px-3 text-muted-foreground hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none"
-                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    aria-label={
+                        showPassword ? 'Hide password' : 'Show password'
+                    }
                     tabIndex={-1}
                 >
                     {showPassword ? (
@@ -120,20 +140,26 @@ export default function PasswordInput({
             </div>
 
             {isFocused && (
-                <div className="rounded-lg border border-border bg-muted/40 p-3 text-xs shadow-xs animate-in fade-in duration-200">
-                    <p className="mb-2 font-medium text-muted-foreground">Password requirements:</p>
+                <div className="animate-in rounded-lg border border-border bg-muted/40 p-3 text-xs shadow-xs duration-200 fade-in">
+                    <p className="mb-2 font-medium text-muted-foreground">
+                        Password requirements:
+                    </p>
                     <ul className="space-y-1.5">
                         {requirements.map((req, idx) => (
                             <li key={idx} className="flex items-center gap-2">
                                 {req.checked ? (
-                                    <Check className="size-3.5 text-green-500 shrink-0" />
+                                    <Check className="size-3.5 shrink-0 text-green-500" />
                                 ) : (
-                                    <X className="size-3.5 text-muted-foreground/60 shrink-0" />
+                                    <X className="size-3.5 shrink-0 text-muted-foreground/60" />
                                 )}
-                                <span className={cn(
-                                    'transition-colors duration-200',
-                                    req.checked ? 'text-green-600 dark:text-green-400 font-medium' : 'text-muted-foreground'
-                                )}>
+                                <span
+                                    className={cn(
+                                        'transition-colors duration-200',
+                                        req.checked
+                                            ? 'font-medium text-green-600 dark:text-green-400'
+                                            : 'text-muted-foreground',
+                                    )}
+                                >
                                     {req.label}
                                 </span>
                             </li>
