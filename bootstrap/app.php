@@ -1,5 +1,6 @@
 <?php
 
+use App\Exceptions\EmployeeProfileNotFoundException;
 use App\Http\Middleware\EnsurePasswordChanged;
 use App\Http\Middleware\EnsureTwoFactorEnabled;
 use App\Http\Middleware\HandleAppearance;
@@ -31,4 +32,12 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );
+
+        $exceptions->render(function (EmployeeProfileNotFoundException $e, Request $request) {
+            if ($request->wantsJson() || $request->expectsJson() || $request->is('inertia/*')) {
+                return response()->json(['error' => $e->getMessage()], 422);
+            }
+
+            return redirect()->back()->withErrors(['error' => $e->getMessage()]);
+        });
     })->create();

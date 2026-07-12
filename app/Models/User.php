@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Exceptions\EmployeeProfileNotFoundException;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -92,6 +93,22 @@ class User extends Authenticatable implements PasskeyUser
     public function employee(): HasOne
     {
         return $this->hasOne(Employee::class);
+    }
+
+    /**
+     * Get the employee profile or throw an exception if not found.
+     *
+     * @throws EmployeeProfileNotFoundException
+     */
+    public function getEmployeeOrAbort(?string $message = null): Employee
+    {
+        $employee = $this->employee;
+
+        if (! $employee) {
+            throw new EmployeeProfileNotFoundException($message ?? 'Employee profile not found.');
+        }
+
+        return $employee;
     }
 
     /**

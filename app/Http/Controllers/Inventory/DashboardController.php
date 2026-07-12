@@ -4,14 +4,12 @@ namespace App\Http\Controllers\Inventory;
 
 use App\Http\Controllers\Controller;
 use App\Models\DepartmentItem;
-use App\Models\Employee;
 use App\Models\Issuance;
 use App\Models\Item;
 use App\Models\Property;
 use App\Models\ReceivingReport;
 use App\Models\Requisition;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -25,8 +23,8 @@ class DashboardController extends Controller
     {
         Gate::authorize('dashboard.view');
 
-        $user = Auth::user();
-        $employee = Employee::where('user_id', $user->id)->first();
+        $user = $request->user();
+        $employee = $user?->employee;
 
         // Check if user should see global inventory (Supply Officer/Admin)
         $seesGlobalInventory = Gate::allows('warehouse.issue');
@@ -66,7 +64,7 @@ class DashboardController extends Controller
             $deptPropertiesQuery = Property::whereHas('activeAssignment.assignee', function ($query) use ($employee) {
                 $query->where('department_id', $employee->department_id);
             });
-            
+
             $totalProperties = $deptPropertiesQuery->count();
             $totalPpeValue = (float) $deptPropertiesQuery->sum('unit_cost');
         }

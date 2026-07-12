@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Dropped unique constraint to support batch assignments where multiple properties share a single PAR/ICS document number
         Schema::table('property_assignments', function (Blueprint $table) {
             $table->dropUnique(['document_number']);
         });

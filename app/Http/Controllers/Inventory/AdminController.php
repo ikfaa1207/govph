@@ -98,7 +98,7 @@ class AdminController extends Controller
         $user->roles()->sync($validated['roles']);
 
         // Update employee details if exists
-        $employee = Employee::where('user_id', $user->id)->first();
+        $employee = $user->employee;
         if ($employee) {
             $employee->update([
                 'name' => $validated['name'],

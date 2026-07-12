@@ -23,7 +23,7 @@ class PhysicalCountController extends Controller
     public function index(): Response
     {
         $user = Auth::user();
-        $employee = Employee::where('user_id', $user->id)->first();
+        $employee = $user?->employee;
 
         $query = PhysicalCount::with('creator');
 
@@ -60,10 +60,7 @@ class PhysicalCountController extends Controller
         ]);
 
         $user = Auth::user();
-        $employee = Employee::where('user_id', $user->id)->first();
-        if (! $employee) {
-            return redirect()->back()->withErrors(['error' => 'Employee profile not found.']);
-        }
+        $employee = $user->getEmployeeOrAbort('Employee profile not found.');
 
         DB::beginTransaction();
         try {
@@ -147,7 +144,7 @@ class PhysicalCountController extends Controller
     public function show(PhysicalCount $physicalCount): Response
     {
         $user = Auth::user();
-        $employee = Employee::where('user_id', $user->id)->first();
+        $employee = $user?->employee;
 
         if (! $user->hasPermissionTo('reports.view')) {
             $isCreator = $employee && $physicalCount->created_by === $employee->id;
@@ -173,7 +170,7 @@ class PhysicalCountController extends Controller
     public function update(Request $request, PhysicalCount $physicalCount): RedirectResponse
     {
         $user = Auth::user();
-        $employee = Employee::where('user_id', $user->id)->first();
+        $employee = $user?->employee;
 
         if (! $user->hasPermissionTo('reports.view')) {
             $isCreator = $employee && $physicalCount->created_by === $employee->id;
@@ -287,11 +284,7 @@ class PhysicalCountController extends Controller
         ]);
 
         $user = Auth::user();
-        $employee = Employee::where('user_id', $user->id)->first();
-
-        if (! $employee) {
-            return redirect()->back()->withErrors(['error' => 'Employee profile not found.']);
-        }
+        $employee = $user->getEmployeeOrAbort('Employee profile not found.');
 
         /** @var PhysicalCountCommittee|null $committee */
         $committee = $physicalCount->committees()->where('employee_id', $employee->id)->first();
@@ -324,7 +317,7 @@ class PhysicalCountController extends Controller
     public function export(PhysicalCount $physicalCount): StreamedResponse
     {
         $user = Auth::user();
-        $employee = Employee::where('user_id', $user->id)->first();
+        $employee = $user?->employee;
 
         if (! $user->hasPermissionTo('reports.view')) {
             $isCreator = $employee && $physicalCount->created_by === $employee->id;
@@ -440,7 +433,7 @@ class PhysicalCountController extends Controller
     public function destroy(PhysicalCount $physicalCount): RedirectResponse
     {
         $user = Auth::user();
-        $employee = Employee::where('user_id', $user->id)->first();
+        $employee = $user?->employee;
 
         if ($physicalCount->status !== PhysicalCountStatus::Draft) {
             return redirect()->back()->withErrors(['error' => 'Only draft physical counts can be deleted.']);

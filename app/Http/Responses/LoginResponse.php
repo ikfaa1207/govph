@@ -2,7 +2,6 @@
 
 namespace App\Http\Responses;
 
-use App\Models\Requisition;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Laravel\Fortify\Contracts\LoginResponse as LoginResponseContract;
@@ -28,7 +27,7 @@ class LoginResponse implements LoginResponseContract
             return redirect()->intended(config('fortify.home'));
         }
 
-        if (Gate::allows('viewAny', Requisition::class) || Gate::allows('request.viewAny')) {
+        if (Gate::allows('requisition.viewAny') || Gate::allows('request.viewAny')) {
             return redirect()->intended('/inventory/requisitions');
         }
 

@@ -37,7 +37,7 @@ class RequisitionController extends Controller
      */
     public function index(Request $request): Response
     {
-        Gate::authorize('viewAny', Requisition::class);
+        Gate::authorize('requisition.viewAny');
 
         $user = Auth::user();
         $employee = $user?->employee;
@@ -82,11 +82,7 @@ class RequisitionController extends Controller
         Gate::authorize('request.create');
 
         $user = Auth::user();
-        $employee = $user?->employee;
-
-        if (! $employee) {
-            return back()->withErrors(['error' => 'You must have an employee profile to file requisitions.']);
-        }
+        $employee = $user->getEmployeeOrAbort('You must have an employee profile to file requisitions.');
 
         $deptHead = Employee::where('department_id', $employee->department_id)
             ->whereHas('user.roles', fn ($q) => $q->where('name', 'Department Head'))
@@ -125,7 +121,7 @@ class RequisitionController extends Controller
      */
     public function approve(ApproveRequisitionRequest $request, Requisition $requisition): RedirectResponse
     {
-        Gate::authorize('approve', $requisition);
+        Gate::authorize('requisition.approve', $requisition);
 
         $employee = Auth::user()?->employee;
 
@@ -156,14 +152,10 @@ class RequisitionController extends Controller
      */
     public function issue(Request $request, Requisition $requisition): RedirectResponse
     {
-        Gate::authorize('issue', $requisition);
+        Gate::authorize('requisition.issue', $requisition);
 
         $user = Auth::user();
-        $employee = $user?->employee;
-
-        if (! $employee) {
-            return back()->withErrors(['error' => 'You must have an employee profile to issue items.']);
-        }
+        $employee = $user->getEmployeeOrAbort('You must have an employee profile to issue items.');
 
         $request->validate([
             'items' => ['required', 'array'],
@@ -248,7 +240,7 @@ class RequisitionController extends Controller
      */
     public function print(Request $request, Requisition $requisition): Response
     {
-        Gate::authorize('view', $requisition);
+        Gate::authorize('requisition.view', $requisition);
 
         $requisition->load([
             'requester.department.office',

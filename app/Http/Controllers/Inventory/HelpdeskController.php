@@ -17,7 +17,7 @@ class HelpdeskController extends Controller
      */
     public function index(Request $request): Response
     {
-        Gate::authorize('viewAny', Ticket::class);
+        Gate::authorize('ticket.viewAny');
 
         $user = $request->user();
 
@@ -45,7 +45,7 @@ class HelpdeskController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
-        Gate::authorize('create', Ticket::class);
+        Gate::authorize('ticket.create');
 
         if ($request->has('attachment') && ! $request->hasFile('attachment')) {
             $request->request->remove('attachment');
@@ -76,7 +76,7 @@ class HelpdeskController extends Controller
      */
     public function update(Request $request, Ticket $ticket): RedirectResponse
     {
-        Gate::authorize('update', $ticket);
+        Gate::authorize('ticket.update', $ticket);
 
         $validated = $request->validate([
             'status' => ['required', 'string', 'in:open,in_progress,resolved'],
