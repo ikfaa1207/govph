@@ -764,18 +764,23 @@ export default function RequisitionsIndex({
                                                 </CardTitle>
                                                 <Badge
                                                     variant="outline"
-                                                    className={`capitalize font-medium ${
-                                                        req.status === 'pending_dept_head'
-                                                            ? 'bg-amber-500/10 text-amber-500 border-amber-500/30'
-                                                            : req.status === 'rejected_dept_head'
-                                                            ? 'bg-destructive/10 text-destructive border-destructive/30 animate-pulse'
-                                                            : req.status === 'pending_supply'
-                                                            ? 'bg-blue-500/10 text-blue-500 border-blue-500/30'
-                                                            : req.status === 'issued'
-                                                            ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/30'
-                                                            : req.status === 'partially_issued'
-                                                            ? 'bg-indigo-500/10 text-indigo-500 border-indigo-500/30'
-                                                            : 'bg-muted text-muted-foreground border-muted-foreground/30'
+                                                    className={`font-medium capitalize ${
+                                                        req.status ===
+                                                        'pending_dept_head'
+                                                            ? 'border-amber-500/30 bg-amber-500/10 text-amber-500'
+                                                            : req.status ===
+                                                                'rejected_dept_head'
+                                                              ? 'animate-pulse border-destructive/30 bg-destructive/10 text-destructive'
+                                                              : req.status ===
+                                                                  'pending_supply'
+                                                                ? 'border-blue-500/30 bg-blue-500/10 text-blue-500'
+                                                                : req.status ===
+                                                                    'issued'
+                                                                  ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-500'
+                                                                  : req.status ===
+                                                                      'partially_issued'
+                                                                    ? 'border-indigo-500/30 bg-indigo-500/10 text-indigo-500'
+                                                                    : 'border-muted-foreground/30 bg-muted text-muted-foreground'
                                                     }`}
                                                 >
                                                     {req.status.replace(
@@ -1342,25 +1347,40 @@ export default function RequisitionsIndex({
                 <Dialog open={isRejectOpen} onOpenChange={setIsRejectOpen}>
                     <DialogContent className="flex max-h-[90vh] flex-col sm:max-w-md">
                         <DialogHeader>
-                            <DialogTitle>Reject Requisition Slip (RIS)</DialogTitle>
+                            <DialogTitle>
+                                Reject Requisition Slip (RIS)
+                            </DialogTitle>
                             <DialogDescription>
-                                Please specify the reason for rejecting this requisition.
+                                Please specify the reason for rejecting this
+                                requisition.
                             </DialogDescription>
                         </DialogHeader>
                         {selectedReq && (
-                            <form onSubmit={handleRejectSubmit} className="space-y-4">
+                            <form
+                                onSubmit={handleRejectSubmit}
+                                className="space-y-4"
+                            >
                                 <div className="space-y-2">
-                                    <Label htmlFor="remarks">Rejection Reason</Label>
+                                    <Label htmlFor="remarks">
+                                        Rejection Reason
+                                    </Label>
                                     <textarea
                                         id="remarks"
-                                        className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                                        className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                                         value={rejectForm.data.remarks}
-                                        onChange={(e) => rejectForm.setData('remarks', e.target.value)}
+                                        onChange={(e) =>
+                                            rejectForm.setData(
+                                                'remarks',
+                                                e.target.value,
+                                            )
+                                        }
                                         placeholder="Enter reason for rejection..."
                                         required
                                     />
                                     {rejectForm.errors.remarks && (
-                                        <p className="text-xs text-destructive">{rejectForm.errors.remarks}</p>
+                                        <p className="text-xs text-destructive">
+                                            {rejectForm.errors.remarks}
+                                        </p>
                                     )}
                                 </div>
                                 <div className="flex justify-end gap-2 border-t pt-4">

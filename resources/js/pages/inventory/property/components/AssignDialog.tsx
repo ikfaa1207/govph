@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { SmartSelect } from '@/components/ui/smart-select';
 import { formatCurrency } from '@/lib/utils';
-import { Property } from '../index';
+import type { Property } from '../index';
 
 interface AssignDialogProps {
     isOpen: boolean;
@@ -22,7 +22,12 @@ interface AssignDialogProps {
     employees: any[];
 }
 
-export function AssignDialog({ isOpen, onClose, property, employees }: AssignDialogProps) {
+export function AssignDialog({
+    isOpen,
+    onClose,
+    property,
+    employees,
+}: AssignDialogProps) {
     const form = useForm({
         assigned_to: '',
         is_non_system: false,
@@ -36,7 +41,9 @@ export function AssignDialog({ isOpen, onClose, property, employees }: AssignDia
         form.post(`/inventory/properties/${property.id}/assign`, {
             onSuccess: () => {
                 onClose();
-                toast.success('Equipment assigned. Handover document generated.');
+                toast.success(
+                    'Equipment assigned. Handover document generated.',
+                );
             },
             onError: () => {
                 toast.error('Failed to assign equipment.');
@@ -50,7 +57,8 @@ export function AssignDialog({ isOpen, onClose, property, employees }: AssignDia
                 <DialogHeader>
                     <DialogTitle>Assign Equipment Accountability</DialogTitle>
                     <DialogDescription>
-                        Assign this equipment to an employee. The document routing is determined automatically.
+                        Assign this equipment to an employee. The document
+                        routing is determined automatically.
                     </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4">
@@ -59,14 +67,22 @@ export function AssignDialog({ isOpen, onClose, property, employees }: AssignDia
                         <div>
                             <strong>Automatic Document Determination:</strong>
                             <p className="mt-0.5">
-                                Cost: <strong>{formatCurrency(property.unit_cost)}</strong>.
+                                Cost:{' '}
+                                <strong>
+                                    {formatCurrency(property.unit_cost)}
+                                </strong>
+                                .
                                 {property.unit_cost >= 50000 ? (
                                     <span className="mt-0.5 block font-semibold text-emerald-600">
-                                        Cost is ≥ ₱50k. System will generate a Property Acknowledgment Receipt (PAR) for PPE.
+                                        Cost is ≥ ₱50k. System will generate a
+                                        Property Acknowledgment Receipt (PAR)
+                                        for PPE.
                                     </span>
                                 ) : (
                                     <span className="mt-0.5 block font-semibold text-amber-600">
-                                        Cost is &lt; ₱50k. System will generate an Inventory Custodian Slip (ICS) for semi-expendables.
+                                        Cost is &lt; ₱50k. System will generate
+                                        an Inventory Custodian Slip (ICS) for
+                                        semi-expendables.
                                     </span>
                                 )}
                             </p>
@@ -124,14 +140,22 @@ export function AssignDialog({ isOpen, onClose, property, employees }: AssignDia
                                     value: String(e.id),
                                     label: `${e.name} (${e.position})`,
                                 }))}
-                                value={form.data.assigned_to ? String(form.data.assigned_to) : undefined}
-                                onValueChange={(val) => form.setData('assigned_to', val)}
+                                value={
+                                    form.data.assigned_to
+                                        ? String(form.data.assigned_to)
+                                        : undefined
+                                }
+                                onValueChange={(val) =>
+                                    form.setData('assigned_to', val)
+                                }
                                 placeholder="Select Employee"
                                 className="w-full"
                                 disabled={form.data.is_non_system}
                             />
                             {form.errors.assigned_to && (
-                                <p className="text-xs text-destructive">{form.errors.assigned_to}</p>
+                                <p className="text-xs text-destructive">
+                                    {form.errors.assigned_to}
+                                </p>
                             )}
                         </div>
                     ) : (
@@ -145,11 +169,18 @@ export function AssignDialog({ isOpen, onClose, property, employees }: AssignDia
                                     type="text"
                                     placeholder="Juan dela Cruz"
                                     value={form.data.non_system_name}
-                                    onChange={(e) => form.setData('non_system_name', e.target.value)}
+                                    onChange={(e) =>
+                                        form.setData(
+                                            'non_system_name',
+                                            e.target.value,
+                                        )
+                                    }
                                     required={form.data.is_non_system}
                                 />
                                 {form.errors.non_system_name && (
-                                    <p className="text-xs text-destructive">{form.errors.non_system_name}</p>
+                                    <p className="text-xs text-destructive">
+                                        {form.errors.non_system_name}
+                                    </p>
                                 )}
                             </div>
                             <div className="space-y-1">
@@ -161,11 +192,18 @@ export function AssignDialog({ isOpen, onClose, property, employees }: AssignDia
                                     type="text"
                                     placeholder="DICT Regional Office"
                                     value={form.data.non_system_department}
-                                    onChange={(e) => form.setData('non_system_department', e.target.value)}
+                                    onChange={(e) =>
+                                        form.setData(
+                                            'non_system_department',
+                                            e.target.value,
+                                        )
+                                    }
                                     required={form.data.is_non_system}
                                 />
                                 {form.errors.non_system_department && (
-                                    <p className="text-xs text-destructive">{form.errors.non_system_department}</p>
+                                    <p className="text-xs text-destructive">
+                                        {form.errors.non_system_department}
+                                    </p>
                                 )}
                             </div>
                         </div>
@@ -179,12 +217,18 @@ export function AssignDialog({ isOpen, onClose, property, employees }: AssignDia
                             id="rem"
                             className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-hidden"
                             value={form.data.remarks}
-                            onChange={(e) => form.setData('remarks', e.target.value)}
+                            onChange={(e) =>
+                                form.setData('remarks', e.target.value)
+                            }
                         />
                     </div>
 
                     <div className="flex justify-end gap-2 pt-2">
-                        <Button type="button" variant="outline" onClick={onClose}>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={onClose}
+                        >
                             Cancel
                         </Button>
                         <Button type="submit" disabled={form.processing}>

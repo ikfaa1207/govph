@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\PropertyStatus;
 use App\Models\Category;
 use App\Models\Department;
 use App\Models\Employee;
@@ -8,14 +9,13 @@ use App\Models\Office;
 use App\Models\Permission;
 use App\Models\Property;
 use App\Models\PropertyAssignment;
+use App\Models\PropertySubAssignment;
 use App\Models\PropertyTransfer;
 use App\Models\Requisition;
 use App\Models\RequisitionItem;
+use App\Models\Role;
 use App\Models\Unit;
 use App\Models\User;
-use App\Enums\PropertyStatus;
-use App\Models\PropertySubAssignment;
-use App\Models\Role;
 use App\Services\Valuation\ValuationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 

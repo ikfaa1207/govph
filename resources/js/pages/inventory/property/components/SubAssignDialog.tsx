@@ -17,7 +17,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { Property } from '../index';
+import type { Property } from '../index';
 
 interface SubAssignDialogProps {
     isOpen: boolean;
@@ -61,7 +61,8 @@ export function SubAssignDialog({
                 <DialogHeader>
                     <DialogTitle>Issue Memorandum Receipt (MR)</DialogTitle>
                     <DialogDescription>
-                        Internally track custody of this property within your department.
+                        Internally track custody of this property within your
+                        department.
                     </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4">
@@ -113,7 +114,9 @@ export function SubAssignDialog({
                             <Label htmlFor="mr_assignee">Employee</Label>
                             <Select
                                 value={String(form.data.issued_to)}
-                                onValueChange={(val) => form.setData('issued_to', val)}
+                                onValueChange={(val) =>
+                                    form.setData('issued_to', val)
+                                }
                                 required={!form.data.is_non_system}
                             >
                                 <SelectTrigger className="w-full">
@@ -124,10 +127,14 @@ export function SubAssignDialog({
                                         .filter(
                                             (e) =>
                                                 current_employee &&
-                                                e.department_id === current_employee.department_id,
+                                                e.department_id ===
+                                                    current_employee.department_id,
                                         )
                                         .map((e) => (
-                                            <SelectItem key={e.id} value={String(e.id)}>
+                                            <SelectItem
+                                                key={e.id}
+                                                value={String(e.id)}
+                                            >
                                                 {e.name} ({e.position})
                                             </SelectItem>
                                         ))}
@@ -144,12 +151,20 @@ export function SubAssignDialog({
                                     id="mr_non_system_name"
                                     type="text"
                                     value={form.data.non_system_name}
-                                    onChange={(e) => form.setData('non_system_name', e.target.value)}
+                                    onChange={(e) =>
+                                        form.setData(
+                                            'non_system_name',
+                                            e.target.value,
+                                        )
+                                    }
                                     required={form.data.is_non_system}
                                 />
                             </div>
                             <p className="mt-2 text-xs text-muted-foreground">
-                                <em>Note: Department will automatically be set to your current department.</em>
+                                <em>
+                                    Note: Department will automatically be set
+                                    to your current department.
+                                </em>
                             </p>
                         </div>
                     )}
@@ -160,12 +175,18 @@ export function SubAssignDialog({
                             id="mr_rem"
                             className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-hidden"
                             value={form.data.remarks}
-                            onChange={(e) => form.setData('remarks', e.target.value)}
+                            onChange={(e) =>
+                                form.setData('remarks', e.target.value)
+                            }
                         />
                     </div>
 
                     <div className="flex justify-end gap-2 pt-2">
-                        <Button type="button" variant="outline" onClick={onClose}>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={onClose}
+                        >
                             Cancel
                         </Button>
                         <Button

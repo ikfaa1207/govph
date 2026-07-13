@@ -1,26 +1,28 @@
-import React from 'react';
 import { Head, Link } from '@inertiajs/react';
-import { Button } from '@/components/ui/button';
 import { AlertTriangle, Home, ArrowLeft } from 'lucide-react';
+import React from 'react';
+import { Button } from '@/components/ui/button';
 
 interface ErrorProps {
     status: number;
 }
 
 export default function ErrorPage({ status }: ErrorProps) {
-    const title = {
-        503: '503: Service Unavailable',
-        500: '500: Server Error',
-        404: '404: Page Not Found',
-        403: '403: Forbidden',
-    }[status] || 'Error';
+    const title =
+        {
+            503: '503: Service Unavailable',
+            500: '500: Server Error',
+            404: '404: Page Not Found',
+            403: '403: Forbidden',
+        }[status] || 'Error';
 
-    const description = {
-        503: 'Sorry, we are doing some maintenance. Please check back soon.',
-        500: 'Whoops, something went wrong on our servers.',
-        404: 'Sorry, the page you are looking for could not be found.',
-        403: 'Sorry, you do not have permission to access this resource or perform this action.',
-    }[status] || 'An unexpected error occurred.';
+    const description =
+        {
+            503: 'Sorry, we are doing some maintenance. Please check back soon.',
+            500: 'Whoops, something went wrong on our servers.',
+            404: 'Sorry, the page you are looking for could not be found.',
+            403: 'Sorry, you do not have permission to access this resource or perform this action.',
+        }[status] || 'An unexpected error occurred.';
 
     return (
         <div className="flex min-h-screen items-center justify-center bg-background p-6">

@@ -354,8 +354,11 @@ export default function PhysicalCountShow({
                             </span>
                         </p>
                         {physicalCount.coa_representative_absent_reason && (
-                            <p className="mt-2 text-xs text-amber-600 dark:text-amber-400 bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/50 dark:border-amber-900/30 px-3 py-1.5 rounded-md inline-block">
-                                <strong>COA Audit Representative Absent:</strong> {physicalCount.coa_representative_absent_reason}
+                            <p className="mt-2 inline-block rounded-md border border-amber-200/50 bg-amber-50/50 px-3 py-1.5 text-xs text-amber-600 dark:border-amber-900/30 dark:bg-amber-950/20 dark:text-amber-400">
+                                <strong>
+                                    COA Audit Representative Absent:
+                                </strong>{' '}
+                                {physicalCount.coa_representative_absent_reason}
                             </p>
                         )}
                     </div>

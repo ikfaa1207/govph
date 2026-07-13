@@ -40,7 +40,7 @@ interface DashboardProps {
     recentIssuances: Array<any>;
     recentReceiving: Array<any>;
     pendingRequests: Array<any>;
-    complianceAlerts?: Array<{ type: string; title: string; message: string; }>;
+    complianceAlerts?: Array<{ type: string; title: string; message: string }>;
 }
 
 export default function Dashboard({
@@ -79,8 +79,12 @@ export default function Dashboard({
                             >
                                 <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
                                 <div>
-                                    <h5 className="font-semibold text-sm">{alert.title}</h5>
-                                    <p className="text-xs mt-1 text-amber-800 dark:text-amber-300">{alert.message}</p>
+                                    <h5 className="text-sm font-semibold">
+                                        {alert.title}
+                                    </h5>
+                                    <p className="mt-1 text-xs text-amber-800 dark:text-amber-300">
+                                        {alert.message}
+                                    </p>
                                 </div>
                             </div>
                         ))}

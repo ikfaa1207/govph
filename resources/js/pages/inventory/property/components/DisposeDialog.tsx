@@ -18,7 +18,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { Property } from '../index';
+import type { Property } from '../index';
 
 interface DisposeDialogProps {
     isOpen: boolean;
@@ -28,7 +28,13 @@ interface DisposeDialogProps {
     current_employee: { id: number; name: string } | null;
 }
 
-export function DisposeDialog({ isOpen, onClose, property, employees, current_employee }: DisposeDialogProps) {
+export function DisposeDialog({
+    isOpen,
+    onClose,
+    property,
+    employees,
+    current_employee,
+}: DisposeDialogProps) {
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
     const form = useForm({
@@ -42,14 +48,19 @@ export function DisposeDialog({ isOpen, onClose, property, employees, current_em
         jev_reference: '',
     });
 
-    const eligibleApprovers = employees.filter((emp) => emp.id !== current_employee?.id);
+    const eligibleApprovers = employees.filter(
+        (emp) => emp.id !== current_employee?.id,
+    );
 
     const handleSubmitClick = (e: React.FormEvent) => {
         e.preventDefault();
+
         if (!form.data.approved_by || !form.data.witness_by) {
             toast.error('Approver and Witnessed By fields are required.');
+
             return;
         }
+
         setIsConfirmOpen(true);
     };
 
@@ -58,7 +69,9 @@ export function DisposeDialog({ isOpen, onClose, property, employees, current_em
         form.post(`/inventory/properties/${property.id}/dispose`, {
             onSuccess: () => {
                 onClose();
-                toast.success('Property condemned / disposed. IIRUP report completed.');
+                toast.success(
+                    'Property condemned / disposed. IIRUP report completed.',
+                );
             },
             onError: () => {
                 toast.error('Failed to dispose property.');
@@ -71,9 +84,12 @@ export function DisposeDialog({ isOpen, onClose, property, employees, current_em
             <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
                 <DialogContent className="sm:max-w-lg">
                     <DialogHeader>
-                        <DialogTitle>Dispose / Condemn Equipment (IIRUP)</DialogTitle>
+                        <DialogTitle>
+                            Dispose / Condemn Equipment (IIRUP)
+                        </DialogTitle>
                         <DialogDescription>
-                            Declare this property as unserviceable and execute disposal protocols.
+                            Declare this property as unserviceable and execute
+                            disposal protocols.
                         </DialogDescription>
                     </DialogHeader>
                     <form onSubmit={handleSubmitClick} className="space-y-4">
@@ -84,17 +100,30 @@ export function DisposeDialog({ isOpen, onClose, property, employees, current_em
                                 </Label>
                                 <Select
                                     value={String(form.data.disposal_method)}
-                                    onValueChange={(val) => form.setData('disposal_method', val as any)}
+                                    onValueChange={(val) =>
+                                        form.setData(
+                                            'disposal_method',
+                                            val as any,
+                                        )
+                                    }
                                     required
                                 >
                                     <SelectTrigger className="w-full">
                                         <SelectValue placeholder="Select Method" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="destruction">Destruction</SelectItem>
-                                        <SelectItem value="auction">Public Auction</SelectItem>
-                                        <SelectItem value="transfer">Transfer to other Agency</SelectItem>
-                                        <SelectItem value="donation">Donation</SelectItem>
+                                        <SelectItem value="destruction">
+                                            Destruction
+                                        </SelectItem>
+                                        <SelectItem value="auction">
+                                            Public Auction
+                                        </SelectItem>
+                                        <SelectItem value="transfer">
+                                            Transfer to other Agency
+                                        </SelectItem>
+                                        <SelectItem value="donation">
+                                            Donation
+                                        </SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -104,17 +133,27 @@ export function DisposeDialog({ isOpen, onClose, property, employees, current_em
                                 </Label>
                                 <Select
                                     value={String(form.data.reason)}
-                                    onValueChange={(val) => form.setData('reason', val as any)}
+                                    onValueChange={(val) =>
+                                        form.setData('reason', val as any)
+                                    }
                                     required
                                 >
                                     <SelectTrigger className="w-full">
                                         <SelectValue placeholder="Select Reason" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="broken">Broken / Unrepairable</SelectItem>
-                                        <SelectItem value="obsolete">Obsolete / Outdated</SelectItem>
-                                        <SelectItem value="lost">Lost / Stolen</SelectItem>
-                                        <SelectItem value="condemned">Condemned</SelectItem>
+                                        <SelectItem value="broken">
+                                            Broken / Unrepairable
+                                        </SelectItem>
+                                        <SelectItem value="obsolete">
+                                            Obsolete / Outdated
+                                        </SelectItem>
+                                        <SelectItem value="lost">
+                                            Lost / Stolen
+                                        </SelectItem>
+                                        <SelectItem value="condemned">
+                                            Condemned
+                                        </SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -129,16 +168,28 @@ export function DisposeDialog({ isOpen, onClose, property, employees, current_em
                                     id="appraise"
                                     type="number"
                                     value={form.data.appraised_value}
-                                    onChange={(e) => form.setData('appraised_value', parseFloat(e.target.value))}
+                                    onChange={(e) =>
+                                        form.setData(
+                                            'appraised_value',
+                                            parseFloat(e.target.value),
+                                        )
+                                    }
                                 />
                             </div>
                             <div className="space-y-1">
-                                <Label htmlFor="proc">Sales Proceeds (if Auctioned)</Label>
+                                <Label htmlFor="proc">
+                                    Sales Proceeds (if Auctioned)
+                                </Label>
                                 <Input
                                     id="proc"
                                     type="number"
                                     value={form.data.proceeds}
-                                    onChange={(e) => form.setData('proceeds', parseFloat(e.target.value))}
+                                    onChange={(e) =>
+                                        form.setData(
+                                            'proceeds',
+                                            parseFloat(e.target.value),
+                                        )
+                                    }
                                 />
                             </div>
                         </div>
@@ -150,7 +201,9 @@ export function DisposeDialog({ isOpen, onClose, property, employees, current_em
                                 </Label>
                                 <Select
                                     value={String(form.data.approved_by)}
-                                    onValueChange={(val) => form.setData('approved_by', val)}
+                                    onValueChange={(val) =>
+                                        form.setData('approved_by', val)
+                                    }
                                     required
                                 >
                                     <SelectTrigger className="w-full">
@@ -158,14 +211,20 @@ export function DisposeDialog({ isOpen, onClose, property, employees, current_em
                                     </SelectTrigger>
                                     <SelectContent>
                                         {eligibleApprovers.map((emp) => (
-                                            <SelectItem key={emp.id} value={String(emp.id)}>
-                                                {emp.name} ({emp.position || 'Staff'})
+                                            <SelectItem
+                                                key={emp.id}
+                                                value={String(emp.id)}
+                                            >
+                                                {emp.name} (
+                                                {emp.position || 'Staff'})
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
                                 {form.errors.approved_by && (
-                                    <p className="text-xs text-destructive">{form.errors.approved_by}</p>
+                                    <p className="text-xs text-destructive">
+                                        {form.errors.approved_by}
+                                    </p>
                                 )}
                             </div>
                             <div className="space-y-1">
@@ -177,11 +236,18 @@ export function DisposeDialog({ isOpen, onClose, property, employees, current_em
                                     type="text"
                                     placeholder="COA Auditor / Officer name"
                                     value={form.data.witness_by}
-                                    onChange={(e) => form.setData('witness_by', e.target.value)}
+                                    onChange={(e) =>
+                                        form.setData(
+                                            'witness_by',
+                                            e.target.value,
+                                        )
+                                    }
                                     required
                                 />
                                 {form.errors.witness_by && (
-                                    <p className="text-xs text-destructive">{form.errors.witness_by}</p>
+                                    <p className="text-xs text-destructive">
+                                        {form.errors.witness_by}
+                                    </p>
                                 )}
                             </div>
                         </div>
@@ -193,21 +259,29 @@ export function DisposeDialog({ isOpen, onClose, property, employees, current_em
                                 </Label>
                                 <Select
                                     value={String(form.data.inspected_by)}
-                                    onValueChange={(val) => form.setData('inspected_by', val)}
+                                    onValueChange={(val) =>
+                                        form.setData('inspected_by', val)
+                                    }
                                 >
                                     <SelectTrigger className="w-full">
                                         <SelectValue placeholder="Select Inspector" />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {employees.map((emp) => (
-                                            <SelectItem key={emp.id} value={String(emp.id)}>
-                                                {emp.name} ({emp.position || 'Staff'})
+                                            <SelectItem
+                                                key={emp.id}
+                                                value={String(emp.id)}
+                                            >
+                                                {emp.name} (
+                                                {emp.position || 'Staff'})
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
                                 {form.errors.inspected_by && (
-                                    <p className="text-xs text-destructive">{form.errors.inspected_by}</p>
+                                    <p className="text-xs text-destructive">
+                                        {form.errors.inspected_by}
+                                    </p>
                                 )}
                             </div>
                             <div className="space-y-1">
@@ -219,16 +293,27 @@ export function DisposeDialog({ isOpen, onClose, property, employees, current_em
                                     type="text"
                                     placeholder="JEV-2026-XXXX"
                                     value={form.data.jev_reference}
-                                    onChange={(e) => form.setData('jev_reference', e.target.value)}
+                                    onChange={(e) =>
+                                        form.setData(
+                                            'jev_reference',
+                                            e.target.value,
+                                        )
+                                    }
                                 />
                                 {form.errors.jev_reference && (
-                                    <p className="text-xs text-destructive">{form.errors.jev_reference}</p>
+                                    <p className="text-xs text-destructive">
+                                        {form.errors.jev_reference}
+                                    </p>
                                 )}
                             </div>
                         </div>
 
                         <div className="flex justify-end gap-2 pt-2">
-                            <Button type="button" variant="outline" onClick={onClose}>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={onClose}
+                            >
                                 Cancel
                             </Button>
                             <Button
@@ -249,7 +334,9 @@ export function DisposeDialog({ isOpen, onClose, property, employees, current_em
                     <DialogHeader>
                         <DialogTitle>Confirm Permanent Disposal</DialogTitle>
                         <DialogDescription>
-                            Are you sure you want to permanently dispose of this property? This action is irreversible and cannot be undone.
+                            Are you sure you want to permanently dispose of this
+                            property? This action is irreversible and cannot be
+                            undone.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="flex justify-end gap-2 border-t pt-4">

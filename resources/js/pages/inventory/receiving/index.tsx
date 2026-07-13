@@ -13,12 +13,11 @@ import {
     Plus,
     History,
     Pencil,
-    MoreHorizontal,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
+import { RowActionsMenu } from '@/components/row-actions-menu';
 import { SimplePagination } from '@/components/simple-pagination';
-import { RowActionsMenu, RowAction } from '@/components/row-actions-menu';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -31,14 +30,6 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
@@ -136,30 +127,31 @@ export default function ReceivingIndex({
     const [isConfirmFinalizeOpen, setIsConfirmFinalizeOpen] = useState(false);
 
     // Form logic
-    const { data, setData, post, put, processing, errors, reset, transform } = useForm({
-        status: 'draft',
-        po_number: '',
-        supplier_id: '',
-        po_date: new Date().toISOString().slice(0, 10),
-        iar_number: '',
-        invoice_number: '',
-        delivery_receipt_number: '',
-        received_date: new Date().toISOString().slice(0, 10),
-        received_by: '',
-        inspected_by: '',
-        remarks: '',
-        items: [
-            {
-                item_id: '',
-                quantity_received: 1,
-                quantity_accepted: 1,
-                unit_cost: 0.0,
-                batch_number: '',
-                expiration_date: '',
-                rejection_reason: '',
-            },
-        ],
-    });
+    const { data, setData, post, put, processing, errors, reset, transform } =
+        useForm({
+            status: 'draft',
+            po_number: '',
+            supplier_id: '',
+            po_date: new Date().toISOString().slice(0, 10),
+            iar_number: '',
+            invoice_number: '',
+            delivery_receipt_number: '',
+            received_date: new Date().toISOString().slice(0, 10),
+            received_by: '',
+            inspected_by: '',
+            remarks: '',
+            items: [
+                {
+                    item_id: '',
+                    quantity_received: 1,
+                    quantity_accepted: 1,
+                    unit_cost: 0.0,
+                    batch_number: '',
+                    expiration_date: '',
+                    rejection_reason: '',
+                },
+            ],
+        });
 
     const supplierHttp = useHttp({
         name: '',
@@ -242,15 +234,21 @@ export default function ReceivingIndex({
     const submitForm = (targetStatus: 'draft' | 'finalized') => {
         if (targetStatus === 'finalized') {
             if (!data.received_by || !data.inspected_by) {
-                toast.error('Receiver and Inspector are required to finalize the delivery.');
+                toast.error(
+                    'Receiver and Inspector are required to finalize the delivery.',
+                );
+
                 return;
             }
+
             if (data.received_by === data.inspected_by) {
                 toast.error(
                     'The Receiver and Inspector cannot be the same person. This violates segregation of duties.',
                 );
+
                 return;
             }
+
             setIsConfirmFinalizeOpen(true);
         } else {
             executeSubmit('draft');
@@ -276,7 +274,7 @@ export default function ReceivingIndex({
                     toast.success(
                         targetStatus === 'finalized'
                             ? 'Receiving Report finalized and stock quantities updated successfully.'
-                            : 'Receiving Report draft updated successfully.'
+                            : 'Receiving Report draft updated successfully.',
                     );
                 },
                 onError: () => {
@@ -326,7 +324,8 @@ export default function ReceivingIndex({
             iar_number: report.iar_number || '',
             invoice_number: report.invoice_number || '',
             delivery_receipt_number: report.delivery_receipt_number || '',
-            received_date: report.received_date || new Date().toISOString().slice(0, 10),
+            received_date:
+                report.received_date || new Date().toISOString().slice(0, 10),
             received_by: String(
                 receivers.find((r) => r.name === report.receiver_name)?.id ||
                     '',
@@ -366,11 +365,19 @@ export default function ReceivingIndex({
     };
 
     const totalReceivedValue = data.items.reduce((sum, item) => {
-        return sum + (Number(item.quantity_received) || 0) * (Number(item.unit_cost) || 0);
+        return (
+            sum +
+            (Number(item.quantity_received) || 0) *
+                (Number(item.unit_cost) || 0)
+        );
     }, 0);
 
     const totalAcceptedValue = data.items.reduce((sum, item) => {
-        return sum + (Number(item.quantity_accepted) || 0) * (Number(item.unit_cost) || 0);
+        return (
+            sum +
+            (Number(item.quantity_accepted) || 0) *
+                (Number(item.unit_cost) || 0)
+        );
     }, 0);
 
     return (
@@ -963,28 +970,39 @@ export default function ReceivingIndex({
                                                 </tbody>
                                             </table>
                                         </div>
-                                         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mt-2 gap-4 border-t pt-3">
-                                             <Button
-                                                 type="button"
-                                                 variant="ghost"
-                                                 size="sm"
-                                                 onClick={handleAddItemRow}
-                                                 className="-ml-2 gap-1.5 text-primary hover:bg-primary/10 hover:text-primary"
-                                             >
-                                                 <PlusCircle className="h-4 w-4" />
-                                                 Add Item
-                                             </Button>
-                                             <div className="flex flex-wrap gap-4 text-xs font-semibold">
-                                                 <div className="text-muted-foreground bg-muted/30 border border-muted-foreground/10 px-3 py-1.5 rounded-md">
-                                                     Total Received: <span className="font-bold text-foreground">{formatCurrency(totalReceivedValue)}</span>
-                                                 </div>
-                                                 {data.status === 'finalized' && (
-                                                     <div className="text-muted-foreground bg-emerald-500/5 border border-emerald-500/10 px-3 py-1.5 rounded-md">
-                                                         Total Accepted: <span className="font-bold text-emerald-600">{formatCurrency(totalAcceptedValue)}</span>
-                                                     </div>
-                                                 )}
-                                             </div>
-                                         </div>
+                                        <div className="mt-2 flex flex-col gap-4 border-t pt-3 sm:flex-row sm:items-center sm:justify-between">
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={handleAddItemRow}
+                                                className="-ml-2 gap-1.5 text-primary hover:bg-primary/10 hover:text-primary"
+                                            >
+                                                <PlusCircle className="h-4 w-4" />
+                                                Add Item
+                                            </Button>
+                                            <div className="flex flex-wrap gap-4 text-xs font-semibold">
+                                                <div className="rounded-md border border-muted-foreground/10 bg-muted/30 px-3 py-1.5 text-muted-foreground">
+                                                    Total Received:{' '}
+                                                    <span className="font-bold text-foreground">
+                                                        {formatCurrency(
+                                                            totalReceivedValue,
+                                                        )}
+                                                    </span>
+                                                </div>
+                                                {data.status ===
+                                                    'finalized' && (
+                                                    <div className="rounded-md border border-emerald-500/10 bg-emerald-500/5 px-3 py-1.5 text-muted-foreground">
+                                                        Total Accepted:{' '}
+                                                        <span className="font-bold text-emerald-600">
+                                                            {formatCurrency(
+                                                                totalAcceptedValue,
+                                                            )}
+                                                        </span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
                                     </div>
 
                                     {/* Remarks */}
@@ -1019,13 +1037,16 @@ export default function ReceivingIndex({
                                         >
                                             Cancel
                                         </Button>
-                                        {(!editMode || data.status === 'draft') && (
+                                        {(!editMode ||
+                                            data.status === 'draft') && (
                                             <Button
                                                 type="button"
                                                 variant="secondary"
                                                 disabled={processing}
-                                                onClick={() => submitForm('draft')}
-                                                className="px-5 bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 hover:text-amber-700 border border-amber-500/20"
+                                                onClick={() =>
+                                                    submitForm('draft')
+                                                }
+                                                className="border border-amber-500/20 bg-amber-500/10 px-5 text-amber-600 hover:bg-amber-500/20 hover:text-amber-700"
                                             >
                                                 Save Draft
                                             </Button>
@@ -1033,10 +1054,14 @@ export default function ReceivingIndex({
                                         <Button
                                             type="button"
                                             disabled={processing}
-                                            onClick={() => submitForm('finalized')}
+                                            onClick={() =>
+                                                submitForm('finalized')
+                                            }
                                             className="px-5"
                                         >
-                                            {data.status === 'finalized' ? 'Save Updates' : 'Finalize & Stock In'}
+                                            {data.status === 'finalized'
+                                                ? 'Save Updates'
+                                                : 'Finalize & Stock In'}
                                         </Button>
                                     </div>
                                 </form>
@@ -1044,19 +1069,29 @@ export default function ReceivingIndex({
                         </Dialog>
 
                         {/* Dialog: Confirm Finalization */}
-                        <Dialog open={isConfirmFinalizeOpen} onOpenChange={setIsConfirmFinalizeOpen}>
+                        <Dialog
+                            open={isConfirmFinalizeOpen}
+                            onOpenChange={setIsConfirmFinalizeOpen}
+                        >
                             <DialogContent className="sm:max-w-md">
                                 <DialogHeader>
-                                    <DialogTitle>Confirm Finalization</DialogTitle>
+                                    <DialogTitle>
+                                        Confirm Finalization
+                                    </DialogTitle>
                                     <DialogDescription>
-                                        This will finalize the Receiving Report and instantly update warehouse stock quantities. This action is irreversible and cannot be reverted to draft.
+                                        This will finalize the Receiving Report
+                                        and instantly update warehouse stock
+                                        quantities. This action is irreversible
+                                        and cannot be reverted to draft.
                                     </DialogDescription>
                                 </DialogHeader>
                                 <div className="flex justify-end gap-2 border-t pt-4">
                                     <Button
                                         type="button"
                                         variant="outline"
-                                        onClick={() => setIsConfirmFinalizeOpen(false)}
+                                        onClick={() =>
+                                            setIsConfirmFinalizeOpen(false)
+                                        }
                                     >
                                         Cancel
                                     </Button>
@@ -1209,7 +1244,9 @@ export default function ReceivingIndex({
                                             <TableRow key={report.id}>
                                                 <TableCell className="font-semibold">
                                                     {report.iar_number || (
-                                                        <span className="italic text-muted-foreground">Draft (No IAR)</span>
+                                                        <span className="text-muted-foreground italic">
+                                                            Draft (No IAR)
+                                                        </span>
                                                     )}
                                                 </TableCell>
                                                 <TableCell className="font-mono text-xs">
@@ -1224,9 +1261,8 @@ export default function ReceivingIndex({
                                                 <TableCell>
                                                     <div className="text-xs">
                                                         DR:{' '}
-                                                        {
-                                                            report.delivery_receipt_number || 'N/A'
-                                                        }
+                                                        {report.delivery_receipt_number ||
+                                                            'N/A'}
                                                     </div>
                                                     {report.invoice_number && (
                                                         <div className="text-[10px] text-muted-foreground">
@@ -1238,15 +1274,23 @@ export default function ReceivingIndex({
                                                     )}
                                                 </TableCell>
                                                 <TableCell className="text-xs">
-                                                    {report.received_date || 'N/A'}
+                                                    {report.received_date ||
+                                                        'N/A'}
                                                 </TableCell>
                                                 <TableCell>
-                                                    {report.status === 'draft' ? (
-                                                        <Badge variant="secondary" className="bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/25 border-amber-500/20">
+                                                    {report.status ===
+                                                    'draft' ? (
+                                                        <Badge
+                                                            variant="secondary"
+                                                            className="border-amber-500/20 bg-amber-500/10 text-amber-600 hover:bg-amber-500/25 dark:text-amber-400"
+                                                        >
                                                             Draft
                                                         </Badge>
                                                     ) : (
-                                                        <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/25 border-emerald-500/20">
+                                                        <Badge
+                                                            variant="secondary"
+                                                            className="border-emerald-500/20 bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/25 dark:text-emerald-400"
+                                                        >
                                                             Finalized
                                                         </Badge>
                                                     )}
@@ -1258,28 +1302,38 @@ export default function ReceivingIndex({
                                                     </Badge>
                                                 </TableCell>
                                                 <TableCell className="text-xs text-muted-foreground">
-                                                    {report.receiver_name || 'N/A'}
+                                                    {report.receiver_name ||
+                                                        'N/A'}
                                                 </TableCell>
                                                 <TableCell className="text-right">
-                                                        <RowActionsMenu
-                                                            actions={[
-                                                                {
-                                                                    label: 'View Details',
-                                                                    icon: Eye,
-                                                                    onClick: () => openDetails(report),
-                                                                },
-                                                                {
-                                                                    label: 'Edit Report',
-                                                                    icon: Pencil,
-                                                                    onClick: () => openEdit(report),
-                                                                },
-                                                                {
-                                                                    label: 'View History',
-                                                                    icon: History,
-                                                                    onClick: () => openHistory(report),
-                                                                },
-                                                            ]}
-                                                        />
+                                                    <RowActionsMenu
+                                                        actions={[
+                                                            {
+                                                                label: 'View Details',
+                                                                icon: Eye,
+                                                                onClick: () =>
+                                                                    openDetails(
+                                                                        report,
+                                                                    ),
+                                                            },
+                                                            {
+                                                                label: 'Edit Report',
+                                                                icon: Pencil,
+                                                                onClick: () =>
+                                                                    openEdit(
+                                                                        report,
+                                                                    ),
+                                                            },
+                                                            {
+                                                                label: 'View History',
+                                                                icon: History,
+                                                                onClick: () =>
+                                                                    openHistory(
+                                                                        report,
+                                                                    ),
+                                                            },
+                                                        ]}
+                                                    />
                                                 </TableCell>
                                             </TableRow>
                                         ))}
@@ -1304,8 +1358,16 @@ export default function ReceivingIndex({
                                     {selectedReport?.iar_number || 'Draft'}
                                 </span>
                                 {selectedReport && (
-                                    <Badge className={selectedReport.status === 'draft' ? 'bg-amber-500 hover:bg-amber-600' : 'bg-emerald-600 hover:bg-emerald-700'}>
-                                        {selectedReport.status === 'draft' ? 'Draft' : 'Finalized'}
+                                    <Badge
+                                        className={
+                                            selectedReport.status === 'draft'
+                                                ? 'bg-amber-500 hover:bg-amber-600'
+                                                : 'bg-emerald-600 hover:bg-emerald-700'
+                                        }
+                                    >
+                                        {selectedReport.status === 'draft'
+                                            ? 'Draft'
+                                            : 'Finalized'}
                                     </Badge>
                                 )}
                             </DialogTitle>
@@ -1345,9 +1407,8 @@ export default function ReceivingIndex({
                                         </div>
                                         <div>
                                             <strong>DR Number:</strong>{' '}
-                                            {
-                                                selectedReport.delivery_receipt_number || 'N/A'
-                                            }
+                                            {selectedReport.delivery_receipt_number ||
+                                                'N/A'}
                                         </div>
                                         {selectedReport.invoice_number && (
                                             <div>
@@ -1357,7 +1418,8 @@ export default function ReceivingIndex({
                                         )}
                                         <div>
                                             <strong>Received Date:</strong>{' '}
-                                            {selectedReport.received_date || 'N/A'}
+                                            {selectedReport.received_date ||
+                                                'N/A'}
                                         </div>
                                     </div>
                                     <div className="space-y-2 rounded-md border border-border p-3">
@@ -1367,11 +1429,13 @@ export default function ReceivingIndex({
                                         </div>
                                         <div>
                                             <strong>Inspected By:</strong>{' '}
-                                            {selectedReport.inspector_name || 'N/A'}
+                                            {selectedReport.inspector_name ||
+                                                'N/A'}
                                         </div>
                                         <div>
                                             <strong>Received By:</strong>{' '}
-                                            {selectedReport.receiver_name || 'N/A'}
+                                            {selectedReport.receiver_name ||
+                                                'N/A'}
                                         </div>
                                     </div>
                                     <div className="space-y-2 rounded-md border border-border p-3">

@@ -422,11 +422,17 @@ export default function UsersIndex({
                                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
                                     <UserPlus className="h-6 w-6" />
                                 </div>
-                                <h3 className="mt-4 text-sm font-semibold">No user accounts registered</h3>
-                                <p className="mt-2 text-sm text-muted-foreground max-w-sm">
-                                    Get started by creating a new employee or administrator account.
+                                <h3 className="mt-4 text-sm font-semibold">
+                                    No user accounts registered
+                                </h3>
+                                <p className="mt-2 max-w-sm text-sm text-muted-foreground">
+                                    Get started by creating a new employee or
+                                    administrator account.
                                 </p>
-                                <Button className="mt-4 gap-2" onClick={() => setIsCreateOpen(true)}>
+                                <Button
+                                    className="mt-4 gap-2"
+                                    onClick={() => setIsCreateOpen(true)}
+                                >
                                     <UserPlus className="h-4 w-4" />
                                     Create Account
                                 </Button>
@@ -437,7 +443,9 @@ export default function UsersIndex({
                                     <TableHeader>
                                         <TableRow>
                                             <TableHead>User Name</TableHead>
-                                            <TableHead className="hidden md:table-cell">Email Address</TableHead>
+                                            <TableHead className="hidden md:table-cell">
+                                                Email Address
+                                            </TableHead>
                                             <TableHead className="hidden lg:table-cell">
                                                 Office / Department
                                             </TableHead>
@@ -492,7 +500,7 @@ export default function UsersIndex({
                                                         </div>
                                                     </div>
                                                 </TableCell>
-                                                <TableCell className="hidden md:table-cell font-mono text-xs">
+                                                <TableCell className="hidden font-mono text-xs md:table-cell">
                                                     {user.email}
                                                 </TableCell>
                                                 <TableCell className="hidden lg:table-cell">

@@ -1,8 +1,8 @@
 import { Head, useForm, router, setLayoutProps } from '@inertiajs/react';
-import { Plus, Edit2, Copy, Trash2, Users, MoreHorizontal, Shield } from 'lucide-react';
+import { Plus, Edit2, Copy, Trash2, Users, Shield } from 'lucide-react';
 import { useState } from 'react';
-import { RowActionsMenu, RowAction } from '@/components/row-actions-menu';
 import { toast } from 'sonner';
+import { RowActionsMenu } from '@/components/row-actions-menu';
 import {
     Accordion,
     AccordionContent,
@@ -20,14 +20,6 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
@@ -421,15 +413,21 @@ export default function RolesIndex({ roles, permissions }: RolesIndexProps) {
 
                 {/* Roles Board */}
                 {roles.length === 0 ? (
-                    <Card className="flex flex-col items-center justify-center py-12 text-center p-6">
+                    <Card className="flex flex-col items-center justify-center p-6 py-12 text-center">
                         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
                             <Shield className="h-6 w-6" />
                         </div>
-                        <h3 className="mt-4 text-sm font-semibold">No custom roles configured</h3>
-                        <p className="mt-2 text-sm text-muted-foreground max-w-sm">
-                            Build custom permission schemes and security clearance levels for your staff.
+                        <h3 className="mt-4 text-sm font-semibold">
+                            No custom roles configured
+                        </h3>
+                        <p className="mt-2 max-w-sm text-sm text-muted-foreground">
+                            Build custom permission schemes and security
+                            clearance levels for your staff.
                         </p>
-                        <Button className="mt-4 gap-2" onClick={() => setIsAddOpen(true)}>
+                        <Button
+                            className="mt-4 gap-2"
+                            onClick={() => setIsAddOpen(true)}
+                        >
                             <Plus className="h-4 w-4" />
                             Create Custom Role
                         </Button>
@@ -442,8 +440,12 @@ export default function RolesIndex({ roles, permissions }: RolesIndexProps) {
                                     <TableHead className="w-[30%]">
                                         Role / Description
                                     </TableHead>
-                                    <TableHead className="hidden sm:table-cell">Users Assigned</TableHead>
-                                    <TableHead className="hidden sm:table-cell">Permissions Count</TableHead>
+                                    <TableHead className="hidden sm:table-cell">
+                                        Users Assigned
+                                    </TableHead>
+                                    <TableHead className="hidden sm:table-cell">
+                                        Permissions Count
+                                    </TableHead>
                                     <TableHead className="text-right">
                                         Actions
                                     </TableHead>
@@ -485,18 +487,29 @@ export default function RolesIndex({ roles, permissions }: RolesIndexProps) {
                                                     {
                                                         label: 'Edit Permissions',
                                                         icon: Edit2,
-                                                        onClick: () => openEditDialog(role),
+                                                        onClick: () =>
+                                                            openEditDialog(
+                                                                role,
+                                                            ),
                                                     },
                                                     {
                                                         label: 'Clone Role',
                                                         icon: Copy,
-                                                        onClick: () => openCloneDialog(role),
+                                                        onClick: () =>
+                                                            openCloneDialog(
+                                                                role,
+                                                            ),
                                                     },
                                                     {
                                                         label: 'Delete Role',
                                                         icon: Trash2,
-                                                        onClick: () => handleDeleteRole(role),
-                                                        show: role.users.length === 0,
+                                                        onClick: () =>
+                                                            handleDeleteRole(
+                                                                role,
+                                                            ),
+                                                        show:
+                                                            role.users
+                                                                .length === 0,
                                                         destructive: true,
                                                     },
                                                 ]}

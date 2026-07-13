@@ -35,18 +35,9 @@ export interface Property {
     date_acquired: string;
     warranty_expiration: string | null;
     condition:
-        | 'new'
-        | 'good'
-        | 'fair'
-        | 'needs_repair'
-        | 'unserviceable'
-        | 'disposed';
+        'new' | 'good' | 'fair' | 'needs_repair' | 'unserviceable' | 'disposed';
     status:
-        | 'available'
-        | 'assigned'
-        | 'transferred'
-        | 'for_disposal'
-        | 'disposed';
+        'available' | 'assigned' | 'transferred' | 'for_disposal' | 'disposed';
     category?: {
         name: string;
     };
@@ -179,7 +170,8 @@ export default function PropertyIndex({
                             Property, Plant, and Equipment (PPE)
                         </h1>
                         <p className="text-sm text-muted-foreground">
-                            Manage capitalized properties, serial codes, and handovers.
+                            Manage capitalized properties, serial codes, and
+                            handovers.
                         </p>
                     </div>
 
@@ -195,7 +187,10 @@ export default function PropertyIndex({
                                     Batch Assign ({selectedPropIds.length})
                                 </Button>
                             )}
-                            <Button className="gap-2" onClick={() => setIsAddOpen(true)}>
+                            <Button
+                                className="gap-2"
+                                onClick={() => setIsAddOpen(true)}
+                            >
                                 <PlusCircle className="h-4 w-4" />
                                 Register Equipment
                             </Button>
@@ -208,7 +203,10 @@ export default function PropertyIndex({
                     <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
                         <Card className="relative flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-blue-500 bg-card bg-linear-to-tr from-transparent to-blue-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
                             <div className="absolute -right-4 -bottom-4 text-blue-500/5">
-                                <Package className="h-28 w-28" strokeWidth={1.5} />
+                                <Package
+                                    className="h-28 w-28"
+                                    strokeWidth={1.5}
+                                />
                             </div>
                             <div className="relative z-10 space-y-1">
                                 <p className="text-[11px] font-medium tracking-wider text-blue-500 uppercase">
@@ -222,7 +220,10 @@ export default function PropertyIndex({
 
                         <Card className="relative flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-emerald-500 bg-card bg-linear-to-tr from-transparent to-emerald-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
                             <div className="absolute -right-4 -bottom-4 text-emerald-500/5">
-                                <PhilippinePeso className="h-28 w-28" strokeWidth={1.5} />
+                                <PhilippinePeso
+                                    className="h-28 w-28"
+                                    strokeWidth={1.5}
+                                />
                             </div>
                             <div className="relative z-10 space-y-1">
                                 <p className="text-[11px] font-medium tracking-wider text-emerald-500 uppercase">
@@ -236,7 +237,10 @@ export default function PropertyIndex({
 
                         <Card className="relative flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-violet-500 bg-card bg-linear-to-tr from-transparent to-violet-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
                             <div className="absolute -right-4 -bottom-4 text-violet-500/5">
-                                <Clock className="h-28 w-28" strokeWidth={1.5} />
+                                <Clock
+                                    className="h-28 w-28"
+                                    strokeWidth={1.5}
+                                />
                             </div>
                             <div className="relative z-10 space-y-1">
                                 <p className="text-[11px] font-medium tracking-wider text-violet-500 uppercase">
@@ -250,7 +254,10 @@ export default function PropertyIndex({
 
                         <Card className="relative flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-amber-500 bg-card bg-linear-to-tr from-transparent to-amber-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
                             <div className="absolute -right-4 -bottom-4 text-amber-500/5">
-                                <CheckCircle className="h-28 w-28" strokeWidth={1.5} />
+                                <CheckCircle
+                                    className="h-28 w-28"
+                                    strokeWidth={1.5}
+                                />
                             </div>
                             <div className="relative z-10 space-y-1">
                                 <p className="text-[11px] font-medium tracking-wider text-amber-500 uppercase">
@@ -264,7 +271,10 @@ export default function PropertyIndex({
 
                         <Card className="relative flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-rose-500 bg-card bg-linear-to-tr from-transparent to-rose-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
                             <div className="absolute -right-4 -bottom-4 text-rose-500/5">
-                                <PackageOpen className="h-28 w-28" strokeWidth={1.5} />
+                                <PackageOpen
+                                    className="h-28 w-28"
+                                    strokeWidth={1.5}
+                                />
                             </div>
                             <div className="relative z-10 space-y-1">
                                 <p className="text-[11px] font-medium tracking-wider text-rose-500 uppercase">
@@ -291,12 +301,18 @@ export default function PropertyIndex({
                                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
                                     <PackageOpen className="h-6 w-6" />
                                 </div>
-                                <h3 className="mt-4 text-sm font-semibold">No properties registered</h3>
-                                <p className="mt-2 text-sm text-muted-foreground max-w-sm">
-                                    Get started by registering high-value assets and equipment into the registry.
+                                <h3 className="mt-4 text-sm font-semibold">
+                                    No properties registered
+                                </h3>
+                                <p className="mt-2 max-w-sm text-sm text-muted-foreground">
+                                    Get started by registering high-value assets
+                                    and equipment into the registry.
                                 </p>
                                 <Can permission="property.assign">
-                                    <Button className="mt-4 gap-2" onClick={() => setIsAddOpen(true)}>
+                                    <Button
+                                        className="mt-4 gap-2"
+                                        onClick={() => setIsAddOpen(true)}
+                                    >
                                         <PlusCircle className="h-4 w-4" />
                                         Register Equipment
                                     </Button>
@@ -312,7 +328,9 @@ export default function PropertyIndex({
                                 openAssignModal={openAssignModal}
                                 openTransferModal={openTransferModal}
                                 openSubAssignModal={openSubAssignModal}
-                                openReturnSubAssignModal={openReturnSubAssignModal}
+                                openReturnSubAssignModal={
+                                    openReturnSubAssignModal
+                                }
                                 openDisposeModal={openDisposeModal}
                             />
                         )}

@@ -1,11 +1,10 @@
-import { Head, Link, useForm, useHttp, setLayoutProps } from '@inertiajs/react';
+import { Head, useForm, useHttp, setLayoutProps } from '@inertiajs/react';
 import {
     PlusCircle,
     Search,
     Eye,
     AlertCircle,
     Plus,
-    MoreHorizontal,
     Package,
     AlertTriangle,
     AlertOctagon,
@@ -17,7 +16,7 @@ import {
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Can } from '@/components/can';
-import { RowActionsMenu, RowAction } from '@/components/row-actions-menu';
+import { RowActionsMenu } from '@/components/row-actions-menu';
 import { SimplePagination } from '@/components/simple-pagination';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -30,13 +29,6 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -1637,8 +1629,13 @@ export default function ItemsIndex({
                                                                 {
                                                                     label: 'Edit Details',
                                                                     icon: Pencil,
-                                                                    onClick: () => handleEditItem(item),
-                                                                    permission: 'inventory.update',
+                                                                    onClick:
+                                                                        () =>
+                                                                            handleEditItem(
+                                                                                item,
+                                                                            ),
+                                                                    permission:
+                                                                        'inventory.update',
                                                                 },
                                                                 {
                                                                     label: 'View Ledger Card',
@@ -1648,8 +1645,13 @@ export default function ItemsIndex({
                                                                 {
                                                                     label: 'Archive Item',
                                                                     icon: Trash2,
-                                                                    onClick: () => handleArchiveItem(item),
-                                                                    permission: 'inventory.delete',
+                                                                    onClick:
+                                                                        () =>
+                                                                            handleArchiveItem(
+                                                                                item,
+                                                                            ),
+                                                                    permission:
+                                                                        'inventory.delete',
                                                                     destructive: true,
                                                                 },
                                                             ]}

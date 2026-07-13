@@ -218,6 +218,7 @@ export default function HelpdeskIndex({ tickets, isAdmin }: Props) {
         const checkMobile = () => setIsMobile(window.innerWidth < 1024);
         checkMobile();
         window.addEventListener('resize', checkMobile);
+
         return () => window.removeEventListener('resize', checkMobile);
     }, []);
 
@@ -303,7 +304,8 @@ export default function HelpdeskIndex({ tickets, isAdmin }: Props) {
         if (!selectedTicket) {
             return (
                 <div className="rounded-lg border border-dashed bg-card p-6 py-12 text-center text-xs text-muted-foreground">
-                    Select a support ticket from the list to review details and perform updates.
+                    Select a support ticket from the list to review details and
+                    perform updates.
                 </div>
             );
         }
@@ -325,7 +327,8 @@ export default function HelpdeskIndex({ tickets, isAdmin }: Props) {
                         </Button>
                     </div>
                     <CardDescription className="text-xs">
-                        Assign a resolution status and add internal/public notes.
+                        Assign a resolution status and add internal/public
+                        notes.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="p-5 pt-0">
@@ -340,7 +343,8 @@ export default function HelpdeskIndex({ tickets, isAdmin }: Props) {
                             <p className="font-bold text-foreground">
                                 Submitted by:{' '}
                                 <span className="font-normal text-muted-foreground">
-                                    {selectedTicket.user?.name} ({selectedTicket.user?.email})
+                                    {selectedTicket.user?.name} (
+                                    {selectedTicket.user?.email})
                                 </span>
                             </p>
                         </div>
@@ -356,7 +360,11 @@ export default function HelpdeskIndex({ tickets, isAdmin }: Props) {
                                             src={selectedTicket.attachment_url}
                                             alt="Attachment Preview"
                                             className="max-h-32 w-full cursor-zoom-in object-cover transition-transform duration-200 group-hover:scale-105"
-                                            onClick={() => setZoomedImage(selectedTicket.attachment_url)}
+                                            onClick={() =>
+                                                setZoomedImage(
+                                                    selectedTicket.attachment_url,
+                                                )
+                                            }
                                         />
                                     </div>
                                 ) : (
@@ -368,7 +376,9 @@ export default function HelpdeskIndex({ tickets, isAdmin }: Props) {
                                     >
                                         <span className="flex items-center gap-2">
                                             <FileText className="size-4 text-indigo-600 dark:text-indigo-400" />
-                                            <span>View / Download PDF Document</span>
+                                            <span>
+                                                View / Download PDF Document
+                                            </span>
                                         </span>
                                         <ArrowRight className="size-3 text-muted-foreground" />
                                     </a>
@@ -384,15 +394,24 @@ export default function HelpdeskIndex({ tickets, isAdmin }: Props) {
                             </Label>
                             <Select
                                 value={adminData.status}
-                                onValueChange={(val) => setAdminData('status', val)}
+                                onValueChange={(val) =>
+                                    setAdminData('status', val)
+                                }
                             >
-                                <SelectTrigger id="admin-status" className="w-full">
+                                <SelectTrigger
+                                    id="admin-status"
+                                    className="w-full"
+                                >
                                     <SelectValue placeholder="Select Status" />
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="open">Open</SelectItem>
-                                    <SelectItem value="in_progress">In Progress</SelectItem>
-                                    <SelectItem value="resolved">Resolved</SelectItem>
+                                    <SelectItem value="in_progress">
+                                        In Progress
+                                    </SelectItem>
+                                    <SelectItem value="resolved">
+                                        Resolved
+                                    </SelectItem>
                                 </SelectContent>
                             </Select>
                             <InputError message={adminErrors.status} />
@@ -408,12 +427,18 @@ export default function HelpdeskIndex({ tickets, isAdmin }: Props) {
                                 className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-hidden"
                                 placeholder="Provide help desk response or resolution steps..."
                                 value={adminData.admin_notes}
-                                onChange={(e) => setAdminData('admin_notes', e.target.value)}
+                                onChange={(e) =>
+                                    setAdminData('admin_notes', e.target.value)
+                                }
                             />
                             <InputError message={adminErrors.admin_notes} />
                         </div>
 
-                        <Button type="submit" className="w-full" disabled={updatingTicket}>
+                        <Button
+                            type="submit"
+                            className="w-full"
+                            disabled={updatingTicket}
+                        >
                             {updatingTicket ? (
                                 <Loader2 className="mr-2 size-4 animate-spin" />
                             ) : (
@@ -879,13 +904,16 @@ export default function HelpdeskIndex({ tickets, isAdmin }: Props) {
                                             !isAdmin ||
                                             t.user_id === auth.user.id,
                                     ).length === 0 ? (
-                                        <div className="flex flex-col items-center justify-center py-12 text-center rounded-lg border border-dashed bg-card/50 p-6">
+                                        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed bg-card/50 p-6 py-12 text-center">
                                             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
                                                 <Inbox className="h-6 w-6" />
                                             </div>
-                                            <h3 className="mt-4 text-sm font-semibold">No support tickets</h3>
-                                            <p className="mt-2 text-xs text-muted-foreground max-w-sm">
-                                                You have not submitted any helpdesk support requests yet.
+                                            <h3 className="mt-4 text-sm font-semibold">
+                                                No support tickets
+                                            </h3>
+                                            <p className="mt-2 max-w-sm text-xs text-muted-foreground">
+                                                You have not submitted any
+                                                helpdesk support requests yet.
                                             </p>
                                         </div>
                                     ) : (
@@ -1057,13 +1085,16 @@ export default function HelpdeskIndex({ tickets, isAdmin }: Props) {
 
                                 <div className="space-y-4">
                                     {tickets.data.length === 0 ? (
-                                        <div className="flex flex-col items-center justify-center py-12 text-center rounded-lg border border-dashed bg-card/50 p-6">
+                                        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed bg-card/50 p-6 py-12 text-center">
                                             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
                                                 <FileX className="h-6 w-6" />
                                             </div>
-                                            <h3 className="mt-4 text-sm font-semibold">Queue is clear</h3>
-                                            <p className="mt-2 text-xs text-muted-foreground max-w-sm">
-                                                No support tickets have been filed in the GIMS registry.
+                                            <h3 className="mt-4 text-sm font-semibold">
+                                                Queue is clear
+                                            </h3>
+                                            <p className="mt-2 max-w-sm text-xs text-muted-foreground">
+                                                No support tickets have been
+                                                filed in the GIMS registry.
                                             </p>
                                         </div>
                                     ) : (
@@ -1177,7 +1208,7 @@ export default function HelpdeskIndex({ tickets, isAdmin }: Props) {
                             </div>
 
                             {/* Resolution Details Form */}
-                            <div className="hidden lg:block sticky top-6 space-y-4">
+                            <div className="sticky top-6 hidden space-y-4 lg:block">
                                 <h3 className="flex items-center gap-2 text-base font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
                                     <UserCheck className="size-5 text-indigo-600 dark:text-indigo-400" />
                                     Ticket Action Panel
@@ -1190,9 +1221,15 @@ export default function HelpdeskIndex({ tickets, isAdmin }: Props) {
             </div>
 
             {isMobile && selectedTicket && (
-                <Sheet open={selectedTicket !== null} onOpenChange={(open) => !open && setSelectedTicket(null)}>
-                    <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto pt-10">
-                        <SheetHeader className="p-0 mb-4">
+                <Sheet
+                    open={selectedTicket !== null}
+                    onOpenChange={(open) => !open && setSelectedTicket(null)}
+                >
+                    <SheetContent
+                        side="right"
+                        className="w-full overflow-y-auto pt-10 sm:max-w-md"
+                    >
+                        <SheetHeader className="mb-4 p-0">
                             <SheetTitle>Ticket Action Panel</SheetTitle>
                             <SheetDescription>
                                 Resolve or update ticket #{selectedTicket.id}

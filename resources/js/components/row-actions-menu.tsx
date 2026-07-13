@@ -1,7 +1,6 @@
-import React from 'react';
 import { Link } from '@inertiajs/react';
 import { MoreHorizontal } from 'lucide-react';
-import { usePermissions } from '@/hooks/use-permissions';
+import React from 'react';
 import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
@@ -11,6 +10,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { usePermissions } from '@/hooks/use-permissions';
 
 export interface RowAction {
     label: string;
@@ -36,12 +36,15 @@ export function RowActionsMenu({ actions }: RowActionsMenuProps) {
         if (action.show === false) {
             return false;
         }
+
         if (action.permission) {
             return hasPermission(action.permission);
         }
+
         if (action.role) {
             return hasRole(action.role);
         }
+
         return true;
     });
 
@@ -55,6 +58,7 @@ export function RowActionsMenu({ actions }: RowActionsMenuProps) {
 
     const renderItemContent = (action: RowAction, isDestructive = false) => {
         const Icon = action.icon;
+
         return (
             <>
                 <Icon
@@ -68,7 +72,11 @@ export function RowActionsMenu({ actions }: RowActionsMenuProps) {
         );
     };
 
-    const renderMenuItem = (action: RowAction, idx: number, isDestructive = false) => {
+    const renderMenuItem = (
+        action: RowAction,
+        idx: number,
+        isDestructive = false,
+    ) => {
         const key = `${action.label}-${idx}`;
         const itemClass = isDestructive
             ? 'cursor-pointer text-destructive focus:bg-destructive/10 focus:text-destructive'
@@ -89,6 +97,7 @@ export function RowActionsMenu({ actions }: RowActionsMenuProps) {
                     </DropdownMenuItem>
                 );
             }
+
             return (
                 <DropdownMenuItem key={key} asChild className={itemClass}>
                     <Link
@@ -122,11 +131,15 @@ export function RowActionsMenu({ actions }: RowActionsMenuProps) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                {nonDestructive.map((action, idx) => renderMenuItem(action, idx, false))}
+                {nonDestructive.map((action, idx) =>
+                    renderMenuItem(action, idx, false),
+                )}
                 {destructive.length > 0 && (
                     <>
                         {nonDestructive.length > 0 && <DropdownMenuSeparator />}
-                        {destructive.map((action, idx) => renderMenuItem(action, idx, true))}
+                        {destructive.map((action, idx) =>
+                            renderMenuItem(action, idx, true),
+                        )}
                     </>
                 )}
             </DropdownMenuContent>

@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { SmartSelect } from '@/components/ui/smart-select';
-import { Property } from '../index';
+import type { Property } from '../index';
 
 interface TransferDialogProps {
     isOpen: boolean;
@@ -38,7 +38,9 @@ export function TransferDialog({
         form.post(`/inventory/properties/${property.id}/transfer`, {
             onSuccess: () => {
                 onClose();
-                toast.success('Property transferred and new PAR/ICS generated.');
+                toast.success(
+                    'Property transferred and new PAR/ICS generated.',
+                );
             },
             onError: () => {
                 toast.error('Failed to complete property transfer.');
@@ -50,9 +52,12 @@ export function TransferDialog({
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>Transfer Accountable Property (PTR)</DialogTitle>
+                    <DialogTitle>
+                        Transfer Accountable Property (PTR)
+                    </DialogTitle>
                     <DialogDescription>
-                        Record a Property Transfer Report (PTR) to transfer the asset.
+                        Record a Property Transfer Report (PTR) to transfer the
+                        asset.
                     </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4">
@@ -63,8 +68,14 @@ export function TransferDialog({
                                 value: String(e.id),
                                 label: `${e.name} (${e.position})`,
                             }))}
-                            value={form.data.to_employee_id ? String(form.data.to_employee_id) : undefined}
-                            onValueChange={(val) => form.setData('to_employee_id', val)}
+                            value={
+                                form.data.to_employee_id
+                                    ? String(form.data.to_employee_id)
+                                    : undefined
+                            }
+                            onValueChange={(val) =>
+                                form.setData('to_employee_id', val)
+                            }
                             placeholder="Select Recipient"
                             className="w-full"
                         />
@@ -79,8 +90,14 @@ export function TransferDialog({
                                 value: String(o.id),
                                 label: o.name,
                             }))}
-                            value={form.data.office_id ? String(form.data.office_id) : undefined}
-                            onValueChange={(val) => form.setData('office_id', val)}
+                            value={
+                                form.data.office_id
+                                    ? String(form.data.office_id)
+                                    : undefined
+                            }
+                            onValueChange={(val) =>
+                                form.setData('office_id', val)
+                            }
                             placeholder="Select Office"
                             className="w-full"
                         />
@@ -94,13 +111,19 @@ export function TransferDialog({
                             id="reason"
                             className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-hidden"
                             value={form.data.reason}
-                            onChange={(e) => form.setData('reason', e.target.value)}
+                            onChange={(e) =>
+                                form.setData('reason', e.target.value)
+                            }
                             required
                         />
                     </div>
 
                     <div className="flex justify-end gap-2 pt-2">
-                        <Button type="button" variant="outline" onClick={onClose}>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={onClose}
+                        >
                             Cancel
                         </Button>
                         <Button type="submit" disabled={form.processing}>

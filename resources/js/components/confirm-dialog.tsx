@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
 import {
     Dialog,
     DialogContent,
@@ -8,7 +9,6 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
 
 interface ConfirmDialogProps {
     trigger: React.ReactNode;
@@ -40,9 +40,7 @@ export function ConfirmDialog({
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-                {trigger}
-            </DialogTrigger>
+            <DialogTrigger asChild>{trigger}</DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
                     <DialogTitle>{title}</DialogTitle>
@@ -52,7 +50,10 @@ export function ConfirmDialog({
                     <Button variant="outline" onClick={() => setOpen(false)}>
                         {cancelLabel}
                     </Button>
-                    <Button variant={confirmButtonVariant} onClick={handleConfirm}>
+                    <Button
+                        variant={confirmButtonVariant}
+                        onClick={handleConfirm}
+                    >
                         {confirmLabel}
                     </Button>
                 </DialogFooter>

@@ -42,7 +42,9 @@ export function BatchAssignDialog({
             onSuccess: () => {
                 onClose();
                 setSelectedPropIds([]);
-                toast.success('Equipment assigned. Handover document(s) generated.');
+                toast.success(
+                    'Equipment assigned. Handover document(s) generated.',
+                );
             },
             onError: () => {
                 toast.error('Failed to assign equipment.');
@@ -54,9 +56,13 @@ export function BatchAssignDialog({
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>Batch Assign Equipment Accountability</DialogTitle>
+                    <DialogTitle>
+                        Batch Assign Equipment Accountability
+                    </DialogTitle>
                     <DialogDescription>
-                        Assign {selectedPropIds.length} properties to an employee. PAR and ICS documents will be automatically generated and grouped.
+                        Assign {selectedPropIds.length} properties to an
+                        employee. PAR and ICS documents will be automatically
+                        generated and grouped.
                     </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4">
@@ -111,14 +117,22 @@ export function BatchAssignDialog({
                                     value: String(e.id),
                                     label: `${e.name} (${e.position})`,
                                 }))}
-                                value={form.data.assigned_to ? String(form.data.assigned_to) : undefined}
-                                onValueChange={(val) => form.setData('assigned_to', val)}
+                                value={
+                                    form.data.assigned_to
+                                        ? String(form.data.assigned_to)
+                                        : undefined
+                                }
+                                onValueChange={(val) =>
+                                    form.setData('assigned_to', val)
+                                }
                                 placeholder="Select Employee"
                                 className="w-full"
                                 disabled={form.data.is_non_system}
                             />
                             {form.errors.assigned_to && (
-                                <p className="text-xs text-destructive">{form.errors.assigned_to}</p>
+                                <p className="text-xs text-destructive">
+                                    {form.errors.assigned_to}
+                                </p>
                             )}
                         </div>
                     ) : (
@@ -132,15 +146,25 @@ export function BatchAssignDialog({
                                     type="text"
                                     placeholder="Juan dela Cruz"
                                     value={form.data.non_system_name}
-                                    onChange={(e) => form.setData('non_system_name', e.target.value)}
+                                    onChange={(e) =>
+                                        form.setData(
+                                            'non_system_name',
+                                            e.target.value,
+                                        )
+                                    }
                                     required={form.data.is_non_system}
                                 />
                                 {form.errors.non_system_name && (
-                                    <p className="text-xs text-destructive">{form.errors.non_system_name}</p>
+                                    <p className="text-xs text-destructive">
+                                        {form.errors.non_system_name}
+                                    </p>
                                 )}
                             </div>
                             <div className="space-y-1">
-                                <Label htmlFor="batch_non_system_department" required>
+                                <Label
+                                    htmlFor="batch_non_system_department"
+                                    required
+                                >
                                     Department / Office / Agency
                                 </Label>
                                 <Input
@@ -148,11 +172,18 @@ export function BatchAssignDialog({
                                     type="text"
                                     placeholder="DICT Regional Office"
                                     value={form.data.non_system_department}
-                                    onChange={(e) => form.setData('non_system_department', e.target.value)}
+                                    onChange={(e) =>
+                                        form.setData(
+                                            'non_system_department',
+                                            e.target.value,
+                                        )
+                                    }
                                     required={form.data.is_non_system}
                                 />
                                 {form.errors.non_system_department && (
-                                    <p className="text-xs text-destructive">{form.errors.non_system_department}</p>
+                                    <p className="text-xs text-destructive">
+                                        {form.errors.non_system_department}
+                                    </p>
                                 )}
                             </div>
                         </div>
@@ -166,12 +197,18 @@ export function BatchAssignDialog({
                             id="batch_rem"
                             className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-hidden"
                             value={form.data.remarks}
-                            onChange={(e) => form.setData('remarks', e.target.value)}
+                            onChange={(e) =>
+                                form.setData('remarks', e.target.value)
+                            }
                         />
                     </div>
 
                     <div className="flex justify-end gap-2 pt-2">
-                        <Button type="button" variant="outline" onClick={onClose}>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={onClose}
+                        >
                             Cancel
                         </Button>
                         <Button type="submit" disabled={form.processing}>

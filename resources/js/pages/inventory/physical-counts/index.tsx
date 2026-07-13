@@ -1,4 +1,4 @@
-import { Head, Link, useForm, usePage, router } from '@inertiajs/react';
+import { Head, useForm, usePage, router } from '@inertiajs/react';
 import {
     PlusCircle,
     FileSpreadsheet,
@@ -9,6 +9,7 @@ import {
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Can } from '@/components/can';
+import { RowActionsMenu } from '@/components/row-actions-menu';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -29,8 +30,6 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-import { usePermissions } from '@/hooks/use-permissions';
-import { RowActionsMenu, RowAction } from '@/components/row-actions-menu';
 import type { BreadcrumbItem } from '@/types';
 
 interface PhysicalCount {
@@ -68,7 +67,6 @@ export default function PhysicalCountsIndex({ counts, employees }: Props) {
         null,
     );
 
-    const { hasPermission } = usePermissions();
     const { auth } = usePage<any>().props;
     const currentEmployee = employees.find((e) => e.user_id === auth.user?.id);
 
@@ -167,7 +165,10 @@ export default function PhysicalCountsIndex({ counts, employees }: Props) {
                     </div>
 
                     <Can permission="reports.view">
-                        <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+                        <Dialog
+                            open={isCreateOpen}
+                            onOpenChange={setIsCreateOpen}
+                        >
                             <DialogTrigger asChild>
                                 <Button className="gap-2">
                                     <PlusCircle className="h-4 w-4" />
@@ -184,14 +185,20 @@ export default function PhysicalCountsIndex({ counts, employees }: Props) {
                                         inventory for reporting.
                                     </DialogDescription>
                                 </DialogHeader>
-                                <form onSubmit={submit} className="mt-2 space-y-4">
+                                <form
+                                    onSubmit={submit}
+                                    className="mt-2 space-y-4"
+                                >
                                     <div className="space-y-2">
                                         <Label>Count Type / Report Type</Label>
                                         <div className="grid grid-cols-2 gap-2">
                                             <button
                                                 type="button"
                                                 onClick={() =>
-                                                    form.setData('type', 'RPCPPE')
+                                                    form.setData(
+                                                        'type',
+                                                        'RPCPPE',
+                                                    )
                                                 }
                                                 className={`flex flex-col items-center justify-center rounded-md border p-4 transition-all ${
                                                     form.data.type === 'RPCPPE'
@@ -268,7 +275,9 @@ export default function PhysicalCountsIndex({ counts, employees }: Props) {
                                                 <Label>Chairperson</Label>
                                                 <SmartSelect
                                                     options={employeeOptions}
-                                                    value={form.data.chairperson_id}
+                                                    value={
+                                                        form.data.chairperson_id
+                                                    }
                                                     onValueChange={(v) =>
                                                         form.setData(
                                                             'chairperson_id',
@@ -280,7 +289,10 @@ export default function PhysicalCountsIndex({ counts, employees }: Props) {
                                                 />
                                                 {form.errors.chairperson_id && (
                                                     <p className="text-xs text-destructive">
-                                                        {form.errors.chairperson_id}
+                                                        {
+                                                            form.errors
+                                                                .chairperson_id
+                                                        }
                                                     </p>
                                                 )}
                                             </div>
@@ -289,7 +301,8 @@ export default function PhysicalCountsIndex({ counts, employees }: Props) {
                                                 <SmartSelect
                                                     options={employeeOptions}
                                                     value={
-                                                        form.data.head_of_agency_id
+                                                        form.data
+                                                            .head_of_agency_id
                                                     }
                                                     onValueChange={(v) =>
                                                         form.setData(
@@ -300,7 +313,8 @@ export default function PhysicalCountsIndex({ counts, employees }: Props) {
                                                     placeholder="Select Head of Agency"
                                                     searchPlaceholder="Search employees..."
                                                 />
-                                                {form.errors.head_of_agency_id && (
+                                                {form.errors
+                                                    .head_of_agency_id && (
                                                     <p className="text-xs text-destructive">
                                                         {
                                                             form.errors
@@ -313,36 +327,71 @@ export default function PhysicalCountsIndex({ counts, employees }: Props) {
 
                                         <div className="grid grid-cols-2 gap-4">
                                             <div className="space-y-1.5">
-                                                <Label>COA Representative (Optional)</Label>
+                                                <Label>
+                                                    COA Representative
+                                                    (Optional)
+                                                </Label>
                                                 <SmartSelect
                                                     options={employeeOptions}
-                                                    value={form.data.coa_representative_id}
+                                                    value={
+                                                        form.data
+                                                            .coa_representative_id
+                                                    }
                                                     onValueChange={(v) => {
-                                                        form.setData('coa_representative_id', v);
+                                                        form.setData(
+                                                            'coa_representative_id',
+                                                            v,
+                                                        );
+
                                                         if (v) {
-                                                            form.setData('coa_representative_absent_reason', '');
+                                                            form.setData(
+                                                                'coa_representative_absent_reason',
+                                                                '',
+                                                            );
                                                         }
                                                     }}
                                                     placeholder="Select COA Representative"
                                                     searchPlaceholder="Search employees..."
                                                 />
-                                                {form.errors.coa_representative_id && (
+                                                {form.errors
+                                                    .coa_representative_id && (
                                                     <p className="text-xs text-destructive">
-                                                        {form.errors.coa_representative_id}
+                                                        {
+                                                            form.errors
+                                                                .coa_representative_id
+                                                        }
                                                     </p>
                                                 )}
                                             </div>
                                             <div className="space-y-1.5">
-                                                <Label>COA Absent Reason (if unassigned)</Label>
+                                                <Label>
+                                                    COA Absent Reason (if
+                                                    unassigned)
+                                                </Label>
                                                 <Input
                                                     placeholder="e.g. Schedule conflict"
-                                                    value={form.data.coa_representative_absent_reason}
-                                                    onChange={(e) => form.setData('coa_representative_absent_reason', e.target.value)}
-                                                    disabled={!!form.data.coa_representative_id}
+                                                    value={
+                                                        form.data
+                                                            .coa_representative_absent_reason
+                                                    }
+                                                    onChange={(e) =>
+                                                        form.setData(
+                                                            'coa_representative_absent_reason',
+                                                            e.target.value,
+                                                        )
+                                                    }
+                                                    disabled={
+                                                        !!form.data
+                                                            .coa_representative_id
+                                                    }
                                                 />
-                                                {form.errors.coa_representative_absent_reason && (
+                                                {form.errors
+                                                    .coa_representative_absent_reason && (
                                                     <p className="text-xs text-destructive">
-                                                        {form.errors.coa_representative_absent_reason}
+                                                        {
+                                                            form.errors
+                                                                .coa_representative_absent_reason
+                                                        }
                                                     </p>
                                                 )}
                                             </div>
@@ -397,7 +446,8 @@ export default function PhysicalCountsIndex({ counts, employees }: Props) {
                                                                     index
                                                                 }
                                                             />
-                                                            {form.data.member_ids
+                                                            {form.data
+                                                                .member_ids
                                                                 .length > 1 && (
                                                                 <Button
                                                                     type="button"
@@ -427,7 +477,9 @@ export default function PhysicalCountsIndex({ counts, employees }: Props) {
                                             type="button"
                                             variant="outline"
                                             className="mr-2"
-                                            onClick={() => setIsCreateOpen(false)}
+                                            onClick={() =>
+                                                setIsCreateOpen(false)
+                                            }
                                         >
                                             Cancel
                                         </Button>
@@ -474,8 +526,7 @@ export default function PhysicalCountsIndex({ counts, employees }: Props) {
                                     const isCreator =
                                         currentEmployee &&
                                         count.created_by === currentEmployee.id;
-                                    const canDelete =
-                                        isDraft && isCreator;
+                                    const canDelete = isDraft && isCreator;
 
                                     return (
                                         <TableRow key={count.id}>
@@ -519,12 +570,17 @@ export default function PhysicalCountsIndex({ counts, employees }: Props) {
                                                             icon: FileSpreadsheet,
                                                             href: `/inventory/physical-counts/${count.id}/export`,
                                                             external: true,
-                                                            show: count.status === 'finalized',
+                                                            show:
+                                                                count.status ===
+                                                                'finalized',
                                                         },
                                                         {
                                                             label: 'Delete',
                                                             icon: Trash2,
-                                                            onClick: () => setCountToDelete(count),
+                                                            onClick: () =>
+                                                                setCountToDelete(
+                                                                    count,
+                                                                ),
                                                             show: canDelete,
                                                             destructive: true,
                                                         },

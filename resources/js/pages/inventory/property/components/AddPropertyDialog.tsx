@@ -19,7 +19,11 @@ interface AddPropertyDialogProps {
     categories: any[];
 }
 
-export function AddPropertyDialog({ isOpen, onClose, categories }: AddPropertyDialogProps) {
+export function AddPropertyDialog({
+    isOpen,
+    onClose,
+    categories,
+}: AddPropertyDialogProps) {
     const form = useForm({
         brand: '',
         model: '',
@@ -50,7 +54,8 @@ export function AddPropertyDialog({ isOpen, onClose, categories }: AddPropertyDi
                 <DialogHeader>
                     <DialogTitle>Register Property (PPE)</DialogTitle>
                     <DialogDescription>
-                        Register high-value assets and equipment into the registry.
+                        Register high-value assets and equipment into the
+                        registry.
                     </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4">
@@ -62,7 +67,9 @@ export function AddPropertyDialog({ isOpen, onClose, categories }: AddPropertyDi
                             <Input
                                 id="brand"
                                 value={form.data.brand}
-                                onChange={(e) => form.setData('brand', e.target.value)}
+                                onChange={(e) =>
+                                    form.setData('brand', e.target.value)
+                                }
                                 required
                             />
                         </div>
@@ -73,7 +80,9 @@ export function AddPropertyDialog({ isOpen, onClose, categories }: AddPropertyDi
                             <Input
                                 id="model"
                                 value={form.data.model}
-                                onChange={(e) => form.setData('model', e.target.value)}
+                                onChange={(e) =>
+                                    form.setData('model', e.target.value)
+                                }
                                 required
                             />
                         </div>
@@ -85,7 +94,9 @@ export function AddPropertyDialog({ isOpen, onClose, categories }: AddPropertyDi
                         <Input
                             id="serial"
                             value={form.data.serial_number}
-                            onChange={(e) => form.setData('serial_number', e.target.value)}
+                            onChange={(e) =>
+                                form.setData('serial_number', e.target.value)
+                            }
                             required
                         />
                     </div>
@@ -98,7 +109,12 @@ export function AddPropertyDialog({ isOpen, onClose, categories }: AddPropertyDi
                                 id="cost"
                                 type="number"
                                 value={form.data.unit_cost}
-                                onChange={(e) => form.setData('unit_cost', parseFloat(e.target.value))}
+                                onChange={(e) =>
+                                    form.setData(
+                                        'unit_cost',
+                                        parseFloat(e.target.value),
+                                    )
+                                }
                                 required
                             />
                         </div>
@@ -111,8 +127,14 @@ export function AddPropertyDialog({ isOpen, onClose, categories }: AddPropertyDi
                                     value: String(c.id),
                                     label: c.name,
                                 }))}
-                                value={form.data.category_id ? String(form.data.category_id) : undefined}
-                                onValueChange={(val) => form.setData('category_id', val)}
+                                value={
+                                    form.data.category_id
+                                        ? String(form.data.category_id)
+                                        : undefined
+                                }
+                                onValueChange={(val) =>
+                                    form.setData('category_id', val)
+                                }
                                 placeholder="Select Category"
                                 className="w-full"
                             />
@@ -125,7 +147,9 @@ export function AddPropertyDialog({ isOpen, onClose, categories }: AddPropertyDi
                             </Label>
                             <DatePicker
                                 value={form.data.date_acquired}
-                                onChange={(val) => form.setData('date_acquired', val)}
+                                onChange={(val) =>
+                                    form.setData('date_acquired', val)
+                                }
                                 required
                             />
                         </div>
@@ -135,12 +159,18 @@ export function AddPropertyDialog({ isOpen, onClose, categories }: AddPropertyDi
                             </Label>
                             <DatePicker
                                 value={form.data.warranty_expiration}
-                                onChange={(val) => form.setData('warranty_expiration', val)}
+                                onChange={(val) =>
+                                    form.setData('warranty_expiration', val)
+                                }
                             />
                         </div>
                     </div>
                     <div className="flex justify-end gap-2 pt-2">
-                        <Button type="button" variant="outline" onClick={onClose}>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={onClose}
+                        >
                             Cancel
                         </Button>
                         <Button type="submit" disabled={form.processing}>
