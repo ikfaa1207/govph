@@ -56,6 +56,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('inventory/properties/{property}/sub-assign', [PropertyController::class, 'subAssign'])->name('inventory.properties.sub-assign');
     Route::post('inventory/properties/sub-assignments/{subAssignment}/return', [PropertyController::class, 'returnSubAssignment'])->name('inventory.properties.sub-assignments.return');
     Route::post('inventory/properties/{property}/dispose', [PropertyController::class, 'dispose'])->name('inventory.properties.dispose');
+    Route::put('inventory/properties/{property}', [PropertyController::class, 'update'])->name('inventory.properties.update');
 
     // Reports
     Route::get('inventory/reports', [ReportController::class, 'index'])->name('inventory.reports.index');

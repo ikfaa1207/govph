@@ -565,3 +565,44 @@ test('property subassign gate secures MR actions and logs unauthorized attempts'
     ]);
     $response->assertStatus(403);
 });
+
+test('property can be updated by authorized user', function () {
+    $office = Office::create(['code' => 'O-TEST-EDIT', 'name' => 'Test Office']);
+    $dept = Department::create(['office_id' => $office->id, 'code' => 'D-TEST-EDIT', 'name' => 'Test Dept']);
+
+    $custodianUser = User::factory()->propertyCustodian()->create(['name' => 'Custodian User', 'email' => 'cust-edit@example.com']);
+    Employee::create(['user_id' => $custodianUser->id, 'employee_id' => 'EMP-C-EDIT', 'name' => 'Custodian User', 'position' => 'Custodian', 'office_id' => $office->id, 'department_id' => $dept->id]);
+
+    Permission::create(['name' => 'property.assign', 'module' => 'property']);
+    $custodianUser->givePermissionTo('property.assign');
+
+    $category = Category::create(['name' => 'IT Equipment', 'code' => 'IT-EQP-EDIT', 'is_ppe' => true]);
+    $property = Property::create([
+        'property_number' => 'PPE-EDIT-01',
+        'serial_number' => 'PENDING-SN-IAR-20260713-8468-sW9e1',
+        'model' => 'Pending Procurement Handoff',
+        'brand' => 'Pending Procurement Handoff',
+        'unit_cost' => 1900000.00,
+        'date_acquired' => now()->toDateString(),
+        'category_id' => $category->id,
+        'condition' => 'new',
+        'status' => 'available',
+    ]);
+
+    $this->actingAs($custodianUser);
+
+    $response = $this->put(route('inventory.properties.update', $property->id), [
+        'brand' => 'Toyota',
+        'model' => 'Hilux 2026',
+        'serial_number' => 'SN-TOYOTA-12345',
+        'condition' => 'good',
+    ]);
+
+    $response->assertRedirect();
+
+    $property->refresh();
+    expect($property->brand)->toBe('Toyota');
+    expect($property->model)->toBe('Hilux 2026');
+    expect($property->serial_number)->toBe('SN-TOYOTA-12345');
+    expect($property->condition)->toBe('good');
+});

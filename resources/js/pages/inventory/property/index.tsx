@@ -20,6 +20,7 @@ import { AddPropertyDialog } from './components/AddPropertyDialog';
 import { AssignDialog } from './components/AssignDialog';
 import { BatchAssignDialog } from './components/BatchAssignDialog';
 import { DisposeDialog } from './components/DisposeDialog';
+import { EditPropertyDialog } from './components/EditPropertyDialog';
 import { PropertyTable } from './components/PropertyTable';
 import { ReturnSubAssignDialog } from './components/ReturnSubAssignDialog';
 import { SubAssignDialog } from './components/SubAssignDialog';
@@ -133,6 +134,12 @@ export default function PropertyIndex({
     const [isDisposeOpen, setIsDisposeOpen] = useState(false);
     const [isSubAssignOpen, setIsSubAssignOpen] = useState(false);
     const [isReturnSubAssignOpen, setIsReturnSubAssignOpen] = useState(false);
+    const [isEditOpen, setIsEditOpen] = useState(false);
+
+    const openEditModal = (prop: Property) => {
+        setSelectedProp(prop);
+        setIsEditOpen(true);
+    };
 
     const openAssignModal = (prop: Property) => {
         setSelectedProp(prop);
@@ -332,6 +339,7 @@ export default function PropertyIndex({
                                     openReturnSubAssignModal
                                 }
                                 openDisposeModal={openDisposeModal}
+                                openEditModal={openEditModal}
                             />
                         )}
                     </CardContent>
@@ -399,6 +407,14 @@ export default function PropertyIndex({
                     <ReturnSubAssignDialog
                         isOpen={isReturnSubAssignOpen}
                         onClose={() => setIsReturnSubAssignOpen(false)}
+                        property={selectedProp}
+                    />
+                )}
+
+                {isEditOpen && selectedProp && (
+                    <EditPropertyDialog
+                        isOpen={isEditOpen}
+                        onClose={() => setIsEditOpen(false)}
                         property={selectedProp}
                     />
                 )}

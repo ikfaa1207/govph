@@ -8,6 +8,7 @@ use App\Actions\Property\DisposeProperty;
 use App\Actions\Property\ReturnSubAssignment;
 use App\Actions\Property\SubAssignProperty;
 use App\Actions\Property\TransferProperty;
+use App\Actions\Property\UpdateProperty;
 use App\Enums\PropertyStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AssignPropertyRequest;
@@ -17,6 +18,7 @@ use App\Http\Requests\ReturnSubAssignmentRequest;
 use App\Http\Requests\StorePropertyRequest;
 use App\Http\Requests\SubAssignPropertyRequest;
 use App\Http\Requests\TransferPropertyRequest;
+use App\Http\Requests\UpdatePropertyRequest;
 use App\Models\Category;
 use App\Models\Employee;
 use App\Models\Office;
@@ -41,6 +43,7 @@ class PropertyController extends Controller
         protected DisposeProperty $disposeProperty,
         protected SubAssignProperty $subAssignProperty,
         protected ReturnSubAssignment $returnSubAssignment,
+        protected UpdateProperty $updateProperty,
     ) {}
 
     /**
@@ -256,5 +259,21 @@ class PropertyController extends Controller
         }
 
         return redirect()->back()->with('success', 'Memorandum Receipt returned successfully.');
+    }
+
+    /**
+     * Update the details of a property.
+     */
+    public function update(UpdatePropertyRequest $request, Property $property): RedirectResponse
+    {
+        Gate::authorize('property.assign');
+
+        try {
+            $this->updateProperty->execute($property, $request->validated());
+        } catch (\Exception $e) {
+            abort(400, $e->getMessage());
+        }
+
+        return redirect()->back()->with('success', 'Property updated successfully.');
     }
 }

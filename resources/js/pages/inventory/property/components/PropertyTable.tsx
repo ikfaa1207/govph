@@ -6,6 +6,7 @@ import {
     Check,
     User,
     AlertTriangle,
+    Pencil,
 } from 'lucide-react';
 import { RowActionsMenu } from '@/components/row-actions-menu';
 import { SimplePagination } from '@/components/simple-pagination';
@@ -36,6 +37,7 @@ interface PropertyTableProps {
     openSubAssignModal: (prop: Property) => void;
     openReturnSubAssignModal: (prop: Property) => void;
     openDisposeModal: (prop: Property) => void;
+    openEditModal: (prop: Property) => void;
 }
 
 export function PropertyTable({
@@ -49,6 +51,7 @@ export function PropertyTable({
     openSubAssignModal,
     openReturnSubAssignModal,
     openDisposeModal,
+    openEditModal,
 }: PropertyTableProps) {
     const { hasPermission } = usePermissions();
     const canManageSubAssign =
@@ -379,6 +382,15 @@ export function PropertyTable({
                                 <TableCell className="text-right whitespace-nowrap">
                                     <RowActionsMenu
                                         actions={[
+                                            {
+                                                label: 'Edit Equipment Details',
+                                                icon: Pencil,
+                                                onClick: () =>
+                                                    openEditModal(prop),
+                                                permission: 'property.assign',
+                                                show:
+                                                    prop.status !== 'disposed',
+                                            },
                                             {
                                                 label: 'Assign Equipment',
                                                 icon: UserCheck,
