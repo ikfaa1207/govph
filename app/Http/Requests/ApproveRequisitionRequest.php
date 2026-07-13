@@ -39,7 +39,7 @@ class ApproveRequisitionRequest extends FormRequest
                     $itemId = $this->input("items.{$index}.id");
 
                     $requisitionItem = RequisitionItem::find($itemId);
-                    if ($requisitionItem && $value > $requisitionItem->quantity_requested) {
+                    if ($requisitionItem instanceof RequisitionItem && $value > $requisitionItem->quantity_requested) {
                         $fail("The approved quantity cannot exceed the requested quantity ({$requisitionItem->quantity_requested}).");
                     }
                 },

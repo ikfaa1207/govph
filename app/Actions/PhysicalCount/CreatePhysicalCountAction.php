@@ -21,6 +21,8 @@ class CreatePhysicalCountAction
      *     chairperson_id: int,
      *     head_of_agency_id: int,
      *     member_ids: int[],
+     *     coa_representative_id?: int|null,
+     *     coa_representative_absent_reason?: string|null,
      * }  $data
      */
     public function execute(Employee $creator, array $data): PhysicalCount

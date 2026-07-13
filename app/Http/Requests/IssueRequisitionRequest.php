@@ -36,7 +36,7 @@ class IssueRequisitionRequest extends FormRequest
                     $itemId = $this->input("items.{$index}.id");
 
                     $requisitionItem = RequisitionItem::find($itemId);
-                    if ($requisitionItem) {
+                    if ($requisitionItem instanceof RequisitionItem) {
                         $remaining = $requisitionItem->quantity_approved - $requisitionItem->quantity_issued;
                         if ($value > $remaining) {
                             $fail("The issued quantity cannot exceed the remaining approved quantity ({$remaining}).");

@@ -63,6 +63,7 @@ class PhysicalCountController extends Controller
     {
         Gate::authorize('physical-count.create');
 
+        /** @var array{type: string, as_of_date: string, chairperson_id: int, head_of_agency_id: int, member_ids: int[], coa_representative_id?: int|null, coa_representative_absent_reason?: string|null} $validated */
         $validated = $request->validated();
 
         $user = Auth::user();

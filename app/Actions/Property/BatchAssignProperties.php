@@ -5,6 +5,7 @@ namespace App\Actions\Property;
 use App\Enums\PropertyStatus;
 use App\Models\Employee;
 use App\Models\Property;
+use App\Models\PropertyAssignment;
 use App\Services\DocumentSequenceService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;

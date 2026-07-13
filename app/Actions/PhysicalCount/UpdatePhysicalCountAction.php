@@ -13,7 +13,7 @@ class UpdatePhysicalCountAction
      * Update the physical count progress or submit for review.
      *
      * @param  array{
-     *     items: array<int, array{id: int, actual_qty: float|int|null, remarks: string|null}>,
+     *     items: array<int, array{id: int, actual_qty: float|int|string|null, remarks: string|null}>,
      *     action?: string|null,
      * }  $data
      */

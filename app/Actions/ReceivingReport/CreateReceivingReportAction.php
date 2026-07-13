@@ -23,7 +23,7 @@ class CreateReceivingReportAction
      * Create a new receiving report and record stock-in if finalized.
      *
      * @param  array{
-     *     status: string,
+     *     status?: string,
      *     po_number: string,
      *     supplier_id: int,
      *     po_date: string,

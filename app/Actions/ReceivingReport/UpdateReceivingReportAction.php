@@ -24,7 +24,7 @@ class UpdateReceivingReportAction
      * Update an existing receiving report and adjust stock inventory.
      *
      * @param  array{
-     *     status: string,
+     *     status?: string,
      *     po_number: string,
      *     supplier_id: int,
      *     po_date: string,
