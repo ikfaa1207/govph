@@ -7,6 +7,7 @@ import {
     Clock,
     CheckCircle,
     PackageOpen,
+    Pencil,
 } from 'lucide-react';
 import { useState } from 'react';
 import { Can } from '@/components/can';
@@ -19,6 +20,7 @@ import { formatCurrency } from '@/lib/utils';
 import { AddPropertyDialog } from './components/AddPropertyDialog';
 import { AssignDialog } from './components/AssignDialog';
 import { BatchAssignDialog } from './components/BatchAssignDialog';
+import { BatchEditDialog } from './components/BatchEditDialog';
 import { DisposeDialog } from './components/DisposeDialog';
 import { EditPropertyDialog } from './components/EditPropertyDialog';
 import { PropertyTable } from './components/PropertyTable';
@@ -135,6 +137,7 @@ export default function PropertyIndex({
     const [isSubAssignOpen, setIsSubAssignOpen] = useState(false);
     const [isReturnSubAssignOpen, setIsReturnSubAssignOpen] = useState(false);
     const [isEditOpen, setIsEditOpen] = useState(false);
+    const [isBatchEditOpen, setIsBatchEditOpen] = useState(false);
 
     const openEditModal = (prop: Property) => {
         setSelectedProp(prop);
@@ -185,14 +188,26 @@ export default function PropertyIndex({
                     <div className="flex items-center gap-2">
                         <Can permission="property.assign">
                             {selectedPropIds.length > 0 && (
-                                <Button
-                                    variant="secondary"
-                                    className="gap-2"
-                                    onClick={() => setIsBatchAssignOpen(true)}
-                                >
-                                    <UserCheck className="h-4 w-4" />
-                                    Batch Assign ({selectedPropIds.length})
-                                </Button>
+                                <>
+                                    <Button
+                                        variant="outline"
+                                        className="gap-2 border-indigo-200 text-indigo-700 hover:bg-indigo-50 dark:border-indigo-900 dark:text-indigo-400 dark:hover:bg-indigo-950/20"
+                                        onClick={() => setIsBatchEditOpen(true)}
+                                    >
+                                        <Pencil className="h-4 w-4" />
+                                        Batch Edit ({selectedPropIds.length})
+                                    </Button>
+                                    <Button
+                                        variant="secondary"
+                                        className="gap-2"
+                                        onClick={() =>
+                                            setIsBatchAssignOpen(true)
+                                        }
+                                    >
+                                        <UserCheck className="h-4 w-4" />
+                                        Batch Assign ({selectedPropIds.length})
+                                    </Button>
+                                </>
                             )}
                             <Button
                                 className="gap-2"
@@ -416,6 +431,17 @@ export default function PropertyIndex({
                         isOpen={isEditOpen}
                         onClose={() => setIsEditOpen(false)}
                         property={selectedProp}
+                    />
+                )}
+
+                {isBatchEditOpen && (
+                    <BatchEditDialog
+                        isOpen={isBatchEditOpen}
+                        onClose={() => setIsBatchEditOpen(false)}
+                        selectedProperties={properties.data.filter((p) =>
+                            selectedPropIds.includes(p.id),
+                        )}
+                        setSelectedPropIds={setSelectedPropIds}
                     />
                 )}
             </div>

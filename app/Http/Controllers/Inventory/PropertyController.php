@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Inventory;
 
 use App\Actions\Property\AssignProperty;
 use App\Actions\Property\BatchAssignProperties;
+use App\Actions\Property\BatchUpdateProperties;
 use App\Actions\Property\DisposeProperty;
 use App\Actions\Property\ReturnSubAssignment;
 use App\Actions\Property\SubAssignProperty;
@@ -13,6 +14,7 @@ use App\Enums\PropertyStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AssignPropertyRequest;
 use App\Http\Requests\BatchAssignPropertyRequest;
+use App\Http\Requests\BatchUpdatePropertyRequest;
 use App\Http\Requests\DisposePropertyRequest;
 use App\Http\Requests\ReturnSubAssignmentRequest;
 use App\Http\Requests\StorePropertyRequest;
@@ -44,6 +46,7 @@ class PropertyController extends Controller
         protected SubAssignProperty $subAssignProperty,
         protected ReturnSubAssignment $returnSubAssignment,
         protected UpdateProperty $updateProperty,
+        protected BatchUpdateProperties $batchUpdateProperties,
     ) {}
 
     /**
@@ -275,5 +278,23 @@ class PropertyController extends Controller
         }
 
         return redirect()->back()->with('success', 'Property updated successfully.');
+    }
+
+    /**
+     * Batch update multiple properties.
+     */
+    public function batchUpdate(BatchUpdatePropertyRequest $request): RedirectResponse
+    {
+        Gate::authorize('property.assign');
+
+        $validated = $request->validated();
+
+        try {
+            $this->batchUpdateProperties->execute($validated['properties']);
+        } catch (\Exception $e) {
+            abort(400, $e->getMessage());
+        }
+
+        return redirect()->back()->with('success', 'Properties updated successfully.');
     }
 }

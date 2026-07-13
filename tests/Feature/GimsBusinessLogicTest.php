@@ -606,3 +606,69 @@ test('property can be updated by authorized user', function () {
     expect($property->serial_number)->toBe('SN-TOYOTA-12345');
     expect($property->condition)->toBe('good');
 });
+
+test('properties can be batch updated by authorized user', function () {
+    $office = Office::create(['code' => 'O-TEST-BATCH', 'name' => 'Test Office']);
+    $dept = Department::create(['office_id' => $office->id, 'code' => 'D-TEST-BATCH', 'name' => 'Test Dept']);
+
+    $custodianUser = User::factory()->propertyCustodian()->create(['name' => 'Custodian User', 'email' => 'cust-batch@example.com']);
+    Employee::create(['user_id' => $custodianUser->id, 'employee_id' => 'EMP-C-BATCH', 'name' => 'Custodian User', 'position' => 'Custodian', 'office_id' => $office->id, 'department_id' => $dept->id]);
+
+    Permission::create(['name' => 'property.assign', 'module' => 'property']);
+    $custodianUser->givePermissionTo('property.assign');
+
+    $category = Category::create(['name' => 'IT Equipment', 'code' => 'IT-EQP-BATCH', 'is_ppe' => true]);
+    $prop1 = Property::create([
+        'property_number' => 'PPE-BATCH-01',
+        'serial_number' => 'PENDING-SN-IAR-20260713-8468-1',
+        'model' => 'Pending Procurement Handoff',
+        'brand' => 'Pending Procurement Handoff',
+        'unit_cost' => 1900000.00,
+        'date_acquired' => now()->toDateString(),
+        'category_id' => $category->id,
+        'condition' => 'new',
+        'status' => 'available',
+    ]);
+    $prop2 = Property::create([
+        'property_number' => 'PPE-BATCH-02',
+        'serial_number' => 'PENDING-SN-IAR-20260713-8468-2',
+        'model' => 'Pending Procurement Handoff',
+        'brand' => 'Pending Procurement Handoff',
+        'unit_cost' => 1900000.00,
+        'date_acquired' => now()->toDateString(),
+        'category_id' => $category->id,
+        'condition' => 'new',
+        'status' => 'available',
+    ]);
+
+    $this->actingAs($custodianUser);
+
+    $response = $this->post(route('inventory.properties.batch-update'), [
+        'properties' => [
+            [
+                'id' => $prop1->id,
+                'brand' => 'Mitsubishi',
+                'model' => 'L200 Triton',
+                'serial_number' => 'SN-MITSU-1',
+                'condition' => 'good',
+            ],
+            [
+                'id' => $prop2->id,
+                'brand' => 'Mitsubishi',
+                'model' => 'L200 Triton',
+                'serial_number' => 'SN-MITSU-2',
+                'condition' => 'good',
+            ],
+        ],
+    ]);
+
+    $response->assertRedirect();
+
+    $prop1->refresh();
+    $prop2->refresh();
+
+    expect($prop1->brand)->toBe('Mitsubishi');
+    expect($prop1->serial_number)->toBe('SN-MITSU-1');
+    expect($prop2->brand)->toBe('Mitsubishi');
+    expect($prop2->serial_number)->toBe('SN-MITSU-2');
+});
