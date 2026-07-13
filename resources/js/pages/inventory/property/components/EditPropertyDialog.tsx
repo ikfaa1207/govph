@@ -1,5 +1,4 @@
 import { useForm } from '@inertiajs/react';
-import { useEffect } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
@@ -26,22 +25,11 @@ export function EditPropertyDialog({
     property,
 }: EditPropertyDialogProps) {
     const form = useForm({
-        brand: '',
-        model: '',
-        serial_number: '',
-        condition: 'new',
+        brand: property?.brand || '',
+        model: property?.model || '',
+        serial_number: property?.serial_number || '',
+        condition: property?.condition || 'new',
     });
-
-    useEffect(() => {
-        if (property) {
-            form.setData({
-                brand: property.brand,
-                model: property.model,
-                serial_number: property.serial_number,
-                condition: property.condition,
-            });
-        }
-    }, [property, form]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
