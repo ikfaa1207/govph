@@ -2,20 +2,17 @@
 
 namespace App\Http\Controllers\Inventory;
 
-use App\Enums\RequisitionStatus;
+use App\Actions\Requisition\ApproveRequisitionAction;
+use App\Actions\Requisition\CreateRequisitionAction;
+use App\Actions\Requisition\IssueRequisitionAction;
+use App\Actions\Requisition\RejectRequisitionAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ApproveRequisitionRequest;
+use App\Http\Requests\IssueRequisitionRequest;
+use App\Http\Requests\RejectRequisitionRequest;
 use App\Http\Requests\StoreRequisitionRequest;
-use App\Models\DepartmentItem;
-use App\Models\Employee;
-use App\Models\Issuance;
-use App\Models\IssuanceItem;
 use App\Models\Item;
 use App\Models\Requisition;
-use App\Models\RequisitionItem;
-use App\Services\Audit\AuditLogger;
-use App\Services\DocumentSequenceService;
-use App\Services\Valuation\ValuationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -27,8 +24,10 @@ use Inertia\Response;
 class RequisitionController extends Controller
 {
     public function __construct(
-        protected ValuationService $valuationService,
-        protected DocumentSequenceService $sequences,
+        protected CreateRequisitionAction $createAction,
+        protected ApproveRequisitionAction $approveAction,
+        protected IssueRequisitionAction $issueAction,
+        protected RejectRequisitionAction $rejectAction,
     ) {}
 
     /**
@@ -58,11 +57,17 @@ class RequisitionController extends Controller
                 'unit' => $item->unit->abbreviation ?? 'pcs',
             ]);
 
+        $counts = Requisition::visibleTo($user, $employee)
+            ->select('status', DB::raw('count(*) as count'))
+            ->groupBy('status')
+            ->pluck('count', 'status')
+            ->toArray();
+
         $stats = [
-            'total_ris' => $requisitions->count(),
-            'pending_approval' => $requisitions->where('status', 'pending_dept_head')->count(),
-            'pending_issuance' => $requisitions->whereIn('status', ['pending_supply', 'partially_issued'])->count(),
-            'completed' => $requisitions->where('status', 'issued')->count(),
+            'total_ris' => array_sum($counts),
+            'pending_approval' => $counts['pending_dept_head'] ?? 0,
+            'pending_issuance' => ($counts['pending_supply'] ?? 0) + ($counts['partially_issued'] ?? 0),
+            'completed' => $counts['issued'] ?? 0,
         ];
 
         return Inertia::render('inventory/requisitions/index', [
@@ -83,34 +88,7 @@ class RequisitionController extends Controller
         $user = Auth::user();
         $employee = $user->getEmployeeOrAbort('You must have an employee profile to file requisitions.');
 
-        $deptHead = Employee::where('department_id', $employee->department_id)
-            ->whereHas('user.roles', fn ($q) => $q->where('name', 'Department Head'))
-            ->first();
-
-        $risNumber = $this->sequences->next('RIS');
-
-        DB::transaction(function () use ($request, $employee, $deptHead, $risNumber) {
-            $requisition = Requisition::create([
-                'ris_number' => $risNumber,
-                'requesting_employee_id' => $employee->id,
-                'department_id' => $employee->department_id,
-                'status' => RequisitionStatus::PendingDeptHead,
-                'department_head_id' => $deptHead?->id,
-                'remarks' => $request->input('purpose'),
-            ]);
-
-            foreach ($request->input('items') as $reqItem) {
-                RequisitionItem::create([
-                    'requisition_id' => $requisition->id,
-                    'item_id' => $reqItem['item_id'],
-                    'quantity_requested' => $reqItem['quantity'],
-                    'quantity_approved' => 0,
-                    'quantity_issued' => 0,
-                ]);
-            }
-
-            AuditLogger::log('CREATE_RIS', $requisition, null, $requisition->toArray());
-        });
+        $this->createAction->execute($employee, $request->validated());
 
         return back()->with('success', 'Requisition submitted successfully.');
     }
@@ -124,24 +102,7 @@ class RequisitionController extends Controller
 
         $employee = Auth::user()?->employee;
 
-        DB::transaction(function () use ($request, $requisition, $employee) {
-            $requisition->status = RequisitionStatus::PendingSupply;
-            if ($employee) {
-                $requisition->department_head_id = $employee->id;
-            }
-            $requisition->approved_at = now();
-            $requisition->save();
-
-            foreach ($request->input('items') as $reqItem) {
-                $dbItem = RequisitionItem::find($reqItem['id']);
-                if ($dbItem instanceof RequisitionItem) {
-                    $dbItem->quantity_approved = $reqItem['quantity_approved'];
-                    $dbItem->save();
-                }
-            }
-
-            AuditLogger::log('APPROVE_RIS', $requisition, null, $requisition->toArray());
-        });
+        $this->approveAction->execute($requisition, $employee, $request->validated());
 
         return back()->with('success', 'Requisition approved successfully.');
     }
@@ -149,102 +110,14 @@ class RequisitionController extends Controller
     /**
      * Issue items from inventory (by Supply Officer).
      */
-    public function issue(Request $request, Requisition $requisition): RedirectResponse
+    public function issue(IssueRequisitionRequest $request, Requisition $requisition): RedirectResponse
     {
         Gate::authorize('requisition.issue', $requisition);
 
         $user = Auth::user();
         $employee = $user->getEmployeeOrAbort('You must have an employee profile to issue items.');
 
-        $request->validate([
-            'items' => ['required', 'array'],
-            'items.*.id' => ['required', 'exists:requisition_items,id'],
-            'items.*.quantity_issued' => [
-                'required',
-                'integer',
-                'min:0',
-                function (string $attribute, mixed $value, \Closure $fail) use ($request) {
-                    preg_match('/items\.(\d+)\.quantity_issued/', $attribute, $matches);
-                    if (! isset($matches[1])) {
-                        return;
-                    }
-                    $index = $matches[1];
-                    $itemId = $request->input("items.{$index}.id");
-
-                    $requisitionItem = RequisitionItem::find($itemId);
-                    if ($requisitionItem) {
-                        $remaining = $requisitionItem->quantity_approved - $requisitionItem->quantity_issued;
-                        if ($value > $remaining) {
-                            $fail("The issued quantity cannot exceed the remaining approved quantity ({$remaining}).");
-                        }
-                    }
-                },
-            ],
-        ]);
-
-        $issueNumber = $this->sequences->next('ISSUE');
-
-        DB::transaction(function () use ($request, $requisition, $employee, $issueNumber) {
-            $issuance = Issuance::create([
-                'requisition_id' => $requisition->id,
-                'issue_number' => $issueNumber,
-                'issued_date' => now()->toDateString(),
-                'issued_by' => $employee->id,
-                'received_by' => $requisition->requesting_employee_id,
-                'purpose' => $requisition->remarks,
-            ]);
-
-            $allCompleted = true;
-
-            foreach ($request->input('items') as $reqItem) {
-                $dbItem = RequisitionItem::find($reqItem['id']);
-                if (! $dbItem instanceof RequisitionItem) {
-                    continue;
-                }
-
-                $qtyIssued = (int) $reqItem['quantity_issued'];
-
-                if ($qtyIssued > 0) {
-                    $item = $dbItem->item;
-
-                    $cost = $this->valuationService->recordStockOut(
-                        $item,
-                        $qtyIssued,
-                        Issuance::class,
-                        $issuance->id,
-                        "Issued via RIS #{$requisition->ris_number}"
-                    );
-
-                    IssuanceItem::create([
-                        'issuance_id' => $issuance->id,
-                        'item_id' => $item->id,
-                        'quantity_issued' => $qtyIssued,
-                        'unit_cost' => $cost,
-                    ]);
-
-                    // Add to Department Inventory
-                    $deptItem = DepartmentItem::firstOrCreate(
-                        ['department_id' => $requisition->department_id, 'item_id' => $item->id],
-                        ['current_stock' => 0]
-                    );
-                    $deptItem->increment('current_stock', $qtyIssued);
-
-                    $dbItem->quantity_issued += $qtyIssued;
-                    $dbItem->save();
-                }
-
-                if ($dbItem->quantity_issued < $dbItem->quantity_approved) {
-                    $allCompleted = false;
-                }
-            }
-
-            $requisition->status = $allCompleted
-                ? RequisitionStatus::Issued
-                : RequisitionStatus::PartiallyIssued;
-            $requisition->save();
-
-            AuditLogger::log('ISSUE_RIS', $issuance, null, $issuance->toArray());
-        });
+        $this->issueAction->execute($requisition, $employee, $request->validated());
 
         return back()->with('success', 'Items issued successfully.');
     }
@@ -252,21 +125,11 @@ class RequisitionController extends Controller
     /**
      * Reject requisition (by Dept Head / Admin).
      */
-    public function reject(Request $request, Requisition $requisition): RedirectResponse
+    public function reject(RejectRequisitionRequest $request, Requisition $requisition): RedirectResponse
     {
         Gate::authorize('requisition.approve', $requisition);
 
-        $request->validate([
-            'remarks' => ['required', 'string', 'max:1000'],
-        ]);
-
-        DB::transaction(function () use ($request, $requisition) {
-            $requisition->status = RequisitionStatus::RejectedDeptHead;
-            $requisition->remarks = $request->input('remarks');
-            $requisition->save();
-
-            AuditLogger::log('REJECT_RIS', $requisition, null, $requisition->toArray());
-        });
+        $this->rejectAction->execute($requisition, $request->validated());
 
         return back()->with('success', 'Requisition rejected successfully.');
     }

@@ -9,6 +9,7 @@ use App\Models\PropertyAssignment;
 use App\Services\Audit\AuditLogger;
 use App\Services\DocumentSequenceService;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 use RuntimeException;
 
 class AssignProperty
@@ -41,6 +42,18 @@ class AssignProperty
     {
         if ($property->status !== PropertyStatus::Available) {
             throw new RuntimeException("Property {$property->property_number} is not available for assignment.");
+        }
+
+        $validator = Validator::make($data, [
+            'is_non_system' => ['nullable', 'boolean'],
+            'assigned_to' => ['required_unless:is_non_system,true', 'nullable', 'exists:employees,id'],
+            'non_system_name' => ['required_if:is_non_system,true', 'nullable', 'string', 'max:255'],
+            'non_system_department' => ['required_if:is_non_system,true', 'nullable', 'string', 'max:255'],
+            'remarks' => ['nullable', 'string'],
+        ]);
+
+        if ($validator->fails()) {
+            throw new \InvalidArgumentException('Invalid assignment data: '.implode(', ', $validator->errors()->all()));
         }
 
         return DB::transaction(function () use ($property, $data, $custodian, $docType, $docNo) {

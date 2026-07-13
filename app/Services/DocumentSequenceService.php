@@ -65,7 +65,7 @@ class DocumentSequenceService
                     DB::table('document_sequences')->insert([
                         'type' => $type,
                         'year' => $year,
-                        'last_value' => 1,
+                        'last_value' => 0,
                         'created_at' => now(),
                         'updated_at' => now(),
                     ]);

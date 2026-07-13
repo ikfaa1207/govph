@@ -7,6 +7,7 @@ use App\Actions\PhysicalCount\CreatePhysicalCountAction;
 use App\Actions\PhysicalCount\UpdatePhysicalCountAction;
 use App\Enums\PhysicalCountStatus;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StorePhysicalCountRequest;
 use App\Models\Employee;
 use App\Models\Item;
 use App\Models\PhysicalCount;
@@ -58,26 +59,11 @@ class PhysicalCountController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(StorePhysicalCountRequest $request): RedirectResponse
     {
         Gate::authorize('physical-count.create');
 
-        $validated = $request->validate([
-            'type' => ['required', 'in:RPCPPE,RPCI'],
-            'as_of_date' => ['required', 'date'],
-            'chairperson_id' => ['required', 'exists:employees,id'],
-            'head_of_agency_id' => ['required', 'exists:employees,id'],
-            'member_ids' => ['required', 'array', 'min:1'],
-            'member_ids.*' => ['exists:employees,id'],
-            'coa_representative_id' => ['nullable', 'exists:employees,id'],
-            'coa_representative_absent_reason' => ['nullable', 'string', 'max:500'],
-        ]);
-
-        if (empty($validated['coa_representative_id']) && empty($validated['coa_representative_absent_reason'])) {
-            return redirect()->back()->withErrors([
-                'coa_representative_absent_reason' => 'A COA Representative is required, or a documented reason for their absence must be provided.',
-            ])->withInput();
-        }
+        $validated = $request->validated();
 
         $user = Auth::user();
         $employee = $user->getEmployeeOrAbort('Employee profile not found.');

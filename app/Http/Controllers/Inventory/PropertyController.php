@@ -10,6 +10,13 @@ use App\Actions\Property\SubAssignProperty;
 use App\Actions\Property\TransferProperty;
 use App\Enums\PropertyStatus;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\AssignPropertyRequest;
+use App\Http\Requests\BatchAssignPropertyRequest;
+use App\Http\Requests\DisposePropertyRequest;
+use App\Http\Requests\ReturnSubAssignmentRequest;
+use App\Http\Requests\StorePropertyRequest;
+use App\Http\Requests\SubAssignPropertyRequest;
+use App\Http\Requests\TransferPropertyRequest;
 use App\Models\Category;
 use App\Models\Employee;
 use App\Models\Office;
@@ -99,19 +106,11 @@ class PropertyController extends Controller
     /**
      * Register a new PPE/property.
      */
-    public function store(Request $request): RedirectResponse
+    public function store(StorePropertyRequest $request): RedirectResponse
     {
         Gate::authorize('property.assign');
 
-        $validated = $request->validate([
-            'model' => ['required', 'string', 'max:255'],
-            'brand' => ['required', 'string', 'max:255'],
-            'serial_number' => ['required', 'string', 'unique:properties,serial_number'],
-            'unit_cost' => ['required', 'numeric', 'min:0'],
-            'date_acquired' => ['required', 'date'],
-            'category_id' => ['required', 'exists:categories,id'],
-            'warranty_expiration' => ['nullable', 'date'],
-        ]);
+        $validated = $request->validated();
 
         // Auto generate property number
         $validated['property_number'] = $this->sequences->next('PPE');
@@ -128,7 +127,7 @@ class PropertyController extends Controller
     /**
      * Assign equipment to an employee, automatically generating ICS or PAR.
      */
-    public function assign(Request $request, Property $property): RedirectResponse
+    public function assign(AssignPropertyRequest $request, Property $property): RedirectResponse
     {
         Gate::authorize('property.assign');
 
@@ -137,13 +136,7 @@ class PropertyController extends Controller
 
         abort_if($property->status !== PropertyStatus::Available, 400, 'Only available properties can be assigned.');
 
-        $validated = $request->validate([
-            'is_non_system' => ['nullable', 'boolean'],
-            'assigned_to' => ['required_unless:is_non_system,true', 'nullable', 'exists:employees,id'],
-            'non_system_name' => ['required_if:is_non_system,true', 'nullable', 'string', 'max:255'],
-            'non_system_department' => ['required_if:is_non_system,true', 'nullable', 'string', 'max:255'],
-            'remarks' => ['nullable', 'string'],
-        ]);
+        $validated = $request->validated();
 
         try {
             $this->assignProperty->execute($property, $validated, $custodian);
@@ -157,22 +150,14 @@ class PropertyController extends Controller
     /**
      * Assign multiple properties to an employee in a batch.
      */
-    public function batchAssign(Request $request): RedirectResponse
+    public function batchAssign(BatchAssignPropertyRequest $request): RedirectResponse
     {
         Gate::authorize('property.assign');
 
         $user = Auth::user();
         $custodian = $user->getEmployeeOrAbort('Property Custodian employee profile not found.');
 
-        $validated = $request->validate([
-            'property_ids' => ['required', 'array', 'min:1'],
-            'property_ids.*' => ['exists:properties,id'],
-            'is_non_system' => ['nullable', 'boolean'],
-            'assigned_to' => ['required_unless:is_non_system,true', 'nullable', 'exists:employees,id'],
-            'non_system_name' => ['required_if:is_non_system,true', 'nullable', 'string', 'max:255'],
-            'non_system_department' => ['required_if:is_non_system,true', 'nullable', 'string', 'max:255'],
-            'remarks' => ['nullable', 'string'],
-        ]);
+        $validated = $request->validated();
 
         $properties = Property::whereIn('id', $validated['property_ids'])->get();
 
@@ -188,7 +173,7 @@ class PropertyController extends Controller
     /**
      * Transfer property (PTR) to another employee.
      */
-    public function transfer(Request $request, Property $property): RedirectResponse
+    public function transfer(TransferPropertyRequest $request, Property $property): RedirectResponse
     {
         Gate::authorize('property.transfer');
 
@@ -197,11 +182,7 @@ class PropertyController extends Controller
 
         abort_if(! in_array($property->status, [PropertyStatus::Assigned, PropertyStatus::Transferred]), 400, 'Only assigned or transferred properties can be transferred.');
 
-        $validated = $request->validate([
-            'to_employee_id' => ['required', 'exists:employees,id'],
-            'office_id' => ['required', 'exists:offices,id'],
-            'reason' => ['required', 'string'],
-        ]);
+        $validated = $request->validated();
 
         try {
             $this->transferProperty->execute($property, $validated, $custodian);
@@ -215,7 +196,7 @@ class PropertyController extends Controller
     /**
      * Dispose of property (IIRUP).
      */
-    public function dispose(Request $request, Property $property): RedirectResponse
+    public function dispose(DisposePropertyRequest $request, Property $property): RedirectResponse
     {
         Gate::authorize('property.dispose');
 
@@ -224,24 +205,7 @@ class PropertyController extends Controller
 
         abort_if($property->status === PropertyStatus::Disposed, 400, 'This property has already been disposed.');
 
-        $validated = $request->validate([
-            'disposal_method' => ['required', 'in:auction,transfer,donation,destruction'],
-            'reason' => ['required', 'in:broken,obsolete,lost,expired,condemned'],
-            'appraised_value' => ['nullable', 'numeric', 'min:0'],
-            'proceeds' => ['nullable', 'numeric', 'min:0'],
-            'witness_by' => ['required', 'string', 'max:255'],
-            'inspected_by' => ['nullable', 'exists:employees,id'],
-            'jev_reference' => ['nullable', 'string', 'max:255'],
-            'approved_by' => [
-                'required',
-                'exists:employees,id',
-                function (string $attribute, mixed $value, \Closure $fail) use ($custodian) {
-                    if ((int) $value === (int) $custodian->id) {
-                        $fail('The disposal approver cannot be the same custodian who initiated the disposal.');
-                    }
-                },
-            ],
-        ]);
+        $validated = $request->validated();
 
         try {
             $this->disposeProperty->execute($property, $validated, $custodian);
@@ -255,7 +219,7 @@ class PropertyController extends Controller
     /**
      * Issue an internal Sub-Assignment (Memorandum Receipt) for a property.
      */
-    public function subAssign(Request $request, Property $property): RedirectResponse
+    public function subAssign(SubAssignPropertyRequest $request, Property $property): RedirectResponse
     {
         Gate::authorize('property.subassign');
 
@@ -265,12 +229,7 @@ class PropertyController extends Controller
 
         abort_if(! in_array($property->status, [PropertyStatus::Assigned, PropertyStatus::Transferred]), 400, 'Only assigned or transferred properties can be sub-assigned.');
 
-        $validated = $request->validate([
-            'is_non_system' => ['nullable', 'boolean'],
-            'issued_to' => ['required_unless:is_non_system,true', 'nullable', 'exists:employees,id'],
-            'non_system_name' => ['required_if:is_non_system,true', 'nullable', 'string', 'max:255'],
-            'remarks' => ['nullable', 'string'],
-        ]);
+        $validated = $request->validated();
 
         try {
             $this->subAssignProperty->execute($property, $validated, $issuer);
@@ -284,13 +243,11 @@ class PropertyController extends Controller
     /**
      * Return/close an internal Sub-Assignment (Memorandum Receipt).
      */
-    public function returnSubAssignment(Request $request, PropertySubAssignment $subAssignment): RedirectResponse
+    public function returnSubAssignment(ReturnSubAssignmentRequest $request, PropertySubAssignment $subAssignment): RedirectResponse
     {
         Gate::authorize('property.subassign');
 
-        $validated = $request->validate([
-            'remarks' => ['nullable', 'string'],
-        ]);
+        $validated = $request->validated();
 
         try {
             $this->returnSubAssignment->execute($subAssignment, $validated);

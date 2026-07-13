@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Inventory;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreTicketRequest;
+use App\Http\Requests\UpdateTicketRequest;
 use App\Models\Ticket;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -22,7 +24,7 @@ class HelpdeskController extends Controller
         $user = $request->user();
 
         // Determine if user has admin privileges
-        $isAdmin = $user->can('users.manage');
+        $isAdmin = Gate::allows('ticket.manage');
 
         if ($isAdmin) {
             $tickets = Inertia::scroll(fn () => Ticket::with('user.employee')
@@ -43,22 +45,11 @@ class HelpdeskController extends Controller
     /**
      * Store a newly created support ticket in database.
      */
-    public function store(Request $request): RedirectResponse
+    public function store(StoreTicketRequest $request): RedirectResponse
     {
         Gate::authorize('ticket.create');
 
-        if ($request->has('attachment') && ! $request->hasFile('attachment')) {
-            $request->request->remove('attachment');
-            $request->files->remove('attachment');
-        }
-
-        $validated = $request->validate([
-            'title' => ['required', 'string', 'max:255'],
-            'category' => ['required', 'string', 'in:technical,discrepancy,request,other'],
-            'priority' => ['required', 'string', 'in:low,medium,high'],
-            'description' => ['required', 'string', 'max:5000'],
-            'attachment' => ['nullable', 'file', 'mimes:jpeg,png,jpg,gif,pdf', 'max:5120'],
-        ]);
+        $validated = $request->validated();
 
         if ($request->hasFile('attachment')) {
             $validated['attachment_path'] = $request->file('attachment')->store('attachments', 'public');
@@ -74,14 +65,11 @@ class HelpdeskController extends Controller
     /**
      * Update the status and admin notes of a support ticket (Admin only).
      */
-    public function update(Request $request, Ticket $ticket): RedirectResponse
+    public function update(UpdateTicketRequest $request, Ticket $ticket): RedirectResponse
     {
         Gate::authorize('ticket.update', $ticket);
 
-        $validated = $request->validate([
-            'status' => ['required', 'string', 'in:open,in_progress,resolved'],
-            'admin_notes' => ['nullable', 'string', 'max:5000'],
-        ]);
+        $validated = $request->validated();
 
         $ticket->update($validated);
 

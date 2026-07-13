@@ -2,15 +2,15 @@
 
 namespace App\Providers;
 
-use App\Enums\PhysicalCountStatus;
-use App\Enums\RequisitionStatus;
-use App\Models\PhysicalCount;
 use App\Models\Requisition;
 use App\Models\Ticket;
 use App\Models\User;
+use App\Policies\PhysicalCountPolicy;
+use App\Policies\PropertyPolicy;
+use App\Policies\RequisitionPolicy;
+use App\Policies\TicketPolicy;
 use App\Services\Audit\AuditLogger;
 use Carbon\CarbonImmutable;
-use Illuminate\Auth\Access\Response;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -49,197 +49,27 @@ class AppServiceProvider extends ServiceProvider
         });
 
         // Requisition Gates
-        Gate::define('requisition.viewAny', function (User $user) {
-            return $user->hasPermissionTo('inventory.view');
-        });
-
-        Gate::define('requisition.view', function (User $user, Requisition $requisition) {
-            if (! $user->hasPermissionTo('inventory.view')) {
-                return Response::deny('You do not have permission to view this requisition.');
-            }
-
-            if ($user->hasPermissionTo('warehouse.issue') || $user->hasPermissionTo('audit.view')) {
-                return Response::allow();
-            }
-
-            $employee = $user->employee;
-
-            if (! $employee) {
-                return Response::deny('You must have an employee profile to view requisitions.');
-            }
-
-            if ($user->hasPermissionTo('request.approve')) {
-                return $requisition->department_id === $employee->department_id
-                    ? Response::allow()
-                    : Response::deny('You can only view requisitions from your department.');
-            }
-
-            return $requisition->requesting_employee_id === $employee->id
-                ? Response::allow()
-                : Response::deny('You can only view your own requisitions.');
-        });
-
-        Gate::define('requisition.approve', function (User $user, Requisition $requisition) {
-            if (! $user->hasPermissionTo('request.approve')) {
-                return Response::deny('You do not have permission to approve requisitions.');
-            }
-
-            $employee = $user->employee()->first();
-
-            if ($employee && $requisition->requesting_employee_id === $employee->id) {
-                return Response::deny('A creator cannot approve their own requisition request.');
-            }
-
-            $isAdmin = $user->hasRole('System Administrator') || $user->hasPermissionTo('admin.super');
-
-            if ($requisition->department_head_id === null) {
-                if ($isAdmin) {
-                    if ($requisition->status !== RequisitionStatus::PendingDeptHead) {
-                        return Response::deny('Only pending requisitions can be approved.');
-                    }
-
-                    return Response::allow();
-                }
-
-                return Response::deny('This requisition has no assigned department head and must be approved by an administrator.');
-            }
-
-            if ($employee === null || $requisition->department_head_id !== $employee->getKey()) {
-                if ($isAdmin) {
-                    if ($requisition->status !== RequisitionStatus::PendingDeptHead) {
-                        return Response::deny('Only pending requisitions can be approved.');
-                    }
-
-                    return Response::allow();
-                }
-
-                return Response::deny('You are not the designated department head for this requisition.');
-            }
-
-            if ($requisition->status !== RequisitionStatus::PendingDeptHead) {
-                return Response::deny('Only pending requisitions can be approved.');
-            }
-
-            return Response::allow();
-        });
-
-        Gate::define('requisition.issue', function (User $user, Requisition $requisition) {
-            if (! $user->hasPermissionTo('warehouse.issue')) {
-                return Response::deny('You do not have permission to issue items.');
-            }
-
-            if (! in_array($requisition->status, [RequisitionStatus::PendingSupply, RequisitionStatus::PartiallyIssued], true)) {
-                return Response::deny('Requisition is not in a state that can be issued.');
-            }
-
-            return Response::allow();
-        });
+        Gate::define('requisition.viewAny', [RequisitionPolicy::class, 'viewAny']);
+        Gate::define('requisition.view', [RequisitionPolicy::class, 'view']);
+        Gate::define('requisition.approve', [RequisitionPolicy::class, 'approve']);
+        Gate::define('requisition.issue', [RequisitionPolicy::class, 'issue']);
 
         // Property / Sub-Assignment Gates
-        Gate::define('property.subassign', function (User $user) {
-            $allowed = $user->hasPermissionTo('property.transfer') || $user->hasRole('Department Head');
-
-            if (! $allowed) {
-                $request = request();
-                if (! $request->wantsJson() && ! $request->is('inertia/*') && (! app()->runningInConsole() || app()->runningUnitTests())) {
-                    AuditLogger::logUnauthorized('property.subassign', 'property');
-                }
-
-                return Response::deny('Unauthorized to issue or return Memorandum Receipts.');
-            }
-
-            return Response::allow();
-        });
+        Gate::define('property.subassign', [PropertyPolicy::class, 'subassign']);
 
         // Physical Count Gates
-        Gate::define('physical-count.viewAny', function (User $user) {
-            return true;
-        });
-
-        Gate::define('physical-count.create', function (User $user) {
-            return $user->hasPermissionTo('reports.view');
-        });
-
-        Gate::define('physical-count.view', function (User $user, PhysicalCount $physicalCount) {
-            if ($user->hasPermissionTo('reports.view')) {
-                return Response::allow();
-            }
-
-            $employee = $user->employee;
-            if (! $employee) {
-                return Response::deny('You must have an employee profile to view physical counts.');
-            }
-
-            if ($physicalCount->created_by === $employee->id) {
-                return Response::allow();
-            }
-
-            $isCommitteeMember = in_array($physicalCount->status, [PhysicalCountStatus::PendingReview, PhysicalCountStatus::Finalized], true)
-                && $physicalCount->committees()->where('employee_id', $employee->id)->exists();
-
-            if ($isCommitteeMember) {
-                return Response::allow();
-            }
-
-            return Response::deny('You are not authorized to view this physical count.');
-        });
-
-        Gate::define('physical-count.update', function (User $user, PhysicalCount $physicalCount) {
-            if ($user->hasPermissionTo('reports.view')) {
-                return Response::allow();
-            }
-
-            $employee = $user->employee;
-            if (! $employee) {
-                return Response::deny('You must have an employee profile to update physical counts.');
-            }
-
-            if ($physicalCount->created_by === $employee->id) {
-                return Response::allow();
-            }
-
-            return Response::deny('You are not authorized to update this physical count.');
-        });
-
-        Gate::define('physical-count.review', function (User $user, PhysicalCount $physicalCount) {
-            $employee = $user->employee;
-            if (! $employee) {
-                return Response::deny('You must have an employee profile to review physical counts.');
-            }
-
-            $isCommitteeMember = $physicalCount->committees()->where('employee_id', $employee->id)->exists();
-            if ($isCommitteeMember) {
-                return Response::allow();
-            }
-
-            return Response::deny('You are not assigned to the committee for this physical count.');
-        });
-
-        Gate::define('physical-count.delete', function (User $user, PhysicalCount $physicalCount) {
-            $employee = $user->employee;
-            if (! $employee) {
-                return Response::deny('You must have an employee profile to delete physical counts.');
-            }
-
-            if ($physicalCount->created_by === $employee->id) {
-                return Response::allow();
-            }
-
-            return Response::deny('Only the creator of the physical count can delete it.');
-        });
+        Gate::define('physical-count.viewAny', [PhysicalCountPolicy::class, 'viewAny']);
+        Gate::define('physical-count.create', [PhysicalCountPolicy::class, 'create']);
+        Gate::define('physical-count.view', [PhysicalCountPolicy::class, 'view']);
+        Gate::define('physical-count.update', [PhysicalCountPolicy::class, 'update']);
+        Gate::define('physical-count.review', [PhysicalCountPolicy::class, 'review']);
+        Gate::define('physical-count.delete', [PhysicalCountPolicy::class, 'delete']);
 
         // Ticket / Helpdesk Gates
-        Gate::define('ticket.viewAny', function (User $user) {
-            return true;
-        });
-
-        Gate::define('ticket.create', function (User $user) {
-            return true;
-        });
-
-        Gate::define('ticket.update', function (User $user, Ticket $ticket) {
-            return $user->can('users.manage');
-        });
+        Gate::define('ticket.viewAny', [TicketPolicy::class, 'viewAny']);
+        Gate::define('ticket.create', [TicketPolicy::class, 'create']);
+        Gate::define('ticket.update', [TicketPolicy::class, 'update']);
+        Gate::define('ticket.manage', [TicketPolicy::class, 'manage']);
 
         // Alias for backward compatibility
         Gate::define('helpdesk.viewAny', function (User $user) {
