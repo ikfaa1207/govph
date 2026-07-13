@@ -1,4 +1,10 @@
-import { Head, useForm, useHttp, setLayoutProps } from '@inertiajs/react';
+import {
+    Head,
+    useForm,
+    useHttp,
+    setLayoutProps,
+    router,
+} from '@inertiajs/react';
 import {
     PlusCircle,
     X,
@@ -98,6 +104,11 @@ interface ReceivingIndexProps {
             email: string;
         };
     };
+    filters?: {
+        search?: string;
+        status?: string;
+        supplier_id?: string;
+    };
 }
 
 export default function ReceivingIndex({
@@ -107,6 +118,7 @@ export default function ReceivingIndex({
     receivers,
     inspectors,
     items,
+    filters = {},
 }: ReceivingIndexProps) {
     const breadcrumbs = [
         { title: 'Receiving (Stock In)', href: '/inventory/receiving-reports' },
@@ -125,6 +137,49 @@ export default function ReceivingIndex({
     const [suppliers, setSuppliers] = useState(initialSuppliers);
     const [isAddSupplierOpen, setIsAddSupplierOpen] = useState(false);
     const [isConfirmFinalizeOpen, setIsConfirmFinalizeOpen] = useState(false);
+
+    // Search and Filter States
+    const [search, setSearch] = useState(filters.search || '');
+    const [status, setStatus] = useState(filters.status || 'all');
+    const [supplierId, setSupplierId] = useState(filters.supplier_id || 'all');
+
+    const handleFilterChange = (
+        newSearch: string,
+        newStatus: string,
+        newSupplier: string,
+    ) => {
+        router.get(
+            '/inventory/receiving',
+            {
+                search: newSearch || undefined,
+                status: newStatus !== 'all' ? newStatus : undefined,
+                supplier_id: newSupplier !== 'all' ? newSupplier : undefined,
+            },
+            {
+                preserveState: true,
+                replace: true,
+            },
+        );
+    };
+
+    const handleSearchSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        handleFilterChange(search, status, supplierId);
+    };
+
+    const clearFilters = () => {
+        setSearch('');
+        setStatus('all');
+        setSupplierId('all');
+        router.get(
+            '/inventory/receiving',
+            {},
+            {
+                preserveState: true,
+                replace: true,
+            },
+        );
+    };
 
     // Form logic
     const { data, setData, post, put, processing, errors, reset, transform } =
@@ -1186,6 +1241,103 @@ export default function ReceivingIndex({
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
+                        {/* Search and Filters Bar */}
+                        <div className="mb-6 grid grid-cols-1 items-end gap-4 md:grid-cols-4">
+                            <div className="space-y-1.5 md:col-span-2">
+                                <Label className="text-xs font-semibold text-muted-foreground">
+                                    Search Reports
+                                </Label>
+                                <form
+                                    onSubmit={handleSearchSubmit}
+                                    className="flex gap-2"
+                                >
+                                    <Input
+                                        value={search}
+                                        onChange={(e) =>
+                                            setSearch(e.target.value)
+                                        }
+                                        placeholder="Search by IAR No., PO No., Supplier, Invoice..."
+                                        className="h-9 text-xs"
+                                    />
+                                    <Button
+                                        type="submit"
+                                        className="h-9 text-xs"
+                                    >
+                                        Search
+                                    </Button>
+                                </form>
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label className="text-xs font-semibold text-muted-foreground">
+                                    Status
+                                </Label>
+                                <SmartSelect
+                                    options={[
+                                        { value: 'all', label: 'All Statuses' },
+                                        { value: 'draft', label: 'Draft' },
+                                        {
+                                            value: 'finalized',
+                                            label: 'Finalized',
+                                        },
+                                    ]}
+                                    value={status}
+                                    onValueChange={(val) => {
+                                        setStatus(val);
+                                        handleFilterChange(
+                                            search,
+                                            val,
+                                            supplierId,
+                                        );
+                                    }}
+                                    placeholder="Select Status"
+                                    className="h-9 text-xs"
+                                />
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label className="text-xs font-semibold text-muted-foreground">
+                                    Supplier
+                                </Label>
+                                <SmartSelect
+                                    options={[
+                                        {
+                                            value: 'all',
+                                            label: 'All Suppliers',
+                                        },
+                                        ...suppliers.map((s) => ({
+                                            value: String(s.id),
+                                            label: s.name,
+                                        })),
+                                    ]}
+                                    value={supplierId}
+                                    onValueChange={(val) => {
+                                        setSupplierId(val);
+                                        handleFilterChange(search, status, val);
+                                    }}
+                                    placeholder="Select Supplier"
+                                    className="h-9 text-xs"
+                                />
+                            </div>
+                        </div>
+
+                        {(search ||
+                            status !== 'all' ||
+                            supplierId !== 'all') && (
+                            <div className="mb-4 flex items-center justify-between rounded-lg border border-muted bg-muted/40 p-3">
+                                <div className="text-xs text-muted-foreground">
+                                    Active filters are limiting the list
+                                    display.
+                                </div>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={clearFilters}
+                                    className="h-7 text-xs"
+                                >
+                                    Clear Filters
+                                </Button>
+                            </div>
+                        )}
                         {reports.data.length === 0 ? (
                             <div className="overflow-x-auto">
                                 <Table>

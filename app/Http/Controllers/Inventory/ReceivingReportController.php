@@ -36,12 +36,42 @@ class ReceivingReportController extends Controller
     {
         Gate::authorize('warehouse.receive');
 
-        $reports = ReceivingReport::with([
+        $query = ReceivingReport::with([
             'purchaseOrder.supplier',
             'receiver',
             'inspector',
             'items.item.unit',
-        ])->orderBy('id', 'desc')->paginate(15)->through(function ($report) {
+        ]);
+
+        // Search filtering
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function ($q) use ($search) {
+                $q->where('iar_number', 'like', "%{$search}%")
+                    ->orWhere('invoice_number', 'like', "%{$search}%")
+                    ->orWhere('delivery_receipt_number', 'like', "%{$search}%")
+                    ->orWhereHas('purchaseOrder', function ($sub) use ($search) {
+                        $sub->where('po_number', 'like', "%{$search}%")
+                            ->orWhereHas('supplier', function ($sup) use ($search) {
+                                $sup->where('name', 'like', "%{$search}%");
+                            });
+                    });
+            });
+        }
+
+        // Status filtering
+        if ($request->filled('status')) {
+            $query->where('status', $request->input('status'));
+        }
+
+        // Supplier filtering
+        if ($request->filled('supplier_id')) {
+            $query->whereHas('purchaseOrder', function ($q) use ($request) {
+                $q->where('supplier_id', $request->input('supplier_id'));
+            });
+        }
+
+        $reports = $query->orderBy('id', 'desc')->paginate(15)->through(function ($report) {
             $mappedItems = [];
             foreach ($report->items as $item) {
                 $mappedItems[] = [
@@ -106,6 +136,7 @@ class ReceivingReportController extends Controller
             'receivers' => $receivers,
             'inspectors' => $inspectors,
             'items' => Item::with('unit')->where('status', 'active')->get(),
+            'filters' => $request->only(['search', 'status', 'supplier_id']),
         ]);
     }
 

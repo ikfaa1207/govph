@@ -1,4 +1,4 @@
-import { Head, useForm, setLayoutProps } from '@inertiajs/react';
+import { Head, useForm, setLayoutProps, router } from '@inertiajs/react';
 import {
     PlusCircle,
     X,
@@ -15,6 +15,7 @@ import {
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
+import { SimplePagination } from '@/components/simple-pagination';
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -41,6 +42,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
 import { SmartSelect } from '@/components/ui/smart-select';
+import { DatePicker } from '@/components/ui/date-picker';
 import {
     Table,
     TableBody,
@@ -101,10 +103,19 @@ interface RequisitionStats {
 }
 
 interface RequisitionIndexProps {
-    requisitions: Requisition[];
+    requisitions: {
+        data: Requisition[];
+        links: any[];
+    };
     stats: RequisitionStats;
     items: any[];
     currentEmployee: any;
+    filters?: {
+        search?: string;
+        status?: string;
+        start_date?: string;
+        end_date?: string;
+    };
     auth: {
         user: {
             id: number;
@@ -128,6 +139,7 @@ export default function RequisitionsIndex({
     items,
     auth,
     currentEmployee,
+    filters = {},
 }: RequisitionIndexProps) {
     const breadcrumbs = [
         { title: 'Requisitions (RIS)', href: '/inventory/requisitions' },
@@ -139,6 +151,53 @@ export default function RequisitionsIndex({
     const canCreate = permissions.includes('request.create');
     const canApprove = permissions.includes('request.approve');
     const canIssue = permissions.includes('warehouse.issue');
+
+    // Search and Filter States
+    const [search, setSearch] = useState(filters.search || '');
+    const [status, setStatus] = useState(filters.status || 'all');
+    const [startDate, setStartDate] = useState(filters.start_date || '');
+    const [endDate, setEndDate] = useState(filters.end_date || '');
+
+    const handleFilterChange = (
+        newSearch: string,
+        newStatus: string,
+        newStart: string,
+        newEnd: string,
+    ) => {
+        router.get(
+            '/inventory/requisitions',
+            {
+                search: newSearch || undefined,
+                status: newStatus !== 'all' ? newStatus : undefined,
+                start_date: newStart || undefined,
+                end_date: newEnd || undefined,
+            },
+            {
+                preserveState: true,
+                replace: true,
+            },
+        );
+    };
+
+    const handleSearchSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        handleFilterChange(search, status, startDate, endDate);
+    };
+
+    const clearFilters = () => {
+        setSearch('');
+        setStatus('all');
+        setStartDate('');
+        setEndDate('');
+        router.get(
+            '/inventory/requisitions',
+            {},
+            {
+                preserveState: true,
+                replace: true,
+            },
+        );
+    };
 
     const canUserApproveReq = (req: Requisition) => {
         if (!canApprove) {
@@ -741,16 +800,159 @@ export default function RequisitionsIndex({
                     </div>
                 )}
 
+                {/* Search and Filters Bar */}
+                <Card>
+                    <CardHeader className="pb-3">
+                        <CardTitle className="text-base font-semibold">
+                            Filter Requisition Board
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="grid grid-cols-1 items-end gap-4 md:grid-cols-4">
+                            <div className="space-y-1.5">
+                                <Label className="text-xs font-semibold text-muted-foreground">
+                                    Search
+                                </Label>
+                                <form
+                                    onSubmit={handleSearchSubmit}
+                                    className="flex gap-2"
+                                >
+                                    <Input
+                                        value={search}
+                                        onChange={(e) =>
+                                            setSearch(e.target.value)
+                                        }
+                                        placeholder="Search by RIS no., requester..."
+                                        className="h-9 text-xs"
+                                    />
+                                    <Button
+                                        type="submit"
+                                        className="h-9 text-xs"
+                                    >
+                                        Search
+                                    </Button>
+                                </form>
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label className="text-xs font-semibold text-muted-foreground">
+                                    Status
+                                </Label>
+                                <SmartSelect
+                                    options={[
+                                        { value: 'all', label: 'All Statuses' },
+                                        {
+                                            value: 'pending_dept_head',
+                                            label: 'Pending Dept Head',
+                                        },
+                                        {
+                                            value: 'rejected_dept_head',
+                                            label: 'Rejected Dept Head',
+                                        },
+                                        {
+                                            value: 'pending_supply',
+                                            label: 'Pending Supply',
+                                        },
+                                        {
+                                            value: 'partially_issued',
+                                            label: 'Partially Issued',
+                                        },
+                                        {
+                                            value: 'issued',
+                                            label: 'Issued / Completed',
+                                        },
+                                    ]}
+                                    value={status}
+                                    onValueChange={(val) => {
+                                        setStatus(val);
+                                        handleFilterChange(
+                                            search,
+                                            val,
+                                            startDate,
+                                            endDate,
+                                        );
+                                    }}
+                                    placeholder="Select Status"
+                                    className="h-9 text-xs"
+                                />
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label className="text-xs font-semibold text-muted-foreground">
+                                    Start Date
+                                </Label>
+                                <DatePicker
+                                    value={startDate}
+                                    onChange={(val) => {
+                                        setStartDate(val);
+                                        handleFilterChange(
+                                            search,
+                                            status,
+                                            val,
+                                            endDate,
+                                        );
+                                    }}
+                                    placeholder="Pick start date"
+                                    className="h-9 text-xs"
+                                />
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label className="text-xs font-semibold text-muted-foreground">
+                                    End Date
+                                </Label>
+                                <DatePicker
+                                    value={endDate}
+                                    onChange={(val) => {
+                                        setEndDate(val);
+                                        handleFilterChange(
+                                            search,
+                                            status,
+                                            startDate,
+                                            val,
+                                        );
+                                    }}
+                                    placeholder="Pick end date"
+                                    className="h-9 text-xs"
+                                />
+                            </div>
+                        </div>
+
+                        {(search ||
+                            status !== 'all' ||
+                            startDate ||
+                            endDate) && (
+                            <div className="mt-4 flex items-center justify-between rounded-lg border border-muted bg-muted/40 p-3">
+                                <div className="text-xs text-muted-foreground">
+                                    Active filters are limiting the list
+                                    display.
+                                </div>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={clearFilters}
+                                    className="h-7 text-xs"
+                                >
+                                    Clear Filters
+                                </Button>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+
                 {/* Requisitions List Board */}
                 <div className="grid gap-6">
-                    {requisitions.length === 0 ? (
+                    {requisitions.data.length === 0 ? (
                         <Card>
                             <CardContent className="py-12 text-center text-muted-foreground">
-                                No requisitions (RIS) found on the board.
+                                {search ||
+                                status !== 'all' ||
+                                startDate ||
+                                endDate
+                                    ? 'No matching requisitions (RIS) found.'
+                                    : 'No requisitions (RIS) found on the board.'}
                             </CardContent>
                         </Card>
                     ) : (
-                        requisitions.map((req) => (
+                        requisitions.data.map((req) => (
                             <Card
                                 key={req.id}
                                 className="relative overflow-hidden"
@@ -972,6 +1174,10 @@ export default function RequisitionsIndex({
                             </Card>
                         ))
                     )}
+                </div>
+
+                <div className="mt-4">
+                    <SimplePagination links={requisitions.links} />
                 </div>
 
                 {/* Dialog: Dept Head Approval Forms */}

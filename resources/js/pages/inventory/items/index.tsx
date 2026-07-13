@@ -1,7 +1,12 @@
-import { Head, useForm, useHttp, setLayoutProps } from '@inertiajs/react';
+import {
+    Head,
+    useForm,
+    useHttp,
+    setLayoutProps,
+    router,
+} from '@inertiajs/react';
 import {
     PlusCircle,
-    Search,
     Eye,
     AlertCircle,
     Plus,
@@ -38,6 +43,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { SmartSelect } from '@/components/ui/smart-select';
 import {
     Table,
     TableBody,
@@ -74,6 +80,7 @@ interface ItemsIndexProps {
     filters: {
         search?: string;
         category_id?: string;
+        stock_status?: string;
     };
     stats: {
         total_items: number;
@@ -99,6 +106,49 @@ export default function ItemsIndex({
     setLayoutProps({ breadcrumbs });
     const [isAddOpen, setIsAddOpen] = useState(false);
     const [searchVal, setSearchVal] = useState(filters.search || '');
+    const [categoryId, setCategoryId] = useState(filters.category_id || 'all');
+    const [stockStatus, setStockStatus] = useState(
+        filters.stock_status || 'all',
+    );
+
+    const handleFilterChange = (
+        newSearch: string,
+        newCategory: string,
+        newStockStatus: string,
+    ) => {
+        router.get(
+            '/inventory/items',
+            {
+                search: newSearch || undefined,
+                category_id: newCategory !== 'all' ? newCategory : undefined,
+                stock_status:
+                    newStockStatus !== 'all' ? newStockStatus : undefined,
+            },
+            {
+                preserveState: true,
+                replace: true,
+            },
+        );
+    };
+
+    const handleSearch = (e: React.FormEvent) => {
+        e.preventDefault();
+        handleFilterChange(searchVal, categoryId, stockStatus);
+    };
+
+    const clearFilters = () => {
+        setSearchVal('');
+        setCategoryId('all');
+        setStockStatus('all');
+        router.get(
+            '/inventory/items',
+            {},
+            {
+                preserveState: true,
+                replace: true,
+            },
+        );
+    };
 
     const [categories, setCategories] = useState(initialCategories);
     const [units, setUnits] = useState(initialUnits);
@@ -295,17 +345,7 @@ export default function ItemsIndex({
         });
     };
 
-    const handleSearch = (e: React.FormEvent) => {
-        e.preventDefault();
-        // Trigger Inertia search visit
-        const queryParams = new URLSearchParams();
-
-        if (searchVal) {
-            queryParams.set('search', searchVal);
-        }
-
-        window.location.search = queryParams.toString();
-    };
+    // Removed manual handleSearch function, handled above.
 
     const handleAddSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -1455,29 +1495,120 @@ export default function ItemsIndex({
 
                 {/* Supplies List Table */}
                 <Card>
-                    <CardHeader className="flex flex-row items-center justify-between pb-3">
+                    <CardHeader className="pb-3">
                         <CardTitle className="text-base font-semibold">
                             Active Supply Ledger
                         </CardTitle>
-                        <form
-                            onSubmit={handleSearch}
-                            className="flex w-full max-w-md gap-2"
-                        >
-                            <div className="relative flex-1">
-                                <Search className="absolute top-3 left-3 h-4 w-4 text-muted-foreground" />
-                                <Input
-                                    placeholder="Search supplies by name, stock number, code or barcode..."
-                                    className="pl-9"
-                                    value={searchVal}
-                                    onChange={(e) =>
-                                        setSearchVal(e.target.value)
-                                    }
-                                />
-                            </div>
-                            <Button type="submit">Search</Button>
-                        </form>
                     </CardHeader>
                     <CardContent>
+                        {/* Search and Filters Bar */}
+                        <div className="mb-6 grid grid-cols-1 items-end gap-4 md:grid-cols-4">
+                            <div className="space-y-1.5 md:col-span-2">
+                                <Label className="text-xs font-semibold text-muted-foreground">
+                                    Search Catalog
+                                </Label>
+                                <form
+                                    onSubmit={handleSearch}
+                                    className="flex gap-2"
+                                >
+                                    <Input
+                                        value={searchVal}
+                                        onChange={(e) =>
+                                            setSearchVal(e.target.value)
+                                        }
+                                        placeholder="Search by name, stock number, code or barcode..."
+                                        className="h-9 text-xs"
+                                    />
+                                    <Button
+                                        type="submit"
+                                        className="h-9 text-xs"
+                                    >
+                                        Search
+                                    </Button>
+                                </form>
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label className="text-xs font-semibold text-muted-foreground">
+                                    Category
+                                </Label>
+                                <SmartSelect
+                                    options={[
+                                        {
+                                            value: 'all',
+                                            label: 'All Categories',
+                                        },
+                                        ...categories.map((c) => ({
+                                            value: String(c.id),
+                                            label: c.name,
+                                        })),
+                                    ]}
+                                    value={categoryId}
+                                    onValueChange={(val) => {
+                                        setCategoryId(val);
+                                        handleFilterChange(
+                                            searchVal,
+                                            val,
+                                            stockStatus,
+                                        );
+                                    }}
+                                    placeholder="Category"
+                                    className="h-9 text-xs"
+                                />
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label className="text-xs font-semibold text-muted-foreground">
+                                    Stock Status
+                                </Label>
+                                <SmartSelect
+                                    options={[
+                                        { value: 'all', label: 'All Items' },
+                                        {
+                                            value: 'in_stock',
+                                            label: 'In Stock',
+                                        },
+                                        {
+                                            value: 'low_stock',
+                                            label: 'Low Stock',
+                                        },
+                                        {
+                                            value: 'out_of_stock',
+                                            label: 'Out of Stock',
+                                        },
+                                    ]}
+                                    value={stockStatus}
+                                    onValueChange={(val) => {
+                                        setStockStatus(val);
+                                        handleFilterChange(
+                                            searchVal,
+                                            categoryId,
+                                            val,
+                                        );
+                                    }}
+                                    placeholder="Stock Status"
+                                    className="h-9 text-xs"
+                                />
+                            </div>
+                        </div>
+
+                        {(searchVal ||
+                            categoryId !== 'all' ||
+                            stockStatus !== 'all') && (
+                            <div className="mb-4 flex items-center justify-between rounded-lg border border-muted bg-muted/40 p-3">
+                                <div className="text-xs text-muted-foreground">
+                                    Active filters are limiting the list
+                                    display.
+                                </div>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={clearFilters}
+                                    className="h-7 text-xs"
+                                >
+                                    Clear Filters
+                                </Button>
+                            </div>
+                        )}
                         {items.data.length === 0 ? (
                             <div className="overflow-x-auto">
                                 <Table>

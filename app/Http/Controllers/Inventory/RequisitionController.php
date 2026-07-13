@@ -40,10 +40,34 @@ class RequisitionController extends Controller
         $user = Auth::user();
         $employee = $user?->employee;
 
-        $requisitions = Requisition::with(['requester.department', 'departmentHead', 'items.item.unit'])
-            ->visibleTo($user, $employee)
-            ->orderBy('id', 'desc')
-            ->get();
+        $query = Requisition::with(['requester.department', 'departmentHead', 'items.item.unit'])
+            ->visibleTo($user, $employee);
+
+        // Search filtering
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function ($q) use ($search) {
+                $q->where('requisition_number', 'like', "%{$search}%")
+                    ->orWhereHas('requester', function ($sub) use ($search) {
+                        $sub->where('name', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        // Status filtering
+        if ($request->filled('status')) {
+            $query->where('status', $request->input('status'));
+        }
+
+        // Date range filtering
+        if ($request->filled('start_date')) {
+            $query->whereDate('created_at', '>=', $request->input('start_date'));
+        }
+        if ($request->filled('end_date')) {
+            $query->whereDate('created_at', '<=', $request->input('end_date'));
+        }
+
+        $requisitions = $query->orderBy('id', 'desc')->paginate(15);
 
         $allItems = Item::where('status', 'active')
             ->whereHas('category', fn ($q) => $q->where('is_ppe', false))
@@ -71,10 +95,11 @@ class RequisitionController extends Controller
         ];
 
         return Inertia::render('inventory/requisitions/index', [
-            'requisitions' => $requisitions->values(),
+            'requisitions' => $requisitions,
             'stats' => $stats,
             'items' => $allItems,
             'currentEmployee' => $employee,
+            'filters' => $request->only(['search', 'status', 'start_date', 'end_date']),
         ]);
     }
 

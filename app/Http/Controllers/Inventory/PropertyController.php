@@ -75,13 +75,27 @@ class PropertyController extends Controller
             $query->where('status', $request->input('status'));
         }
 
+        if ($request->filled('condition')) {
+            $query->where('condition', $request->input('condition'));
+        }
+
+        if ($request->filled('category_id')) {
+            $query->where('category_id', $request->input('category_id'));
+        }
+
         if ($request->filled('search')) {
             $search = $request->input('search');
             $query->where(function ($q) use ($search) {
                 $q->where('property_number', 'like', "%{$search}%")
                     ->orWhere('serial_number', 'like', "%{$search}%")
                     ->orWhere('model', 'like', "%{$search}%")
-                    ->orWhere('brand', 'like', "%{$search}%");
+                    ->orWhere('brand', 'like', "%{$search}%")
+                    ->orWhereHas('activeAssignment.assignee', function ($subQ) use ($search) {
+                        $subQ->where('name', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('activeAssignment', function ($subQ) use ($search) {
+                        $subQ->where('non_system_name', 'like', "%{$search}%");
+                    });
             });
         }
 
@@ -104,7 +118,7 @@ class PropertyController extends Controller
             'categories' => $categories,
             'offices' => $offices,
             'current_employee' => $employee,
-            'filters' => $request->only(['status', 'search']),
+            'filters' => $request->only(['status', 'search', 'category_id', 'condition']),
             'stats' => $stats,
         ]);
     }

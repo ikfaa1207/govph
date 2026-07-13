@@ -10,7 +10,9 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { Can } from '@/components/can';
 import { RowActionsMenu } from '@/components/row-actions-menu';
+import { SimplePagination } from '@/components/simple-pagination';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
     Dialog,
     DialogContent,
@@ -53,6 +55,11 @@ interface Props {
         links: { url: string | null; label: string; active: boolean }[];
     };
     employees: { id: number; name: string; position: string | null }[];
+    filters?: {
+        search?: string;
+        type?: string;
+        status?: string;
+    };
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -60,12 +67,59 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Physical Counts', href: '/inventory/physical-counts' },
 ];
 
-export default function PhysicalCountsIndex({ counts, employees }: Props) {
+export default function PhysicalCountsIndex({
+    counts,
+    employees,
+    filters = {},
+}: Props) {
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [newMemberIndex, setNewMemberIndex] = useState<number | null>(null);
     const [countToDelete, setCountToDelete] = useState<PhysicalCount | null>(
         null,
     );
+
+    // Search and Filter States
+    const [search, setSearch] = useState(filters.search || '');
+    const [typeFilter, setTypeFilter] = useState(filters.type || 'all');
+    const [statusFilter, setStatusFilter] = useState(filters.status || 'all');
+
+    const handleFilterChange = (
+        newSearch: string,
+        newType: string,
+        newStatus: string,
+    ) => {
+        router.get(
+            '/inventory/physical-counts',
+            {
+                search: newSearch || undefined,
+                type: newType !== 'all' ? newType : undefined,
+                status: newStatus !== 'all' ? newStatus : undefined,
+            },
+            {
+                preserveState: true,
+                replace: true,
+            },
+        );
+    };
+
+    const handleSearchSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        handleFilterChange(search, typeFilter, statusFilter);
+    };
+
+    const clearFilters = () => {
+        setSearch('');
+        setTypeFilter('all');
+        setStatusFilter('all');
+        router.get(
+            '/inventory/physical-counts',
+            {},
+            {
+                preserveState: true,
+                replace: true,
+            },
+        );
+    };
 
     const { auth } = usePage<any>().props;
     const currentEmployee = employees.find((e) => e.user_id === auth.user?.id);
@@ -496,6 +550,122 @@ export default function PhysicalCountsIndex({ counts, employees }: Props) {
                     </Can>
                 </div>
 
+                {/* Search and Filters Bar */}
+                <Card>
+                    <CardHeader className="pb-3">
+                        <CardTitle className="text-base font-semibold">
+                            Filter Physical Counts
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="grid grid-cols-1 items-end gap-4 md:grid-cols-3">
+                            <div className="space-y-1.5">
+                                <Label className="text-xs font-semibold text-muted-foreground">
+                                    Search
+                                </Label>
+                                <form
+                                    onSubmit={handleSearchSubmit}
+                                    className="flex gap-2"
+                                >
+                                    <Input
+                                        value={search}
+                                        onChange={(e) =>
+                                            setSearch(e.target.value)
+                                        }
+                                        placeholder="Search type, date, creator..."
+                                        className="h-9 text-xs"
+                                    />
+                                    <Button
+                                        type="submit"
+                                        className="h-9 text-xs"
+                                    >
+                                        Search
+                                    </Button>
+                                </form>
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label className="text-xs font-semibold text-muted-foreground">
+                                    Count Type
+                                </Label>
+                                <SmartSelect
+                                    options={[
+                                        { value: 'all', label: 'All Types' },
+                                        {
+                                            value: 'RPCPPE',
+                                            label: 'RPCPPE (PPE Assets)',
+                                        },
+                                        {
+                                            value: 'RPCI',
+                                            label: 'RPCI (Supplies)',
+                                        },
+                                    ]}
+                                    value={typeFilter}
+                                    onValueChange={(val) => {
+                                        setTypeFilter(val);
+                                        handleFilterChange(
+                                            search,
+                                            val,
+                                            statusFilter,
+                                        );
+                                    }}
+                                    placeholder="Select Type"
+                                    className="h-9 text-xs"
+                                />
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label className="text-xs font-semibold text-muted-foreground">
+                                    Status
+                                </Label>
+                                <SmartSelect
+                                    options={[
+                                        { value: 'all', label: 'All Statuses' },
+                                        { value: 'draft', label: 'Draft' },
+                                        {
+                                            value: 'pending_review',
+                                            label: 'Pending Review',
+                                        },
+                                        {
+                                            value: 'finalized',
+                                            label: 'Finalized',
+                                        },
+                                    ]}
+                                    value={statusFilter}
+                                    onValueChange={(val) => {
+                                        setStatusFilter(val);
+                                        handleFilterChange(
+                                            search,
+                                            typeFilter,
+                                            val,
+                                        );
+                                    }}
+                                    placeholder="Select Status"
+                                    className="h-9 text-xs"
+                                />
+                            </div>
+                        </div>
+
+                        {(search ||
+                            typeFilter !== 'all' ||
+                            statusFilter !== 'all') && (
+                            <div className="mt-4 flex items-center justify-between rounded-lg border border-muted bg-muted/40 p-3">
+                                <div className="text-xs text-muted-foreground">
+                                    Active filters are limiting the list
+                                    display.
+                                </div>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={clearFilters}
+                                    className="h-7 text-xs"
+                                >
+                                    Clear Filters
+                                </Button>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+
                 <div className="overflow-hidden rounded-xl border bg-card shadow-xs">
                     <Table>
                         <TableHeader>
@@ -517,7 +687,11 @@ export default function PhysicalCountsIndex({ counts, employees }: Props) {
                                         colSpan={6}
                                         className="h-24 text-center text-muted-foreground"
                                     >
-                                        No physical counts initiated yet.
+                                        {search ||
+                                        typeFilter !== 'all' ||
+                                        statusFilter !== 'all'
+                                            ? 'No matching physical counts found.'
+                                            : 'No physical counts initiated yet.'}
                                     </TableCell>
                                 </TableRow>
                             ) : (
@@ -593,6 +767,10 @@ export default function PhysicalCountsIndex({ counts, employees }: Props) {
                             )}
                         </TableBody>
                     </Table>
+                </div>
+
+                <div className="mt-4">
+                    <SimplePagination links={counts.links} />
                 </div>
             </div>
         </>

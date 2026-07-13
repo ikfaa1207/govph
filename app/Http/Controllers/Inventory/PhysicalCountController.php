@@ -29,7 +29,7 @@ class PhysicalCountController extends Controller
         protected ApprovePhysicalCountAction $approveAction
     ) {}
 
-    public function index(): Response
+    public function index(Request $request): Response
     {
         Gate::authorize('physical-count.viewAny');
 
@@ -50,12 +50,35 @@ class PhysicalCountController extends Controller
             });
         }
 
+        // Search filtering
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function ($q) use ($search) {
+                $q->where('type', 'like', "%{$search}%")
+                    ->orWhere('as_of_date', 'like', "%{$search}%")
+                    ->orWhereHas('creator', function ($sub) use ($search) {
+                        $sub->where('name', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        // Type filtering
+        if ($request->filled('type')) {
+            $query->where('type', $request->input('type'));
+        }
+
+        // Status filtering
+        if ($request->filled('status')) {
+            $query->where('status', $request->input('status'));
+        }
+
         $counts = $query->latest()->paginate(15);
         $employees = Employee::orderBy('name')->get(['id', 'name', 'position', 'user_id']);
 
         return Inertia::render('inventory/physical-counts/index', [
             'counts' => $counts,
             'employees' => $employees,
+            'filters' => $request->only(['search', 'type', 'status']),
         ]);
     }
 

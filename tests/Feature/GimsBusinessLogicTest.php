@@ -672,3 +672,102 @@ test('properties can be batch updated by authorized user', function () {
     expect($prop2->brand)->toBe('Mitsubishi');
     expect($prop2->serial_number)->toBe('SN-MITSU-2');
 });
+
+test('properties list can be searched and filtered by authorized user', function () {
+    $office = Office::create(['code' => 'O-TEST-SRCH', 'name' => 'Test Office']);
+    $dept = Department::create(['office_id' => $office->id, 'code' => 'D-TEST-SRCH', 'name' => 'Test Dept']);
+
+    $custodianUser = User::factory()->propertyCustodian()->create(['name' => 'Custodian User', 'email' => 'cust-srch@example.com']);
+    Employee::create(['user_id' => $custodianUser->id, 'employee_id' => 'EMP-C-SRCH', 'name' => 'Custodian User', 'position' => 'Custodian', 'office_id' => $office->id, 'department_id' => $dept->id]);
+
+    Permission::create(['name' => 'property.view', 'module' => 'property']);
+    Permission::create(['name' => 'warehouse.issue', 'module' => 'warehouse']);
+    $custodianUser->givePermissionTo('property.view');
+    $custodianUser->givePermissionTo('warehouse.issue');
+
+    $category = Category::create(['name' => 'IT Equipment', 'code' => 'IT-EQP-SRCH', 'is_ppe' => true]);
+    $prop1 = Property::create([
+        'property_number' => 'PPE-SRCH-99',
+        'serial_number' => 'SN-SRCH-99',
+        'model' => 'IdeaPad 3',
+        'brand' => 'Lenovo',
+        'unit_cost' => 55000.00,
+        'date_acquired' => now()->toDateString(),
+        'category_id' => $category->id,
+        'condition' => 'good',
+        'status' => 'available',
+    ]);
+
+    $this->actingAs($custodianUser);
+
+    // Test search by serial number
+    $response = $this->get(route('inventory.properties.index', ['search' => 'SN-SRCH-99']));
+    $response->assertStatus(200);
+    $data = $response->viewData('page')['props']['properties']['data'];
+    expect($data)->toHaveCount(1);
+    expect($data[0]['property_number'])->toBe('PPE-SRCH-99');
+
+    // Test filter by condition
+    $response = $this->get(route('inventory.properties.index', ['condition' => 'good']));
+    $response->assertStatus(200);
+    $data = $response->viewData('page')['props']['properties']['data'];
+    expect($data)->toHaveCount(1);
+
+    // Test filter by status (no items matching disposed status)
+    $response = $this->get(route('inventory.properties.index', ['status' => 'disposed']));
+    $response->assertStatus(200);
+    $data = $response->viewData('page')['props']['properties']['data'];
+    expect($data)->toHaveCount(0);
+});
+
+test('items list can be searched and filtered', function () {
+    $user = User::factory()->propertyCustodian()->create();
+    $perm = Permission::firstOrCreate(['name' => 'inventory.view', 'module' => 'inventory']);
+    $user->givePermissionTo($perm);
+    $unit = Unit::create(['name' => 'piece', 'abbreviation' => 'pc']);
+    $category1 = Category::create(['name' => 'Stationery', 'code' => 'STAT-TEST', 'is_ppe' => false]);
+    $category2 = Category::create(['name' => 'Computers', 'code' => 'COMP-TEST', 'is_ppe' => false]);
+
+    $item1 = Item::create([
+        'name' => 'Blue Ballpen',
+        'item_code' => 'PEN-BLUE-TEST',
+        'stock_number' => '1001-TEST',
+        'category_id' => $category1->id,
+        'unit_id' => $unit->id,
+        'unit_cost' => 15.00,
+        'current_stock' => 50,
+        'reorder_level' => 10,
+        'status' => 'active',
+    ]);
+    $item2 = Item::create([
+        'name' => 'Lenovo Laptop X1',
+        'item_code' => 'LAP-LENOVO-TEST',
+        'stock_number' => '1002-TEST',
+        'category_id' => $category2->id,
+        'unit_id' => $unit->id,
+        'unit_cost' => 60000.00,
+        'current_stock' => 0, // Out of stock
+        'reorder_level' => 5,
+        'status' => 'active',
+    ]);
+
+    $this->actingAs($user);
+
+    // Search query test
+    $response = $this->get(route('inventory.items.index', ['search' => 'Ballpen']));
+    $response->assertStatus(200);
+    $data = $response->viewData('page')['props']['items']['data'];
+    expect($data[0]['name'])->toBe('Blue Ballpen');
+
+    // Category filter test
+    $response = $this->get(route('inventory.items.index', ['category_id' => $category2->id]));
+    $response->assertStatus(200);
+    $data = $response->viewData('page')['props']['items']['data'];
+    expect($data[0]['name'])->toBe('Lenovo Laptop X1');
+
+    // Stock status filter test
+    $response = $this->get(route('inventory.items.index', ['stock_status' => 'out_of_stock']));
+    $response->assertStatus(200);
+    $data = $response->viewData('page')['props']['items']['data'];
+    expect($data[0]['name'])->toBe('Lenovo Laptop X1');
+});

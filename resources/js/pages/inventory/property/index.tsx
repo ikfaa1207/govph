@@ -1,4 +1,4 @@
-import { Head, setLayoutProps } from '@inertiajs/react';
+import { Head, setLayoutProps, router } from '@inertiajs/react';
 import {
     PlusCircle,
     UserCheck,
@@ -13,6 +13,9 @@ import { useState } from 'react';
 import { Can } from '@/components/can';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { SmartSelect } from '@/components/ui/smart-select';
 import { usePermissions } from '@/hooks/use-permissions';
 import { formatCurrency } from '@/lib/utils';
 
@@ -102,6 +105,12 @@ interface PropertyIndexProps {
         total_value: number;
         recently_added: number;
     };
+    filters: {
+        search?: string;
+        status?: string;
+        category_id?: string;
+        condition?: string;
+    };
 }
 
 export default function PropertyIndex({
@@ -112,6 +121,7 @@ export default function PropertyIndex({
     auth,
     current_employee,
     stats,
+    filters,
 }: PropertyIndexProps) {
     const breadcrumbs = [
         { title: 'Property Registry (PPE)', href: '/inventory/properties' },
@@ -131,6 +141,63 @@ export default function PropertyIndex({
     const [selectedProp, setSelectedProp] = useState<Property | null>(null);
     const [selectedPropIds, setSelectedPropIds] = useState<number[]>([]);
     const [isAssignOpen, setIsAssignOpen] = useState(false);
+
+    // Search and Filter States
+    const [search, setSearch] = useState(filters.search || '');
+    const [status, setStatus] = useState(filters.status || 'all');
+    const [categoryId, setCategoryId] = useState(filters.category_id || 'all');
+    const [condition, setCondition] = useState(filters.condition || 'all');
+
+    const handleFilterChange = (
+        newSearch: string,
+        newStatus: string,
+        newCategory: string,
+        newCondition: string,
+    ) => {
+        router.get(
+            '/inventory/properties',
+            {
+                search: newSearch || undefined,
+                status: newStatus !== 'all' ? newStatus : undefined,
+                category_id: newCategory !== 'all' ? newCategory : undefined,
+                condition: newCondition !== 'all' ? newCondition : undefined,
+            },
+            {
+                preserveState: true,
+                replace: true,
+            },
+        );
+    };
+
+    const onStatusChange = (val: string) => {
+        setStatus(val);
+        handleFilterChange(search, val, categoryId, condition);
+    };
+
+    const onCategoryChange = (val: string) => {
+        setCategoryId(val);
+        handleFilterChange(search, status, val, condition);
+    };
+
+    const onConditionChange = (val: string) => {
+        setCondition(val);
+        handleFilterChange(search, status, categoryId, val);
+    };
+
+    const clearFilters = () => {
+        setSearch('');
+        setStatus('all');
+        setCategoryId('all');
+        setCondition('all');
+        router.get(
+            '/inventory/properties',
+            {},
+            {
+                preserveState: true,
+                replace: true,
+            },
+        );
+    };
     const [isBatchAssignOpen, setIsBatchAssignOpen] = useState(false);
     const [isTransferOpen, setIsTransferOpen] = useState(false);
     const [isDisposeOpen, setIsDisposeOpen] = useState(false);
@@ -318,27 +385,204 @@ export default function PropertyIndex({
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
+                        {/* Search and Filters Bar */}
+                        <div className="mb-6 grid grid-cols-1 items-end gap-4 md:grid-cols-5">
+                            <div className="space-y-1.5 md:col-span-2">
+                                <Label className="text-xs font-semibold text-muted-foreground">
+                                    Search Registry
+                                </Label>
+                                <div className="flex gap-2">
+                                    <Input
+                                        value={search}
+                                        onChange={(e) =>
+                                            setSearch(e.target.value)
+                                        }
+                                        onKeyDown={(e) =>
+                                            e.key === 'Enter' &&
+                                            handleFilterChange(
+                                                search,
+                                                status,
+                                                categoryId,
+                                                condition,
+                                            )
+                                        }
+                                        placeholder="Search by Property No., S/N, Brand, Model, Assignee..."
+                                        className="h-9 text-xs"
+                                    />
+                                    <Button
+                                        type="button"
+                                        variant="secondary"
+                                        className="h-9 text-xs"
+                                        onClick={() =>
+                                            handleFilterChange(
+                                                search,
+                                                status,
+                                                categoryId,
+                                                condition,
+                                            )
+                                        }
+                                    >
+                                        Search
+                                    </Button>
+                                </div>
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label className="text-xs font-semibold text-muted-foreground">
+                                    Status
+                                </Label>
+                                <SmartSelect
+                                    options={[
+                                        { value: 'all', label: 'All Statuses' },
+                                        {
+                                            value: 'available',
+                                            label: 'Available',
+                                        },
+                                        {
+                                            value: 'assigned',
+                                            label: 'Assigned',
+                                        },
+                                        {
+                                            value: 'transferred',
+                                            label: 'Transferred',
+                                        },
+                                        {
+                                            value: 'for_disposal',
+                                            label: 'For Disposal',
+                                        },
+                                        {
+                                            value: 'disposed',
+                                            label: 'Disposed',
+                                        },
+                                    ]}
+                                    value={status}
+                                    onValueChange={onStatusChange}
+                                    placeholder="Status"
+                                    className="h-9 text-xs"
+                                />
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label className="text-xs font-semibold text-muted-foreground">
+                                    Category
+                                </Label>
+                                <SmartSelect
+                                    options={[
+                                        {
+                                            value: 'all',
+                                            label: 'All Categories',
+                                        },
+                                        ...categories.map((c) => ({
+                                            value: String(c.id),
+                                            label: c.name,
+                                        })),
+                                    ]}
+                                    value={categoryId}
+                                    onValueChange={onCategoryChange}
+                                    placeholder="Category"
+                                    className="h-9 text-xs"
+                                />
+                            </div>
+                            <div className="flex flex-col justify-end gap-1.5 space-y-1.5">
+                                <div className="space-y-1.5">
+                                    <Label className="text-xs font-semibold text-muted-foreground">
+                                        Physical Condition
+                                    </Label>
+                                    <SmartSelect
+                                        options={[
+                                            {
+                                                value: 'all',
+                                                label: 'All Conditions',
+                                            },
+                                            { value: 'new', label: 'New' },
+                                            { value: 'good', label: 'Good' },
+                                            { value: 'fair', label: 'Fair' },
+                                            {
+                                                value: 'needs_repair',
+                                                label: 'Needs Repair',
+                                            },
+                                            {
+                                                value: 'unserviceable',
+                                                label: 'Unserviceable',
+                                            },
+                                            {
+                                                value: 'disposed',
+                                                label: 'Disposed',
+                                            },
+                                        ]}
+                                        value={condition}
+                                        onValueChange={onConditionChange}
+                                        placeholder="Condition"
+                                        className="h-9 w-full text-xs"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        {(search ||
+                            status !== 'all' ||
+                            categoryId !== 'all' ||
+                            condition !== 'all') && (
+                            <div className="mb-4 flex items-center justify-between rounded-lg border border-muted bg-muted/40 p-3">
+                                <div className="text-xs text-muted-foreground">
+                                    Active filters are limiting the list
+                                    display.
+                                </div>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={clearFilters}
+                                    className="h-7 text-xs"
+                                >
+                                    Clear Filters
+                                </Button>
+                            </div>
+                        )}
+
                         {properties.data.length === 0 ? (
                             <div className="flex flex-col items-center justify-center py-12 text-center">
                                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
                                     <PackageOpen className="h-6 w-6" />
                                 </div>
                                 <h3 className="mt-4 text-sm font-semibold">
-                                    No properties registered
+                                    {search ||
+                                    status !== 'all' ||
+                                    categoryId !== 'all' ||
+                                    condition !== 'all'
+                                        ? 'No matching properties found'
+                                        : 'No properties registered'}
                                 </h3>
                                 <p className="mt-2 max-w-sm text-sm text-muted-foreground">
-                                    Get started by registering high-value assets
-                                    and equipment into the registry.
+                                    {search ||
+                                    status !== 'all' ||
+                                    categoryId !== 'all' ||
+                                    condition !== 'all'
+                                        ? 'Try adjusting your search terms or filters.'
+                                        : 'Get started by registering high-value assets and equipment into the registry.'}
                                 </p>
-                                <Can permission="property.assign">
+                                {!(
+                                    search ||
+                                    status !== 'all' ||
+                                    categoryId !== 'all' ||
+                                    condition !== 'all'
+                                ) ? (
+                                    <Can permission="property.assign">
+                                        <Button
+                                            className="mt-4 gap-2"
+                                            onClick={() => setIsAddOpen(true)}
+                                        >
+                                            <PlusCircle className="h-4 w-4" />
+                                            Register Equipment
+                                        </Button>
+                                    </Can>
+                                ) : (
                                     <Button
                                         className="mt-4 gap-2"
-                                        onClick={() => setIsAddOpen(true)}
+                                        variant="outline"
+                                        onClick={clearFilters}
                                     >
-                                        <PlusCircle className="h-4 w-4" />
-                                        Register Equipment
+                                        Clear Filters
                                     </Button>
-                                </Can>
+                                )}
                             </div>
                         ) : (
                             <PropertyTable

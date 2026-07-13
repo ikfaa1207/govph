@@ -53,6 +53,19 @@ class ItemController extends Controller
             $query->where('category_id', $request->input('category_id'));
         }
 
+        // Stock status filter
+        if ($request->filled('stock_status')) {
+            $stockStatus = $request->input('stock_status');
+            if ($stockStatus === 'low_stock') {
+                $query->whereColumn('current_stock', '<=', 'reorder_level')
+                    ->where('current_stock', '>', 0);
+            } elseif ($stockStatus === 'out_of_stock') {
+                $query->where('current_stock', '<=', 0);
+            } elseif ($stockStatus === 'in_stock') {
+                $query->whereColumn('current_stock', '>', 'reorder_level');
+            }
+        }
+
         $items = $query->orderBy('id', 'desc')->paginate(15)->through(function ($item) {
             return [
                 'id' => $item->id,
@@ -85,7 +98,7 @@ class ItemController extends Controller
             'units' => Unit::all(),
             'locations' => Location::with('warehouse')->get(),
             'warehouses' => Warehouse::all(),
-            'filters' => $request->only(['search', 'category_id']),
+            'filters' => $request->only(['search', 'category_id', 'stock_status']),
             'stats' => $stats,
         ]);
     }
