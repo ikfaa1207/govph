@@ -14,8 +14,8 @@ import {
 } from 'lucide-react';
 import { useState, useRef } from 'react';
 import { toast } from 'sonner';
-import { Badge } from '@/components/ui/badge';
 import { SimplePagination } from '@/components/simple-pagination';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -30,6 +30,7 @@ import {
     CollapsibleContent,
     CollapsibleTrigger,
 } from '@/components/ui/collapsible';
+import { DatePicker } from '@/components/ui/date-picker';
 import {
     Dialog,
     DialogContent,
@@ -42,7 +43,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
 import { SmartSelect } from '@/components/ui/smart-select';
-import { DatePicker } from '@/components/ui/date-picker';
 import {
     Table,
     TableBody,
@@ -454,7 +454,10 @@ export default function RequisitionsIndex({
                                         onSubmit={handleRequestSubmit}
                                         className="space-y-6"
                                     >
-                                        <div ref={tableContainerRef} className="max-h-[30vh] overflow-y-auto rounded-md border border-border">
+                                        <div
+                                            ref={tableContainerRef}
+                                            className="max-h-[30vh] overflow-y-auto rounded-md border border-border"
+                                        >
                                             <Table className="text-xs">
                                                 <TableHeader>
                                                     <TableRow className="bg-muted/50">

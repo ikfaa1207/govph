@@ -20,6 +20,14 @@ class RequisitionPolicy
     }
 
     /**
+     * Determine whether the user can create a requisition.
+     */
+    public function create(User $user): bool
+    {
+        return $user->hasPermissionTo('request.create');
+    }
+
+    /**
      * Determine whether the user can view a specific requisition.
      */
     public function view(User $user, Requisition $requisition): Response
@@ -107,6 +115,54 @@ class RequisitionPolicy
 
         if (! in_array($requisition->status, [RequisitionStatus::PendingSupply, RequisitionStatus::PartiallyIssued], true)) {
             return Response::deny('Requisition is not in a state that can be issued.');
+        }
+
+        return Response::allow();
+    }
+
+    /**
+     * Determine whether the user can reject a requisition.
+     */
+    public function reject(User $user, Requisition $requisition): Response
+    {
+        if (! $user->hasPermissionTo('request.approve')) {
+            return Response::deny('You do not have permission to reject requisitions.');
+        }
+
+        $employee = $user->employee;
+
+        if ($employee && $requisition->requesting_employee_id === $employee->id) {
+            return Response::deny('A creator cannot reject their own requisition request.');
+        }
+
+        $isAdmin = $user->hasRole('System Administrator') || $user->hasPermissionTo('admin.super');
+
+        if ($requisition->department_head_id === null) {
+            if ($isAdmin) {
+                if ($requisition->status !== RequisitionStatus::PendingDeptHead) {
+                    return Response::deny('Only pending requisitions can be rejected.');
+                }
+
+                return Response::allow();
+            }
+
+            return Response::deny('This requisition has no assigned department head and must be rejected by an administrator.');
+        }
+
+        if ($employee === null || $requisition->department_head_id !== $employee->getKey()) {
+            if ($isAdmin) {
+                if ($requisition->status !== RequisitionStatus::PendingDeptHead) {
+                    return Response::deny('Only pending requisitions can be rejected.');
+                }
+
+                return Response::allow();
+            }
+
+            return Response::deny('You are not the designated department head for this requisition.');
+        }
+
+        if ($requisition->status !== RequisitionStatus::PendingDeptHead) {
+            return Response::deny('Only pending requisitions can be rejected.');
         }
 
         return Response::allow();

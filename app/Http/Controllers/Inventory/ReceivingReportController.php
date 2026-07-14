@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Inventory;
 use App\Actions\ReceivingReport\CreateReceivingReportAction;
 use App\Actions\ReceivingReport\UpdateReceivingReportAction;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreReceivingReportRequest;
+use App\Http\Requests\UpdateReceivingReportRequest;
 use App\Models\AuditLog;
 use App\Models\Employee;
 use App\Models\Item;
@@ -143,57 +145,10 @@ class ReceivingReportController extends Controller
     /**
      * Store a newly created receiving report in database.
      */
-    public function store(Request $request): RedirectResponse
+    public function store(StoreReceivingReportRequest $request): RedirectResponse
     {
-        Gate::authorize('warehouse.receive');
-
         $status = $request->input('status', 'finalized');
-
-        $validated = $request->validate([
-            'status' => ['nullable', 'in:draft,finalized'],
-            'po_number' => ['required', 'string', 'max:255'],
-            'supplier_id' => ['required', 'exists:suppliers,id'],
-            'po_date' => ['required', 'date'],
-            'iar_number' => [
-                $status === 'finalized' ? 'required' : 'nullable',
-                'string',
-                'max:255',
-                'unique:receiving_reports,iar_number',
-            ],
-            'invoice_number' => ['nullable', 'string', 'max:255'],
-            'delivery_receipt_number' => [$status === 'finalized' ? 'required' : 'nullable', 'string', 'max:255'],
-            'received_date' => [$status === 'finalized' ? 'required' : 'nullable', 'date'],
-            'received_by' => [$status === 'finalized' ? 'required' : 'nullable', 'exists:employees,id'],
-            'inspected_by' => [
-                $status === 'finalized' ? 'required' : 'nullable',
-                'exists:employees,id',
-                $status === 'finalized' ? 'different:received_by' : '',
-            ],
-            'remarks' => ['nullable', 'string'],
-            'items' => ['required', 'array', 'min:1'],
-            'items.*.item_id' => ['required', 'exists:items,id'],
-            'items.*.quantity_received' => ['required', 'integer', 'min:1'],
-            'items.*.quantity_accepted' => [
-                $status === 'finalized' ? 'required' : 'nullable',
-                'integer',
-                'min:0',
-                function (string $attribute, mixed $value, \Closure $fail) use ($request) {
-                    preg_match('/items\.(\d+)\.quantity_accepted/', $attribute, $matches);
-                    if (! isset($matches[1])) {
-                        return;
-                    }
-                    $index = $matches[1];
-                    $receivedQty = (int) $request->input("items.{$index}.quantity_received");
-                    if ($value > $receivedQty) {
-                        $fail("The accepted quantity cannot exceed the received quantity ({$receivedQty}).");
-                    }
-                },
-            ],
-            'items.*.unit_cost' => ['required', 'numeric', 'min:0'],
-            'items.*.batch_number' => ['nullable', 'string', 'max:255'],
-            'items.*.expiration_date' => ['nullable', 'date'],
-            'items.*.rejection_reason' => ['nullable', 'string'],
-        ]);
+        $validated = $request->validated();
 
         try {
             $this->createAction->execute($validated);
@@ -209,10 +164,8 @@ class ReceivingReportController extends Controller
     /**
      * Update an existing receiving report.
      */
-    public function update(Request $request, ReceivingReport $report): RedirectResponse
+    public function update(UpdateReceivingReportRequest $request, ReceivingReport $report): RedirectResponse
     {
-        Gate::authorize('warehouse.receive');
-
         $status = $request->input('status', 'finalized');
 
         if ($report->status === 'finalized' && $status === 'draft') {
@@ -221,52 +174,7 @@ class ReceivingReportController extends Controller
             ]);
         }
 
-        $validated = $request->validate([
-            'status' => ['nullable', 'in:draft,finalized'],
-            'po_number' => ['required', 'string', 'max:255'],
-            'supplier_id' => ['required', 'exists:suppliers,id'],
-            'po_date' => ['required', 'date'],
-            'iar_number' => [
-                $status === 'finalized' ? 'required' : 'nullable',
-                'string',
-                'max:255',
-                'unique:receiving_reports,iar_number,'.$report->id,
-            ],
-            'invoice_number' => ['nullable', 'string', 'max:255'],
-            'delivery_receipt_number' => [$status === 'finalized' ? 'required' : 'nullable', 'string', 'max:255'],
-            'received_date' => [$status === 'finalized' ? 'required' : 'nullable', 'date'],
-            'received_by' => [$status === 'finalized' ? 'required' : 'nullable', 'exists:employees,id'],
-            'inspected_by' => [
-                $status === 'finalized' ? 'required' : 'nullable',
-                'exists:employees,id',
-                $status === 'finalized' ? 'different:received_by' : '',
-            ],
-            'remarks' => ['nullable', 'string'],
-            'items' => ['required', 'array', 'min:1'],
-            'items.*.id' => ['nullable', 'integer'], // track existing items
-            'items.*.item_id' => ['required', 'exists:items,id'],
-            'items.*.quantity_received' => ['required', 'integer', 'min:1'],
-            'items.*.quantity_accepted' => [
-                $status === 'finalized' ? 'required' : 'nullable',
-                'integer',
-                'min:0',
-                function (string $attribute, mixed $value, \Closure $fail) use ($request) {
-                    preg_match('/items\.(\d+)\.quantity_accepted/', $attribute, $matches);
-                    if (! isset($matches[1])) {
-                        return;
-                    }
-                    $index = $matches[1];
-                    $receivedQty = (int) $request->input("items.{$index}.quantity_received");
-                    if ($value > $receivedQty) {
-                        $fail("The accepted quantity cannot exceed the received quantity ({$receivedQty}).");
-                    }
-                },
-            ],
-            'items.*.unit_cost' => ['required', 'numeric', 'min:0'],
-            'items.*.batch_number' => ['nullable', 'string', 'max:255'],
-            'items.*.expiration_date' => ['nullable', 'date'],
-            'items.*.rejection_reason' => ['nullable', 'string'],
-        ]);
+        $validated = $request->validated();
 
         try {
             $this->updateAction->execute($report, $validated);

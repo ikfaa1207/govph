@@ -9,6 +9,8 @@ import {
     Users,
     ShieldAlert,
     Truck,
+    ShoppingCart,
+    FileBox,
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
@@ -45,6 +47,18 @@ const mainNavItems: GimsNavItem[] = [
         title: 'Supplies Catalog',
         href: items.index.url(),
         icon: Package,
+        permission: 'inventory.view',
+    },
+    {
+        title: 'Purchase Requests (PR)',
+        href: '/inventory/purchase-requests',
+        icon: FileBox,
+        permission: 'inventory.view',
+    },
+    {
+        title: 'Purchase Orders (PO)',
+        href: '/inventory/purchase-orders',
+        icon: ShoppingCart,
         permission: 'inventory.view',
     },
     {

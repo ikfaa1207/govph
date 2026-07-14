@@ -22,28 +22,7 @@ class CreateReceivingReportAction
     /**
      * Create a new receiving report and record stock-in if finalized.
      *
-     * @param  array{
-     *     status?: string,
-     *     po_number: string,
-     *     supplier_id: int,
-     *     po_date: string,
-     *     iar_number?: string|null,
-     *     invoice_number?: string|null,
-     *     delivery_receipt_number?: string|null,
-     *     received_date?: string|null,
-     *     received_by?: int|null,
-     *     inspected_by?: int|null,
-     *     remarks?: string|null,
-     *     items: array<int, array{
-     *         item_id: int,
-     *         quantity_received: int,
-     *         quantity_accepted?: int|null,
-     *         unit_cost: float|int,
-     *         batch_number?: string|null,
-     *         expiration_date?: string|null,
-     *         rejection_reason?: string|null,
-     *     }>,
-     * }  $data
+     * @param  array<string, mixed>  $data
      */
     public function execute(array $data): ReceivingReport
     {

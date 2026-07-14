@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 #[Fillable([
     'pr_number',
@@ -14,6 +16,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'purpose',
     'status',
     'approved_by',
+    'rejection_reason',
 ])]
 class PurchaseRequest extends Model
 {
@@ -47,5 +50,25 @@ class PurchaseRequest extends Model
     public function approver(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    /**
+     * Get the line items for this purchase request.
+     *
+     * @return HasMany<PurchaseRequestItem, $this>
+     */
+    public function items(): HasMany
+    {
+        return $this->hasMany(PurchaseRequestItem::class);
+    }
+
+    /**
+     * Get the purchase order generated from this request.
+     *
+     * @return HasOne<PurchaseOrder, $this>
+     */
+    public function purchaseOrder(): HasOne
+    {
+        return $this->hasOne(PurchaseOrder::class);
     }
 }

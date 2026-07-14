@@ -8,6 +8,8 @@ use App\Http\Controllers\Inventory\ItemController;
 use App\Http\Controllers\Inventory\LocationController;
 use App\Http\Controllers\Inventory\PhysicalCountController;
 use App\Http\Controllers\Inventory\PropertyController;
+use App\Http\Controllers\Inventory\PurchaseOrderController;
+use App\Http\Controllers\Inventory\PurchaseRequestController;
 use App\Http\Controllers\Inventory\ReceivingReportController;
 use App\Http\Controllers\Inventory\ReportController;
 use App\Http\Controllers\Inventory\RequisitionController;
@@ -27,6 +29,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('inventory/items/{item}', [ItemController::class, 'update'])->name('inventory.items.update');
     Route::patch('inventory/items/{item}/archive', [ItemController::class, 'archive'])->name('inventory.items.archive');
     Route::get('inventory/items/{item}', [ItemController::class, 'show'])->name('inventory.items.show');
+
+    // Purchase Requests
+    Route::get('inventory/purchase-requests', [PurchaseRequestController::class, 'index'])->name('inventory.purchase-requests.index');
+    Route::post('inventory/purchase-requests', [PurchaseRequestController::class, 'store'])->name('inventory.purchase-requests.store');
+    Route::post('inventory/purchase-requests/{purchaseRequest}/approve', [PurchaseRequestController::class, 'approve'])->name('inventory.purchase-requests.approve');
+    Route::post('inventory/purchase-requests/{purchaseRequest}/reject', [PurchaseRequestController::class, 'reject'])->name('inventory.purchase-requests.reject');
+
+    // Purchase Orders
+    Route::get('inventory/purchase-orders', [PurchaseOrderController::class, 'index'])->name('inventory.purchase-orders.index');
+    Route::post('inventory/purchase-orders', [PurchaseOrderController::class, 'store'])->name('inventory.purchase-orders.store');
+    Route::put('inventory/purchase-orders/{purchaseOrder}', [PurchaseOrderController::class, 'update'])->name('inventory.purchase-orders.update');
+    Route::post('inventory/purchase-orders/{purchaseOrder}/send', [PurchaseOrderController::class, 'send'])->name('inventory.purchase-orders.send');
 
     // Receiving Reports (Stock In)
     Route::get('inventory/receiving-reports', [ReceivingReportController::class, 'index'])->name('inventory.receiving.index');

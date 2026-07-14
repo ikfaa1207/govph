@@ -108,7 +108,7 @@ class RequisitionController extends Controller
      */
     public function store(StoreRequisitionRequest $request): RedirectResponse
     {
-        Gate::authorize('request.create');
+        Gate::authorize('create', Requisition::class);
 
         $user = Auth::user();
         $employee = $user->getEmployeeOrAbort('You must have an employee profile to file requisitions.');
@@ -152,7 +152,7 @@ class RequisitionController extends Controller
      */
     public function reject(RejectRequisitionRequest $request, Requisition $requisition): RedirectResponse
     {
-        Gate::authorize('requisition.approve', $requisition);
+        Gate::authorize('reject', $requisition);
 
         $this->rejectAction->execute($requisition, $request->validated());
 

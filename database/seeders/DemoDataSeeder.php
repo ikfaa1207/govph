@@ -20,6 +20,7 @@ use App\Models\Unit;
 use App\Services\Valuation\ValuationService;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class DemoDataSeeder extends Seeder
 {
@@ -33,7 +34,7 @@ class DemoDataSeeder extends Seeder
         }
 
         // Disable foreign key constraints to safely truncate/delete existing records
-        DB::statement('PRAGMA foreign_keys = OFF;');
+        Schema::disableForeignKeyConstraints();
 
         // Clear existing demo tables (leaves users, roles, and permissions intact)
         DB::table('stock_transactions')->truncate();
@@ -47,7 +48,7 @@ class DemoDataSeeder extends Seeder
         DB::table('properties')->truncate();
         DB::table('items')->truncate();
 
-        DB::statement('PRAGMA foreign_keys = ON;');
+        Schema::enableForeignKeyConstraints();
 
         $valuationService = new ValuationService;
 
