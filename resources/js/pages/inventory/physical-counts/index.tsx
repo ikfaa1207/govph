@@ -5,6 +5,10 @@ import {
     ListChecks,
     UserPlus,
     Trash2,
+    Box,
+    Package,
+    ClipboardList,
+    Users,
 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -23,6 +27,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { DatePicker } from '@/components/ui/date-picker';
 import { SmartSelect } from '@/components/ui/smart-select';
 import {
     Table,
@@ -241,299 +246,185 @@ export default function PhysicalCountsIndex({
                                 </DialogHeader>
                                 <form
                                     onSubmit={submit}
-                                    className="mt-2 space-y-4"
+                                    className="mt-4 space-y-6"
                                 >
-                                    <div className="space-y-2">
-                                        <Label>Count Type / Report Type</Label>
-                                        <div className="grid grid-cols-2 gap-2">
-                                            <button
-                                                type="button"
-                                                onClick={() =>
-                                                    form.setData(
-                                                        'type',
-                                                        'RPCPPE',
-                                                    )
-                                                }
-                                                className={`flex flex-col items-center justify-center rounded-md border p-4 transition-all ${
-                                                    form.data.type === 'RPCPPE'
-                                                        ? 'border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-950/30'
-                                                        : 'hover:bg-muted/50'
-                                                }`}
-                                            >
-                                                <span className="font-bold">
-                                                    RPCPPE
-                                                </span>
-                                                <span className="text-xs opacity-70">
-                                                    Property, Plant & Equipment
-                                                </span>
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() =>
-                                                    form.setData('type', 'RPCI')
-                                                }
-                                                className={`flex flex-col items-center justify-center rounded-md border p-4 transition-all ${
-                                                    form.data.type === 'RPCI'
-                                                        ? 'border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-950/30'
-                                                        : 'hover:bg-muted/50'
-                                                }`}
-                                            >
-                                                <span className="font-bold">
-                                                    RPCI
-                                                </span>
-                                                <span className="text-xs opacity-70">
-                                                    Inventories / Consumables
-                                                </span>
-                                            </button>
-                                        </div>
-                                        {form.errors.type && (
-                                            <p className="text-xs text-destructive">
-                                                {form.errors.type}
-                                            </p>
-                                        )}
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="as_of_date">
-                                            As of Date
-                                        </Label>
-                                        <Input
-                                            id="as_of_date"
-                                            type="date"
-                                            value={form.data.as_of_date}
-                                            onChange={(e) =>
-                                                form.setData(
-                                                    'as_of_date',
-                                                    e.target.value,
-                                                )
-                                            }
-                                            required
-                                        />
-                                        {form.errors.as_of_date && (
-                                            <p className="text-xs text-destructive">
-                                                {form.errors.as_of_date}
-                                            </p>
-                                        )}
-                                    </div>
-                                    <div className="mt-4 space-y-4 rounded-lg border bg-muted/30 p-4">
-                                        <div>
-                                            <h4 className="text-sm font-semibold tracking-tight">
-                                                Committee Assignment
-                                            </h4>
-                                            <p className="text-xs text-muted-foreground">
-                                                Assign personnel to oversee the
-                                                physical count.
-                                            </p>
-                                        </div>
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div className="space-y-1.5">
-                                                <Label>Chairperson</Label>
-                                                <SmartSelect
-                                                    options={employeeOptions}
-                                                    value={
-                                                        form.data.chairperson_id
-                                                    }
-                                                    onValueChange={(v) =>
-                                                        form.setData(
-                                                            'chairperson_id',
-                                                            v,
-                                                        )
-                                                    }
-                                                    placeholder="Select Chairperson"
-                                                    searchPlaceholder="Search employees..."
-                                                />
-                                                {form.errors.chairperson_id && (
-                                                    <p className="text-xs text-destructive">
-                                                        {
-                                                            form.errors
-                                                                .chairperson_id
-                                                        }
-                                                    </p>
-                                                )}
+                                    <Card className="border-muted/60 shadow-sm overflow-hidden">
+                                        <CardHeader className="border-b bg-muted/20 pb-3">
+                                            <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+                                                <ClipboardList className="h-4 w-4 text-primary" />
+                                                Report Details
+                                            </CardTitle>
+                                        </CardHeader>
+                                        <CardContent className="space-y-5 pt-4">
+                                            <div className="space-y-3">
+                                                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Count Type / Report Type</Label>
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => form.setData('type', 'RPCPPE')}
+                                                        className={`flex items-start gap-3 rounded-xl border p-4 text-left transition-all ${
+                                                            form.data.type === 'RPCPPE'
+                                                                ? 'border-primary bg-primary/5 ring-1 ring-primary'
+                                                                : 'hover:border-border/80 hover:bg-muted/50'
+                                                        }`}
+                                                    >
+                                                        <div className={`mt-0.5 rounded-lg p-2 ${
+                                                            form.data.type === 'RPCPPE' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
+                                                        }`}>
+                                                            <Box className="h-4 w-4" />
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-sm font-semibold">RPCPPE</p>
+                                                            <p className="mt-1 text-xs text-muted-foreground">Property, Plant & Equipment</p>
+                                                        </div>
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => form.setData('type', 'RPCI')}
+                                                        className={`flex items-start gap-3 rounded-xl border p-4 text-left transition-all ${
+                                                            form.data.type === 'RPCI'
+                                                                ? 'border-primary bg-primary/5 ring-1 ring-primary'
+                                                                : 'hover:border-border/80 hover:bg-muted/50'
+                                                        }`}
+                                                    >
+                                                        <div className={`mt-0.5 rounded-lg p-2 ${
+                                                            form.data.type === 'RPCI' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
+                                                        }`}>
+                                                            <Package className="h-4 w-4" />
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-sm font-semibold">RPCI</p>
+                                                            <p className="mt-1 text-xs text-muted-foreground">Inventories & Consumables</p>
+                                                        </div>
+                                                    </button>
+                                                </div>
+                                                {form.errors.type && <p className="text-xs text-destructive">{form.errors.type}</p>}
                                             </div>
-                                            <div className="space-y-1.5">
-                                                <Label>Head of Agency</Label>
-                                                <SmartSelect
-                                                    options={employeeOptions}
-                                                    value={
-                                                        form.data
-                                                            .head_of_agency_id
-                                                    }
-                                                    onValueChange={(v) =>
-                                                        form.setData(
-                                                            'head_of_agency_id',
-                                                            v,
-                                                        )
-                                                    }
-                                                    placeholder="Select Head of Agency"
-                                                    searchPlaceholder="Search employees..."
-                                                />
-                                                {form.errors
-                                                    .head_of_agency_id && (
-                                                    <p className="text-xs text-destructive">
-                                                        {
-                                                            form.errors
-                                                                .head_of_agency_id
-                                                        }
-                                                    </p>
-                                                )}
-                                            </div>
-                                        </div>
 
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div className="space-y-1.5">
-                                                <Label>
-                                                    COA Representative
-                                                    (Optional)
-                                                </Label>
-                                                <SmartSelect
-                                                    options={employeeOptions}
-                                                    value={
-                                                        form.data
-                                                            .coa_representative_id
-                                                    }
-                                                    onValueChange={(v) => {
-                                                        form.setData(
-                                                            'coa_representative_id',
-                                                            v,
-                                                        );
-
-                                                        if (v) {
-                                                            form.setData(
-                                                                'coa_representative_absent_reason',
-                                                                '',
-                                                            );
-                                                        }
-                                                    }}
-                                                    placeholder="Select COA Representative"
-                                                    searchPlaceholder="Search employees..."
+                                            <div className="space-y-2 flex flex-col">
+                                                <Label htmlFor="as_of_date" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">As of Date</Label>
+                                                <DatePicker
+                                                    value={form.data.as_of_date}
+                                                    onChange={(v) => form.setData('as_of_date', v)}
+                                                    required
                                                 />
-                                                {form.errors
-                                                    .coa_representative_id && (
-                                                    <p className="text-xs text-destructive">
-                                                        {
-                                                            form.errors
-                                                                .coa_representative_id
-                                                        }
-                                                    </p>
-                                                )}
+                                                {form.errors.as_of_date && <p className="text-xs text-destructive">{form.errors.as_of_date}</p>}
                                             </div>
-                                            <div className="space-y-1.5">
-                                                <Label>
-                                                    COA Absent Reason (if
-                                                    unassigned)
-                                                </Label>
-                                                <Input
-                                                    placeholder="e.g. Schedule conflict"
-                                                    value={
-                                                        form.data
-                                                            .coa_representative_absent_reason
-                                                    }
-                                                    onChange={(e) =>
-                                                        form.setData(
-                                                            'coa_representative_absent_reason',
-                                                            e.target.value,
-                                                        )
-                                                    }
-                                                    disabled={
-                                                        !!form.data
-                                                            .coa_representative_id
-                                                    }
-                                                />
-                                                {form.errors
-                                                    .coa_representative_absent_reason && (
-                                                    <p className="text-xs text-destructive">
-                                                        {
-                                                            form.errors
-                                                                .coa_representative_absent_reason
-                                                        }
-                                                    </p>
-                                                )}
-                                            </div>
-                                        </div>
+                                        </CardContent>
+                                    </Card>
 
-                                        <div className="space-y-3 pt-2">
+                                    <Card className="border-muted/60 shadow-sm overflow-hidden">
+                                        <CardHeader className="border-b bg-muted/20 pb-3">
                                             <div className="flex items-center justify-between">
-                                                <Label>Committee Members</Label>
-                                                <Button
-                                                    type="button"
-                                                    variant="outline"
-                                                    size="sm"
-                                                    onClick={addMemberSlot}
-                                                >
-                                                    <UserPlus className="mr-1.5 h-3.5 w-3.5" />{' '}
+                                                <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+                                                    <Users className="h-4 w-4 text-primary" />
+                                                    Committee Assignment
+                                                </CardTitle>
+                                                <Button type="button" variant="outline" size="sm" onClick={addMemberSlot} className="h-7 text-xs">
+                                                    <UserPlus className="mr-1.5 h-3.5 w-3.5" />
                                                     Add Member
                                                 </Button>
                                             </div>
-                                            <div className="space-y-2">
-                                                {form.data.member_ids.map(
-                                                    (memberId, index) => (
-                                                        <div
-                                                            key={index}
-                                                            className="flex items-center gap-2"
-                                                        >
-                                                            <SmartSelect
-                                                                options={
-                                                                    employeeOptions
-                                                                }
-                                                                value={memberId}
-                                                                onValueChange={(
-                                                                    v,
-                                                                ) => {
-                                                                    const newMembers =
-                                                                        [
-                                                                            ...form
-                                                                                .data
-                                                                                .member_ids,
-                                                                        ];
-                                                                    newMembers[
-                                                                        index
-                                                                    ] = v;
-                                                                    form.setData(
-                                                                        'member_ids',
-                                                                        newMembers,
-                                                                    );
-                                                                }}
-                                                                placeholder="Select Member"
-                                                                searchPlaceholder="Search employees..."
-                                                                defaultOpen={
-                                                                    newMemberIndex ===
-                                                                    index
-                                                                }
-                                                            />
-                                                            {form.data
-                                                                .member_ids
-                                                                .length > 1 && (
-                                                                <Button
-                                                                    type="button"
-                                                                    variant="ghost"
-                                                                    size="icon"
-                                                                    className="shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                                                                    onClick={() =>
-                                                                        removeMemberSlot(
-                                                                            index,
-                                                                        )
-                                                                    }
-                                                                >
-                                                                    <Trash2 className="h-4 w-4" />
-                                                                    <span className="sr-only">
-                                                                        Remove
-                                                                    </span>
-                                                                </Button>
-                                                            )}
-                                                        </div>
-                                                    ),
-                                                )}
+                                        </CardHeader>
+                                        <CardContent className="space-y-5 pt-4">
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div className="space-y-1.5">
+                                                    <Label>Chairperson</Label>
+                                                    <SmartSelect
+                                                        options={employeeOptions}
+                                                        value={form.data.chairperson_id}
+                                                        onValueChange={(v) => form.setData('chairperson_id', v)}
+                                                        placeholder="Select Chairperson"
+                                                        searchPlaceholder="Search employees..."
+                                                    />
+                                                    {form.errors.chairperson_id && <p className="text-xs text-destructive">{form.errors.chairperson_id}</p>}
+                                                </div>
+                                                <div className="space-y-1.5">
+                                                    <Label>Head of Agency</Label>
+                                                    <SmartSelect
+                                                        options={employeeOptions}
+                                                        value={form.data.head_of_agency_id}
+                                                        onValueChange={(v) => form.setData('head_of_agency_id', v)}
+                                                        placeholder="Select Head of Agency"
+                                                        searchPlaceholder="Search employees..."
+                                                    />
+                                                    {form.errors.head_of_agency_id && <p className="text-xs text-destructive">{form.errors.head_of_agency_id}</p>}
+                                                </div>
                                             </div>
-                                        </div>
-                                    </div>
+
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div className="space-y-1.5">
+                                                    <Label>COA Representative (Optional)</Label>
+                                                    <SmartSelect
+                                                        options={employeeOptions}
+                                                        value={form.data.coa_representative_id}
+                                                        onValueChange={(v) => {
+                                                            form.setData('coa_representative_id', v);
+                                                            if (v) {
+                                                                form.setData('coa_representative_absent_reason', '');
+                                                            }
+                                                        }}
+                                                        placeholder="Select COA Representative"
+                                                        searchPlaceholder="Search employees..."
+                                                    />
+                                                    {form.errors.coa_representative_id && <p className="text-xs text-destructive">{form.errors.coa_representative_id}</p>}
+                                                </div>
+                                                <div className="space-y-1.5">
+                                                    <Label>COA Absent Reason</Label>
+                                                    <Input
+                                                        placeholder="e.g. Schedule conflict"
+                                                        value={form.data.coa_representative_absent_reason}
+                                                        onChange={(e) => form.setData('coa_representative_absent_reason', e.target.value)}
+                                                        disabled={!!form.data.coa_representative_id}
+                                                    />
+                                                    {form.errors.coa_representative_absent_reason && <p className="text-xs text-destructive">{form.errors.coa_representative_absent_reason}</p>}
+                                                </div>
+                                            </div>
+
+                                            {form.data.member_ids.length > 0 && (
+                                                <div className="space-y-3 pt-2">
+                                                    <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Committee Members</Label>
+                                                    <div className="space-y-2">
+                                                        {form.data.member_ids.map((memberId, index) => (
+                                                            <div key={index} className="flex items-center gap-2">
+                                                                <SmartSelect
+                                                                    options={employeeOptions}
+                                                                    value={memberId}
+                                                                    onValueChange={(v) => {
+                                                                        const newMembers = [...form.data.member_ids];
+                                                                        newMembers[index] = v;
+                                                                        form.setData('member_ids', newMembers);
+                                                                    }}
+                                                                    placeholder="Select Member"
+                                                                    searchPlaceholder="Search employees..."
+                                                                    defaultOpen={newMemberIndex === index}
+                                                                />
+                                                                {form.data.member_ids.length > 1 && (
+                                                                    <Button
+                                                                        type="button"
+                                                                        variant="ghost"
+                                                                        size="icon"
+                                                                        className="shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                                                                        onClick={() => removeMemberSlot(index)}
+                                                                    >
+                                                                        <Trash2 className="h-4 w-4" />
+                                                                        <span className="sr-only">Remove</span>
+                                                                    </Button>
+                                                                )}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </CardContent>
+                                    </Card>
+
                                     <div className="flex justify-end pt-4">
                                         <Button
                                             type="button"
                                             variant="outline"
                                             className="mr-2"
-                                            onClick={() =>
-                                                setIsCreateOpen(false)
-                                            }
+                                            onClick={() => setIsCreateOpen(false)}
                                         >
                                             Cancel
                                         </Button>

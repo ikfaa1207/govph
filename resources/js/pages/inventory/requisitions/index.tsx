@@ -12,7 +12,7 @@ import {
     Plus,
     Minus,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { SimplePagination } from '@/components/simple-pagination';
@@ -226,10 +226,15 @@ export default function RequisitionsIndex({
     const [isRejectOpen, setIsRejectOpen] = useState(false);
     const [isIssueOpen, setIsIssueOpen] = useState(false);
     const [showSummaryPreview, setShowSummaryPreview] = useState(false);
+    const tableContainerRef = useRef<HTMLDivElement>(null);
 
     // Form for Request Submission
     const requestForm = useForm({
-        items: [{ item_id: '', quantity: 1 }],
+        items: [{ item_id: '', quantity: 1, isNew: false }] as Array<{
+            item_id: string;
+            quantity: number;
+            isNew: boolean;
+        }>,
         purpose: '',
     });
 
@@ -251,8 +256,14 @@ export default function RequisitionsIndex({
     const handleAddRequestItem = () => {
         requestForm.setData('items', [
             ...requestForm.data.items,
-            { item_id: '', quantity: 1 },
+            { item_id: '', quantity: 1, isNew: true },
         ]);
+        setTimeout(() => {
+            if (tableContainerRef.current) {
+                tableContainerRef.current.scrollTop =
+                    tableContainerRef.current.scrollHeight;
+            }
+        }, 50);
     };
 
     const handleRemoveRequestItem = (index: number) => {
@@ -443,7 +454,7 @@ export default function RequisitionsIndex({
                                         onSubmit={handleRequestSubmit}
                                         className="space-y-6"
                                     >
-                                        <div className="max-h-[30vh] overflow-y-auto rounded-md border border-border">
+                                        <div ref={tableContainerRef} className="max-h-[30vh] overflow-y-auto rounded-md border border-border">
                                             <Table className="text-xs">
                                                 <TableHeader>
                                                     <TableRow className="bg-muted/50">
@@ -458,112 +469,120 @@ export default function RequisitionsIndex({
                                                 </TableHeader>
                                                 <TableBody>
                                                     {requestForm.data.items.map(
-                                                        (item, idx) => (
-                                                            <TableRow key={idx}>
-                                                                <TableCell className="p-2.5">
-                                                                    <SmartSelect
-                                                                        options={items.map(
-                                                                            (
-                                                                                i,
-                                                                            ) => ({
-                                                                                value: String(
-                                                                                    i.id,
-                                                                                ),
-                                                                                label: `${i.name} (Qty Available: ${i.current_stock} ${i.unit})`,
-                                                                            }),
-                                                                        )}
-                                                                        value={
-                                                                            item.item_id
-                                                                                ? String(
-                                                                                      item.item_id,
-                                                                                  )
-                                                                                : undefined
-                                                                        }
-                                                                        onValueChange={(
-                                                                            val,
-                                                                        ) => {
-                                                                            const newItems =
-                                                                                [
-                                                                                    ...requestForm
-                                                                                        .data
-                                                                                        .items,
-                                                                                ];
-                                                                            newItems[
-                                                                                idx
-                                                                            ].item_id =
-                                                                                val;
-                                                                            requestForm.setData(
-                                                                                'items',
-                                                                                newItems,
-                                                                            );
-                                                                        }}
-                                                                        placeholder="Select Item"
-                                                                        className="h-8 w-full bg-background text-xs"
-                                                                        searchThreshold={
-                                                                            20
-                                                                        }
-                                                                        defaultOpen={
-                                                                            !item.item_id
-                                                                        }
-                                                                    />
-                                                                </TableCell>
-                                                                <TableCell className="p-2.5">
-                                                                    <Input
-                                                                        type="number"
-                                                                        min="1"
-                                                                        value={
-                                                                            item.quantity
-                                                                        }
-                                                                        onChange={(
-                                                                            e,
-                                                                        ) => {
-                                                                            const newItems =
-                                                                                [
-                                                                                    ...requestForm
-                                                                                        .data
-                                                                                        .items,
-                                                                                ];
-                                                                            newItems[
-                                                                                idx
-                                                                            ].quantity =
-                                                                                parseInt(
-                                                                                    e
-                                                                                        .target
-                                                                                        .value,
-                                                                                ) ||
-                                                                                0;
-                                                                            requestForm.setData(
-                                                                                'items',
-                                                                                newItems,
-                                                                            );
-                                                                        }}
-                                                                        className="h-8 p-1.5 text-xs"
-                                                                        required
-                                                                    />
-                                                                </TableCell>
-                                                                <TableCell className="p-2.5 text-center">
-                                                                    {requestForm
-                                                                        .data
-                                                                        .items
-                                                                        .length >
-                                                                        1 && (
-                                                                        <Button
-                                                                            type="button"
-                                                                            variant="ghost"
-                                                                            size="icon"
-                                                                            className="h-7 w-7 text-rose-500 hover:bg-rose-50 hover:text-rose-600"
-                                                                            onClick={() =>
-                                                                                handleRemoveRequestItem(
-                                                                                    idx,
-                                                                                )
+                                                        (item, idx) => {
+                                                            return (
+                                                                <TableRow
+                                                                    key={
+                                                                        item.isNew
+                                                                            ? `new-${idx}`
+                                                                            : idx
+                                                                    }
+                                                                >
+                                                                    <TableCell className="p-2.5">
+                                                                        <SmartSelect
+                                                                            options={items.map(
+                                                                                (
+                                                                                    i,
+                                                                                ) => ({
+                                                                                    value: String(
+                                                                                        i.id,
+                                                                                    ),
+                                                                                    label: `${i.name} (Qty Available: ${i.current_stock} ${i.unit})`,
+                                                                                }),
+                                                                            )}
+                                                                            value={
+                                                                                item.item_id
+                                                                                    ? String(
+                                                                                          item.item_id,
+                                                                                      )
+                                                                                    : undefined
                                                                             }
-                                                                        >
-                                                                            <X className="h-4 w-4" />
-                                                                        </Button>
-                                                                    )}
-                                                                </TableCell>
-                                                            </TableRow>
-                                                        ),
+                                                                            onValueChange={(
+                                                                                val,
+                                                                            ) => {
+                                                                                const newItems =
+                                                                                    [
+                                                                                        ...requestForm
+                                                                                            .data
+                                                                                            .items,
+                                                                                    ];
+                                                                                newItems[
+                                                                                    idx
+                                                                                ].item_id =
+                                                                                    val;
+                                                                                requestForm.setData(
+                                                                                    'items',
+                                                                                    newItems,
+                                                                                );
+                                                                            }}
+                                                                            placeholder="Select Item"
+                                                                            className="h-8 w-full bg-background text-xs"
+                                                                            searchThreshold={
+                                                                                0
+                                                                            }
+                                                                            defaultOpen={
+                                                                                item.isNew
+                                                                            }
+                                                                        />
+                                                                    </TableCell>
+                                                                    <TableCell className="p-2.5">
+                                                                        <Input
+                                                                            type="number"
+                                                                            min="1"
+                                                                            value={
+                                                                                item.quantity
+                                                                            }
+                                                                            onChange={(
+                                                                                e,
+                                                                            ) => {
+                                                                                const newItems =
+                                                                                    [
+                                                                                        ...requestForm
+                                                                                            .data
+                                                                                            .items,
+                                                                                    ];
+                                                                                newItems[
+                                                                                    idx
+                                                                                ].quantity =
+                                                                                    parseInt(
+                                                                                        e
+                                                                                            .target
+                                                                                            .value,
+                                                                                    ) ||
+                                                                                    0;
+                                                                                requestForm.setData(
+                                                                                    'items',
+                                                                                    newItems,
+                                                                                );
+                                                                            }}
+                                                                            className="h-8 p-1.5 text-xs"
+                                                                            required
+                                                                        />
+                                                                    </TableCell>
+                                                                    <TableCell className="p-2.5 text-center">
+                                                                        {requestForm
+                                                                            .data
+                                                                            .items
+                                                                            .length >
+                                                                            1 && (
+                                                                            <Button
+                                                                                type="button"
+                                                                                variant="ghost"
+                                                                                size="icon"
+                                                                                className="h-7 w-7 text-rose-500 hover:bg-rose-50 hover:text-rose-600"
+                                                                                onClick={() =>
+                                                                                    handleRemoveRequestItem(
+                                                                                        idx,
+                                                                                    )
+                                                                                }
+                                                                            >
+                                                                                <X className="h-4 w-4" />
+                                                                            </Button>
+                                                                        )}
+                                                                    </TableCell>
+                                                                </TableRow>
+                                                            );
+                                                        },
                                                     )}
                                                 </TableBody>
                                             </Table>

@@ -122,6 +122,7 @@ export function EditPropertyDialog({
                             }
                             placeholder="Select Condition"
                             className="w-full"
+                            searchThreshold={0}
                         />
                     </div>
 
