@@ -10,7 +10,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        DB::statement('CREATE UNIQUE INDEX active_assignment_unique ON property_assignments(property_id) WHERE returned_date IS NULL');
+        if (DB::connection()->getDriverName() === 'sqlite' || DB::connection()->getDriverName() === 'pgsql') {
+            DB::statement('CREATE UNIQUE INDEX active_assignment_unique ON property_assignments(property_id) WHERE returned_date IS NULL');
+        }
     }
 
     /**
