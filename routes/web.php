@@ -1,11 +1,14 @@
 <?php
 
+use App\Http\Controllers\Inventory\AcknowledgeAssignmentController;
+use App\Http\Controllers\Inventory\AcknowledgeTransferController;
 use App\Http\Controllers\Inventory\AdminController;
 use App\Http\Controllers\Inventory\CategoryController;
 use App\Http\Controllers\Inventory\DashboardController;
 use App\Http\Controllers\Inventory\HelpdeskController;
 use App\Http\Controllers\Inventory\ItemController;
 use App\Http\Controllers\Inventory\LocationController;
+use App\Http\Controllers\Inventory\MasterDataController;
 use App\Http\Controllers\Inventory\PhysicalCountController;
 use App\Http\Controllers\Inventory\PropertyController;
 use App\Http\Controllers\Inventory\PurchaseOrderController;
@@ -13,21 +16,24 @@ use App\Http\Controllers\Inventory\PurchaseRequestController;
 use App\Http\Controllers\Inventory\ReceivingReportController;
 use App\Http\Controllers\Inventory\ReportController;
 use App\Http\Controllers\Inventory\RequisitionController;
+use App\Http\Controllers\Inventory\SearchController;
 use App\Http\Controllers\Inventory\SupplierController;
 use App\Http\Controllers\Inventory\UnitController;
 use App\Http\Controllers\Inventory\WarehouseController;
+use App\Http\Controllers\RpcppeReportController;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'welcome')->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('inventory/search', [SearchController::class, 'index'])->name('inventory.search');
 
     // Items/Stock Management
     Route::get('inventory/items', [ItemController::class, 'index'])->name('inventory.items.index');
     Route::post('inventory/items', [ItemController::class, 'store'])->name('inventory.items.store');
     Route::put('inventory/items/{item}', [ItemController::class, 'update'])->name('inventory.items.update');
-    Route::patch('inventory/items/{item}/archive', [ItemController::class, 'archive'])->name('inventory.items.archive');
+    Route::patch('inventory/items/{item}/toggle', [ItemController::class, 'toggleStatus'])->name('inventory.items.toggle');
     Route::get('inventory/items/{item}', [ItemController::class, 'show'])->name('inventory.items.show');
 
     // Purchase Requests
@@ -47,11 +53,27 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('inventory/receiving-reports', [ReceivingReportController::class, 'store'])->name('inventory.receiving.store');
     Route::put('inventory/receiving-reports/{report}', [ReceivingReportController::class, 'update'])->name('inventory.receiving.update');
     Route::get('inventory/receiving-reports/{report}/history', [ReceivingReportController::class, 'history'])->name('inventory.receiving.history');
+    Route::get('inventory/master-data', [MasterDataController::class, 'index'])->name('inventory.master-data.index');
+
     Route::post('inventory/suppliers', [SupplierController::class, 'store'])->name('inventory.suppliers.store');
+    Route::put('inventory/suppliers/{supplier}', [SupplierController::class, 'update'])->name('inventory.suppliers.update');
+    Route::post('inventory/suppliers/{supplier}/toggle', [SupplierController::class, 'toggleStatus'])->name('inventory.suppliers.toggle');
+
     Route::post('inventory/categories', [CategoryController::class, 'store'])->name('inventory.categories.store');
+    Route::put('inventory/categories/{category}', [CategoryController::class, 'update'])->name('inventory.categories.update');
+    Route::post('inventory/categories/{category}/toggle', [CategoryController::class, 'toggleStatus'])->name('inventory.categories.toggle');
+
     Route::post('inventory/units', [UnitController::class, 'store'])->name('inventory.units.store');
+    Route::put('inventory/units/{unit}', [UnitController::class, 'update'])->name('inventory.units.update');
+    Route::post('inventory/units/{unit}/toggle', [UnitController::class, 'toggleStatus'])->name('inventory.units.toggle');
+
     Route::post('inventory/locations', [LocationController::class, 'store'])->name('inventory.locations.store');
+    Route::put('inventory/locations/{location}', [LocationController::class, 'update'])->name('inventory.locations.update');
+    Route::post('inventory/locations/{location}/toggle', [LocationController::class, 'toggleStatus'])->name('inventory.locations.toggle');
+
     Route::post('inventory/warehouses', [WarehouseController::class, 'store'])->name('inventory.warehouses.store');
+    Route::put('inventory/warehouses/{warehouse}', [WarehouseController::class, 'update'])->name('inventory.warehouses.update');
+    Route::post('inventory/warehouses/{warehouse}/toggle', [WarehouseController::class, 'toggleStatus'])->name('inventory.warehouses.toggle');
 
     // Requisition/RIS
     Route::get('inventory/requisitions', [RequisitionController::class, 'index'])->name('inventory.requisitions.index');
@@ -67,9 +89,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('inventory/properties/batch-assign', [PropertyController::class, 'batchAssign'])->name('inventory.properties.batch-assign');
     Route::post('inventory/properties/{property}/assign', [PropertyController::class, 'assign'])->name('inventory.properties.assign');
     Route::post('inventory/properties/{property}/transfer', [PropertyController::class, 'transfer'])->name('inventory.properties.transfer');
+    Route::post('inventory/properties/{property}/dispose', [PropertyController::class, 'dispose'])->name('inventory.properties.dispose');
+    Route::post('inventory/property-assignments/{assignment}/acknowledge', AcknowledgeAssignmentController::class)->name('inventory.property-assignments.acknowledge');
+    Route::post('inventory/property-transfers/{transfer}/acknowledge', AcknowledgeTransferController::class)->name('inventory.property-transfers.acknowledge');
     Route::post('inventory/properties/{property}/sub-assign', [PropertyController::class, 'subAssign'])->name('inventory.properties.sub-assign');
     Route::post('inventory/properties/sub-assignments/{subAssignment}/return', [PropertyController::class, 'returnSubAssignment'])->name('inventory.properties.sub-assignments.return');
-    Route::post('inventory/properties/{property}/dispose', [PropertyController::class, 'dispose'])->name('inventory.properties.dispose');
     Route::put('inventory/properties/{property}', [PropertyController::class, 'update'])->name('inventory.properties.update');
     Route::post('inventory/properties/batch-update', [PropertyController::class, 'batchUpdate'])->name('inventory.properties.batch-update');
 
@@ -105,6 +129,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('inventory/admin/roles/{role}', [AdminController::class, 'updateRole'])->name('inventory.admin.roles.update');
     Route::post('inventory/admin/roles/{role}/clone', [AdminController::class, 'cloneRole'])->name('inventory.admin.roles.clone');
     Route::delete('inventory/admin/roles/{role}', [AdminController::class, 'deleteRole'])->name('inventory.admin.roles.delete');
+
+    Route::get('/physical-counts/{physicalCount}/rpcppe', [RpcppeReportController::class, 'export'])->name('physical-counts.rpcppe');
 });
 
 require __DIR__.'/settings.php';

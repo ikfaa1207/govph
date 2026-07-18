@@ -16,7 +16,6 @@ use App\Services\DocumentSequenceService;
 use App\Services\Valuation\ValuationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -83,13 +82,21 @@ class ItemController extends Controller
             ];
         });
 
-        // Calculate statistics
+        // Optimize 5 separate queries into a single aggregate query
+        $aggregates = Item::where('status', 'active')->selectRaw('
+            count(*) as total_items,
+            sum(case when current_stock <= reorder_level and current_stock > 0 then 1 else 0 end) as low_stock,
+            sum(case when current_stock <= 0 then 1 else 0 end) as out_of_stock,
+            sum(current_stock * unit_cost) as total_value,
+            sum(case when created_at >= ? then 1 else 0 end) as recently_added
+        ', [now()->subDays(7)])->first();
+
         $stats = [
-            'total_items' => Item::where('status', 'active')->count(),
-            'low_stock' => Item::where('status', 'active')->whereColumn('current_stock', '<=', 'reorder_level')->where('current_stock', '>', 0)->count(),
-            'out_of_stock' => Item::where('status', 'active')->where('current_stock', '<=', 0)->count(),
-            'total_value' => Item::where('status', 'active')->sum(DB::raw('current_stock * unit_cost')),
-            'recently_added' => Item::where('status', 'active')->where('created_at', '>=', now()->subDays(7))->count(),
+            'total_items' => (int) ($aggregates->total_items ?? 0),
+            'low_stock' => (int) ($aggregates->low_stock ?? 0),
+            'out_of_stock' => (int) ($aggregates->out_of_stock ?? 0),
+            'total_value' => (float) ($aggregates->total_value ?? 0),
+            'recently_added' => (int) ($aggregates->recently_added ?? 0),
         ];
 
         return Inertia::render('inventory/items/index', [
@@ -223,17 +230,23 @@ class ItemController extends Controller
     }
 
     /**
-     * Archive the specified item.
+     * Toggle the status of the specified item.
      */
-    public function archive(Item $item): RedirectResponse
+    public function toggleStatus(Item $item): RedirectResponse
     {
-        Gate::authorize('inventory.delete'); // using delete permission for archiving
+        Gate::authorize('inventory.update');
 
-        $item->status = ItemStatus::Inactive->value;
+        $newStatus = $item->status === ItemStatus::Active 
+            ? ItemStatus::Inactive 
+            : ItemStatus::Active;
+
+        $item->status = $newStatus->value;
         $item->save();
 
-        AuditLogger::log('ARCHIVE_ITEM', $item, null, $item->toArray());
+        AuditLogger::log('TOGGLE_ITEM_STATUS', $item, null, $item->toArray());
 
-        return redirect()->back()->with('success', 'Item archived successfully.');
+        $statusText = $newStatus === ItemStatus::Active ? 'activated' : 'deactivated';
+
+        return redirect()->back()->with('success', "Item {$statusText} successfully.");
     }
 }

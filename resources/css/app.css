@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 @import 'tailwindcss';
 
 @import 'tw-animate-css';
@@ -10,9 +11,8 @@
 
 @theme {
     --font-sans:
-        'Instrument Sans', ui-sans-serif, system-ui, sans-serif,
-        'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
-        'Noto Color Emoji';
+        'Inter', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
+        'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 
     --radius-lg: var(--radius);
     --radius-md: calc(var(--radius) - 2px);
@@ -63,108 +63,105 @@
 }
 
 :root {
-    --background: oklch(0.99 0 0);
-    --foreground: oklch(0.15 0.02 290);
-    --card: oklch(0.99 0 0);
-    --card-foreground: oklch(0.15 0.02 290);
-    --popover: oklch(0.99 0 0);
-    --popover-foreground: oklch(0.15 0.02 290);
-    --primary: oklch(0.45 0.18 290);
-    --primary-foreground: oklch(0.99 0 0);
-    --secondary: oklch(0.95 0.02 290);
-    --secondary-foreground: oklch(0.45 0.18 290);
-    --muted: oklch(0.95 0.02 290);
-    --muted-foreground: oklch(0.55 0.02 290);
-    --accent: oklch(0.95 0.05 290);
-    --accent-foreground: oklch(0.45 0.18 290);
-    --destructive: oklch(0.577 0.245 27.325);
-    --destructive-foreground: oklch(0.99 0 0);
-    --border: oklch(0.9 0.02 290);
-    --input: oklch(0.9 0.02 290);
-    --ring: oklch(0.45 0.18 290);
-    --chart-1: oklch(0.646 0.222 41.116);
-    --chart-2: oklch(0.6 0.118 184.704);
-    --chart-3: oklch(0.398 0.07 227.392);
-    --chart-4: oklch(0.828 0.189 84.429);
-    --chart-5: oklch(0.769 0.188 70.08);
-    --radius: 1rem;
-    --sidebar: oklch(0.98 0.01 290);
-    --sidebar-foreground: oklch(0.15 0.02 290);
-    --sidebar-primary: oklch(0.45 0.18 290);
-    --sidebar-primary-foreground: oklch(0.99 0 0);
-    --sidebar-accent: oklch(0.95 0.05 290);
-    --sidebar-accent-foreground: oklch(0.45 0.18 290);
-    --sidebar-border: oklch(0.9 0.02 290);
-    --sidebar-ring: oklch(0.45 0.18 290);
+    /* GovPH Light Theme */
+    --background: #f8fafc;
+    --foreground: #0f172a;
+    --card: rgba(255, 255, 255, 0.7);
+    --card-foreground: #0f172a;
+    --popover: rgba(255, 255, 255, 0.85);
+    --popover-foreground: #0f172a;
 
-    --ticket-ink: #1c2530;
-    --ticket-ink-soft: #3b4753;
-    --ticket-paper: #fbf8f2;
-    --ticket-paper-deep: #f2ede1;
-    --ticket-line: #e1d9c7;
-    --ticket-steel: #56697a;
-    --ticket-steel-light: #8fa0ad;
-    --ticket-rust: #c1502e;
-    --ticket-rust-soft: #f3dcd2;
-    --ticket-amber: #b9862a;
-    --ticket-amber-soft: #f3e4c4;
-    --ticket-moss: #3f7a5b;
-    --ticket-moss-soft: #dcebe0;
-    --ticket-slate-soft: #e4e9ec;
-    --ticket-shadow:
-        0 1px 2px rgba(28, 37, 48, 0.06), 0 6px 16px rgba(28, 37, 48, 0.08);
+    /* GovPH Blue */
+    --primary: #0038a8;
+    --primary-foreground: #ffffff;
+
+    /* Sleek Secondary */
+    --secondary: #e2e8f0;
+    --secondary-foreground: #1e293b;
+
+    /* Muted */
+    --muted: #f1f5f9;
+    --muted-foreground: #64748b;
+
+    /* GovPH Yellow */
+    --accent: #fcd116;
+    --accent-foreground: #0f172a;
+
+    /* GovPH Red */
+    --destructive: #ce1126;
+    --destructive-foreground: #ffffff;
+
+    --border: rgba(226, 232, 240, 0.8);
+    --input: rgba(226, 232, 240, 0.8);
+    --ring: #0038a8;
+
+    --chart-1: #0038a8;
+    --chart-2: #fcd116;
+    --chart-3: #ce1126;
+    --chart-4: #0284c7;
+    --chart-5: #10b981;
+
+    --radius: 0.75rem;
+
+    /* Glassmorphic Sidebar */
+    --sidebar: rgba(255, 255, 255, 0.6);
+    --sidebar-foreground: #0f172a;
+    --sidebar-primary: #0038a8;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: rgba(241, 245, 249, 0.7);
+    --sidebar-accent-foreground: #0f172a;
+    --sidebar-border: rgba(226, 232, 240, 0.5);
+    --sidebar-ring: #0038a8;
 }
 
 .dark {
-    --background: oklch(0.15 0.02 290);
-    --foreground: oklch(0.95 0.02 290);
-    --card: oklch(0.18 0.02 290);
-    --card-foreground: oklch(0.95 0.02 290);
-    --popover: oklch(0.18 0.02 290);
-    --popover-foreground: oklch(0.95 0.02 290);
-    --primary: oklch(0.65 0.18 290);
-    --primary-foreground: oklch(0.99 0 0);
-    --secondary: oklch(0.25 0.03 290);
-    --secondary-foreground: oklch(0.95 0.02 290);
-    --muted: oklch(0.25 0.03 290);
-    --muted-foreground: oklch(0.65 0.02 290);
-    --accent: oklch(0.25 0.05 290);
-    --accent-foreground: oklch(0.95 0.02 290);
-    --destructive: oklch(0.396 0.141 25.723);
-    --destructive-foreground: oklch(0.99 0 0);
-    --border: oklch(0.25 0.03 290);
-    --input: oklch(0.25 0.03 290);
-    --ring: oklch(0.65 0.18 290);
-    --chart-1: oklch(0.488 0.243 264.376);
-    --chart-2: oklch(0.696 0.17 162.48);
-    --chart-3: oklch(0.769 0.188 70.08);
-    --chart-4: oklch(0.627 0.265 303.9);
-    --chart-5: oklch(0.645 0.246 16.439);
-    --sidebar: oklch(0.15 0.02 290);
-    --sidebar-foreground: oklch(0.95 0.02 290);
-    --sidebar-primary: oklch(0.65 0.18 290);
-    --sidebar-primary-foreground: oklch(0.99 0 0);
-    --sidebar-accent: oklch(0.25 0.05 290);
-    --sidebar-accent-foreground: oklch(0.95 0.02 290);
-    --sidebar-border: oklch(0.25 0.03 290);
-    --sidebar-ring: oklch(0.65 0.18 290);
+    /* GovPH Dark Theme */
+    --background: #020617;
+    --foreground: #f8fafc;
+    --card: rgba(15, 23, 42, 0.6);
+    --card-foreground: #f8fafc;
+    --popover: rgba(15, 23, 42, 0.85);
+    --popover-foreground: #f8fafc;
 
-    --ticket-ink: #fbf8f2;
-    --ticket-ink-soft: #c4ced8;
-    --ticket-paper: #232b35;
-    --ticket-paper-deep: #1c2530;
-    --ticket-line: #3e4d5d;
-    --ticket-steel: #8fa0ad;
-    --ticket-steel-light: #56697a;
-    --ticket-rust: #e06d4b;
-    --ticket-rust-soft: rgba(224, 109, 75, 0.15);
-    --ticket-amber: #e5af4d;
-    --ticket-amber-soft: rgba(229, 175, 77, 0.15);
-    --ticket-moss: #5bb381;
-    --ticket-moss-soft: rgba(91, 179, 129, 0.15);
-    --ticket-slate-soft: rgba(255, 255, 255, 0.08);
-    --ticket-shadow:
-        0 1px 2px rgba(0, 0, 0, 0.2), 0 6px 16px rgba(0, 0, 0, 0.3);
+    /* GovPH Blue (Slightly lighter for dark mode visibility) */
+    --primary: #3b82f6;
+    --primary-foreground: #ffffff;
+
+    /* Sleek Secondary */
+    --secondary: rgba(30, 41, 59, 0.7);
+    --secondary-foreground: #f8fafc;
+
+    /* Muted */
+    --muted: rgba(30, 41, 59, 0.5);
+    --muted-foreground: #94a3b8;
+
+    /* GovPH Yellow */
+    --accent: #fcd116;
+    --accent-foreground: #020617;
+
+    /* GovPH Red */
+    --destructive: #ef4444;
+    --destructive-foreground: #ffffff;
+
+    --border: rgba(30, 41, 59, 0.8);
+    --input: rgba(30, 41, 59, 0.8);
+    --ring: #3b82f6;
+
+    --chart-1: #3b82f6;
+    --chart-2: #fcd116;
+    --chart-3: #ef4444;
+    --chart-4: #38bdf8;
+    --chart-5: #34d399;
+
+    /* Glassmorphic Sidebar Dark */
+    --sidebar: rgba(2, 6, 23, 0.6);
+    --sidebar-foreground: #f8fafc;
+    --sidebar-primary: #3b82f6;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: rgba(30, 41, 59, 0.7);
+    --sidebar-accent-foreground: #f8fafc;
+    --sidebar-border: rgba(30, 41, 59, 0.5);
+    --sidebar-ring: #3b82f6;
 }
 
 @layer base {
@@ -173,135 +170,8 @@
     }
 
     body {
-        @apply bg-background text-foreground;
+        @apply bg-background bg-gradient-to-br from-slate-50 to-slate-200 bg-cover bg-fixed text-foreground dark:from-slate-950 dark:to-slate-900;
     }
-}
-
-/* Vintage Ticket Styles */
-.vintage-ticket {
-    position: relative;
-    background: var(--ticket-paper);
-    border: 1px solid var(--ticket-line);
-    border-radius: 3px;
-    box-shadow: var(--ticket-shadow);
-    padding: 16px 14px 14px;
-    transition:
-        transform 0.12s ease,
-        box-shadow 0.12s ease;
-}
-
-.vintage-ticket:hover {
-    transform: translateY(-2px);
-    box-shadow:
-        0 4px 10px rgba(28, 37, 48, 0.12),
-        0 10px 22px rgba(28, 37, 48, 0.1);
-}
-.dark .vintage-ticket:hover {
-    box-shadow:
-        0 4px 10px rgba(0, 0, 0, 0.3),
-        0 10px 22px rgba(0, 0, 0, 0.4);
-}
-
-.vintage-ticket::before {
-    content: '';
-    position: absolute;
-    top: -1px;
-    left: 8px;
-    right: 8px;
-    height: 8px;
-    background-image: radial-gradient(
-        circle at 6px 0,
-        transparent 4px,
-        var(--ticket-paper) 4.5px
-    );
-    background-size: 12px 8px;
-    background-repeat: repeat-x;
-    background-position: left top;
-}
-
-.vintage-ticket-id {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 11px;
-    color: var(--ticket-steel);
-    letter-spacing: 0.03em;
-}
-
-.vintage-priority-tag {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    padding: 2px 7px;
-    border-radius: 9px;
-    transform: rotate(-1.5deg);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.vintage-priority-critical {
-    background: var(--ticket-rust-soft);
-    color: var(--ticket-rust);
-}
-
-.vintage-priority-high {
-    background: var(--ticket-amber-soft);
-    color: var(--ticket-amber);
-}
-
-.vintage-priority-normal {
-    background: var(--ticket-slate-soft);
-    color: var(--ticket-steel);
-}
-
-.vintage-priority-low {
-    background: var(--ticket-moss-soft);
-    color: var(--ticket-moss);
-}
-
-.vintage-ticket-title {
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 14px;
-    font-weight: 600;
-    line-height: 1.35;
-    color: var(--ticket-ink);
-}
-
-.vintage-ticket-category {
-    font-size: 11px;
-    color: var(--ticket-steel);
-    background: var(--ticket-slate-soft);
-    padding: 2px 7px;
-    border-radius: 2px;
-}
-
-.vintage-ticket-avatar {
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    background: var(--ticket-ink);
-    color: var(--ticket-paper);
-    font-size: 9.5px;
-    font-family: 'IBM Plex Mono', monospace;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 600;
-}
-
-.vintage-ticket-age {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 10px;
-    color: var(--ticket-steel-light);
-}
-
-.vintage-ticket-requester {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 11.5px;
-    color: var(--ticket-steel);
 }
 
 /* Premium Global Scrollbar */

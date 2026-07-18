@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { EmptyState } from '@/components/empty-state';
 import { SimplePagination } from '@/components/simple-pagination';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -727,11 +728,34 @@ export default function PurchaseRequestsIndex({
                     <TableBody>
                         {purchaseRequests.data.length === 0 ? (
                             <TableRow>
-                                <TableCell
-                                    colSpan={8}
-                                    className="py-8 text-center text-muted-foreground"
-                                >
-                                    No purchase requests found matching filters.
+                                <TableCell colSpan={8} className="p-4 md:p-8">
+                                    <EmptyState
+                                        icon={ClipboardCheck}
+                                        title={
+                                            search || status !== 'all'
+                                                ? 'No matching purchase requests found'
+                                                : 'No purchase requests filed'
+                                        }
+                                        description={
+                                            search || status !== 'all'
+                                                ? 'Try adjusting your search terms or filters.'
+                                                : 'Get started by filing a new purchase request.'
+                                        }
+                                        action={
+                                            canCreate &&
+                                            !(search || status !== 'all') ? (
+                                                <Button
+                                                    className="gap-2"
+                                                    onClick={() =>
+                                                        setIsCreateOpen(true)
+                                                    }
+                                                >
+                                                    <PlusCircle className="h-4 w-4" />
+                                                    Create Purchase Request
+                                                </Button>
+                                            ) : undefined
+                                        }
+                                    />
                                 </TableCell>
                             </TableRow>
                         ) : (

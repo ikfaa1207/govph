@@ -43,12 +43,7 @@ test('authorized user can create category inline', function () {
         'is_ppe' => false,
     ]);
 
-    $response->assertOk();
-    $response->assertJson([
-        'name' => 'Writing Materials',
-        'code' => 'WRIT-MAT',
-        'is_ppe' => false,
-    ]);
+    $response->assertRedirect();
 
     $this->assertDatabaseHas('categories', [
         'name' => 'Writing Materials',
@@ -96,12 +91,7 @@ test('authorized user can create location inline', function () {
         'description' => 'Temporary loading bay',
     ]);
 
-    $response->assertOk();
-    $response->assertJson([
-        'warehouse_id' => $this->warehouse->id,
-        'code' => 'SHELF-X-99',
-        'description' => 'Temporary loading bay',
-    ]);
+    $response->assertRedirect();
 
     $this->assertDatabaseHas('locations', [
         'warehouse_id' => $this->warehouse->id,
@@ -150,11 +140,7 @@ test('authorized user can create warehouse inline', function () {
         'address' => 'Floor 2',
     ]);
 
-    $response->assertOk();
-    $response->assertJson([
-        'name' => 'Warehouse Beta',
-        'address' => 'Floor 2',
-    ]);
+    $response->assertRedirect();
 
     $this->assertDatabaseHas('warehouses', [
         'name' => 'Warehouse Beta',

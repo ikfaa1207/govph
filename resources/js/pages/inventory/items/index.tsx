@@ -8,7 +8,6 @@ import {
 import {
     PlusCircle,
     Eye,
-    AlertCircle,
     Plus,
     Package,
     AlertTriangle,
@@ -17,10 +16,13 @@ import {
     Clock,
     Pencil,
     Trash2,
+    Power,
+    PowerOff,
 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Can } from '@/components/can';
+import { EmptyState } from '@/components/empty-state';
 import { RowActionsMenu } from '@/components/row-actions-menu';
 import { SimplePagination } from '@/components/simple-pagination';
 import { Badge } from '@/components/ui/badge';
@@ -161,7 +163,6 @@ export default function ItemsIndex({
 
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [selectedItem, setSelectedItem] = useState<Item | null>(null);
-    const [itemToArchive, setItemToArchive] = useState<Item | null>(null);
 
     const editForm = useForm({
         name: '',
@@ -175,8 +176,6 @@ export default function ItemsIndex({
         barcode: '',
         expiration_date: '',
     });
-
-    const archiveHttp = useHttp({});
 
     const { data, setData, post, processing, errors, reset } = useForm({
         name: '',
@@ -323,26 +322,22 @@ export default function ItemsIndex({
         });
     };
 
-    const handleArchiveItem = (item: Item) => {
-        setItemToArchive(item);
-    };
-
-    const confirmArchive = () => {
-        if (!itemToArchive) {
-            return;
-        }
-
-        const item = itemToArchive;
-        setItemToArchive(null);
-
-        archiveHttp.patch(`/inventory/items/${item.id}/archive`, {
-            onSuccess: () => {
-                toast.success('Item archived successfully.');
+    const handleToggleStatus = (item: Item) => {
+        router.patch(
+            `/inventory/items/${item.id}/toggle`,
+            {},
+            {
+                preserveScroll: true,
+                onSuccess: () => toast.success(`Item ${item.status === 'active' ? 'deactivated' : 'activated'} successfully.`),
+                onError: (err: any) => {
+                    const message =
+                        err.error ||
+                        Object.values(err)[0] ||
+                        'Failed to update item status.';
+                    toast.error(message as string);
+                },
             },
-            onError: () => {
-                toast.error('Failed to archive item.');
-            },
-        });
+        );
     };
 
     // Removed manual handleSearch function, handled above.
@@ -366,33 +361,6 @@ export default function ItemsIndex({
     return (
         <>
             <Head title="Supplies Catalog - GIMS" />
-
-            <Dialog
-                open={itemToArchive !== null}
-                onOpenChange={(open) => !open && setItemToArchive(null)}
-            >
-                <DialogContent className="sm:max-w-[425px]">
-                    <DialogHeader>
-                        <DialogTitle>Archive Supply Item</DialogTitle>
-                        <DialogDescription className="pt-2">
-                            Are you sure you want to archive "
-                            {itemToArchive?.name}"? It will no longer appear in
-                            active dropdowns.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <div className="flex justify-end gap-2 pt-4">
-                        <Button
-                            variant="outline"
-                            onClick={() => setItemToArchive(null)}
-                        >
-                            Cancel
-                        </Button>
-                        <Button variant="destructive" onClick={confirmArchive}>
-                            Confirm Archive
-                        </Button>
-                    </div>
-                </DialogContent>
-            </Dialog>
 
             <div className="space-y-6 p-6">
                 {/* Header Section */}
@@ -1631,43 +1599,43 @@ export default function ItemsIndex({
                             </div>
                         )}
                         {items.data.length === 0 ? (
-                            <div className="overflow-x-auto">
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead>Item Code</TableHead>
-                                            <TableHead>Stock No.</TableHead>
-                                            <TableHead>Item Name</TableHead>
-                                            <TableHead>Category</TableHead>
-                                            <TableHead>UOM</TableHead>
-                                            <TableHead className="text-right">
-                                                Unit Cost
-                                            </TableHead>
-                                            <TableHead className="text-center">
-                                                Stock Balance
-                                            </TableHead>
-                                            <TableHead>Location</TableHead>
-                                            <TableHead className="text-right">
-                                                Actions
-                                            </TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        <TableRow>
-                                            <TableCell
-                                                colSpan={9}
-                                                className="space-y-2 py-12 text-center text-muted-foreground"
-                                            >
-                                                <AlertCircle className="mx-auto h-8 w-8 text-muted-foreground" />
-                                                <p>
-                                                    No supplies found. Register
-                                                    new items or adjust search
-                                                    query.
-                                                </p>
-                                            </TableCell>
-                                        </TableRow>
-                                    </TableBody>
-                                </Table>
+                            <div className="p-4 md:p-8">
+                                <EmptyState
+                                    icon={Package}
+                                    title={
+                                        searchVal ||
+                                        categoryId !== 'all' ||
+                                        stockStatus !== 'all'
+                                            ? 'No matching supply items found'
+                                            : 'No supply items cataloged'
+                                    }
+                                    description={
+                                        searchVal ||
+                                        categoryId !== 'all' ||
+                                        stockStatus !== 'all'
+                                            ? 'Try adjusting your search terms or filters.'
+                                            : 'Get started by registering new supplies into the system catalog.'
+                                    }
+                                    action={
+                                        !(
+                                            searchVal ||
+                                            categoryId !== 'all' ||
+                                            stockStatus !== 'all'
+                                        ) ? (
+                                            <Can permission="inventory.create">
+                                                <Button
+                                                    className="gap-2"
+                                                    onClick={() =>
+                                                        setIsAddOpen(true)
+                                                    }
+                                                >
+                                                    <PlusCircle className="h-4 w-4" />
+                                                    Add Supply Item
+                                                </Button>
+                                            </Can>
+                                        ) : undefined
+                                    }
+                                />
                             </div>
                         ) : (
                             <div className="overflow-x-auto">
@@ -1795,16 +1763,16 @@ export default function ItemsIndex({
                                                                     href: `/inventory/items/${item.id}`,
                                                                 },
                                                                 {
-                                                                    label: 'Archive Item',
-                                                                    icon: Trash2,
+                                                                    label: item.status === 'active' ? 'Deactivate Item' : 'Activate Item',
+                                                                    icon: item.status === 'active' ? PowerOff : Power,
                                                                     onClick:
                                                                         () =>
-                                                                            handleArchiveItem(
+                                                                            handleToggleStatus(
                                                                                 item,
                                                                             ),
                                                                     permission:
-                                                                        'inventory.delete',
-                                                                    destructive: true,
+                                                                        'inventory.update',
+                                                                    destructive: item.status === 'active',
                                                                 },
                                                             ]}
                                                         />

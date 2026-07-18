@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable([
     'physical_count_id',
@@ -19,7 +20,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 ])]
 class PhysicalCountItem extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $casts = [
         'recorded_qty' => 'decimal:2',
@@ -28,16 +29,25 @@ class PhysicalCountItem extends Model
         'overage_qty' => 'decimal:2',
     ];
 
+    /**
+     * @return BelongsTo<PhysicalCount, $this>
+     */
     public function count(): BelongsTo
     {
         return $this->belongsTo(PhysicalCount::class, 'physical_count_id');
     }
 
+    /**
+     * @return BelongsTo<Property, $this>
+     */
     public function property(): BelongsTo
     {
         return $this->belongsTo(Property::class);
     }
 
+    /**
+     * @return BelongsTo<Item, $this>
+     */
     public function item(): BelongsTo
     {
         return $this->belongsTo(Item::class);

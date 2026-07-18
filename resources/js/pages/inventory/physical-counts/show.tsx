@@ -6,6 +6,7 @@ import {
     Send,
     ListChecks,
     Trash2,
+    FileText,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
@@ -30,6 +31,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { usePermissions } from '@/hooks/use-permissions';
+import { RpcppeViewerDialog } from './components/RpcppeViewerDialog';
 
 interface PhysicalCountItem {
     id: number;
@@ -110,6 +112,7 @@ export default function PhysicalCountShow({
 
     const [isApprovalsOpen, setIsApprovalsOpen] = useState(false);
     const [isSubmitConfirmOpen, setIsSubmitConfirmOpen] = useState(false);
+    const [isRpcppeViewerOpen, setIsRpcppeViewerOpen] = useState(false);
 
     const form = useForm({
         action: 'save',
@@ -327,6 +330,12 @@ export default function PhysicalCountShow({
                     </div>
                 </DialogContent>
             </Dialog>
+
+            <RpcppeViewerDialog
+                isOpen={isRpcppeViewerOpen}
+                onClose={() => setIsRpcppeViewerOpen(false)}
+                physicalCountId={physicalCount.id}
+            />
 
             <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4 md:gap-8 md:p-8">
                 <div className="flex items-center justify-between">
@@ -584,6 +593,15 @@ export default function PhysicalCountShow({
                                 </a>
                             </Button>
                         )}
+                        {(isFinalized || isPendingReview) && isRPCPPE && (
+                            <Button
+                                variant="outline"
+                                onClick={() => setIsRpcppeViewerOpen(true)}
+                            >
+                                <FileText className="mr-2 h-4 w-4 text-blue-600" />
+                                Generate RPCPPE Report
+                            </Button>
+                        )}
                         {isDraft && (
                             <>
                                 {canDelete && (
@@ -616,8 +634,8 @@ export default function PhysicalCountShow({
                     </div>
                 </div>
 
-                <div className="overflow-hidden rounded-xl border bg-card shadow-xs">
-                    <Table>
+                <div className="hidden w-full overflow-x-auto overflow-y-hidden rounded-xl border bg-card shadow-xs md:block">
+                    <Table className="min-w-[800px]">
                         <TableHeader>
                             <TableRow>
                                 <TableHead>Article</TableHead>
@@ -743,6 +761,122 @@ export default function PhysicalCountShow({
                             )}
                         </TableBody>
                     </Table>
+                </div>
+
+                <div className="mt-2 grid gap-4 md:hidden">
+                    {localItems.map((item) => {
+                        const entity = isRPCPPE ? item.property : item.item;
+                        const identifier = isRPCPPE
+                            ? item.property?.property_number
+                            : item.item?.stock_number;
+                        const desc = isRPCPPE
+                            ? `${item.property?.brand} ${item.property?.model}`
+                            : item.item?.name;
+                        const disc = calcDiscrepancy(
+                            item.recorded_qty,
+                            item.form_actual_qty,
+                        );
+
+                        return (
+                            <div
+                                key={item.id}
+                                className="flex flex-col space-y-3 rounded-xl border bg-card p-4 shadow-xs"
+                            >
+                                <div className="flex items-start justify-between">
+                                    <div>
+                                        <div className="text-sm font-bold">
+                                            {desc}
+                                        </div>
+                                        <div className="mt-0.5 font-mono text-xs text-muted-foreground">
+                                            {identifier}
+                                        </div>
+                                    </div>
+                                    <Badge variant="outline">
+                                        {entity?.category?.name || 'N/A'}
+                                    </Badge>
+                                </div>
+                                <div className="flex justify-between border-y py-2 text-sm">
+                                    <div className="flex flex-col">
+                                        <span className="text-xs text-muted-foreground">
+                                            Recorded
+                                        </span>
+                                        <span className="font-bold">
+                                            {parseFloat(item.recorded_qty)}
+                                        </span>
+                                    </div>
+                                    <div className="flex flex-col text-right">
+                                        <span className="text-xs text-muted-foreground">
+                                            Unit Value
+                                        </span>
+                                        <span className="font-medium">
+                                            ₱{entity?.unit_cost}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div className="flex flex-col space-y-1.5">
+                                    <Label className="text-xs font-semibold text-muted-foreground">
+                                        Actual Qty
+                                    </Label>
+                                    {isDraft ? (
+                                        <Input
+                                            type="number"
+                                            min="0"
+                                            step="1"
+                                            className="h-9"
+                                            value={item.form_actual_qty}
+                                            onChange={(e) =>
+                                                handleQtyChange(
+                                                    item.id,
+                                                    e.target.value,
+                                                )
+                                            }
+                                        />
+                                    ) : (
+                                        <span className="text-lg font-bold">
+                                            {item.actual_qty ?? '-'}
+                                        </span>
+                                    )}
+                                </div>
+                                {disc.s !== null && disc.s > 0 && (
+                                    <div className="text-sm font-semibold text-red-500">
+                                        Shortage: {disc.s}
+                                    </div>
+                                )}
+                                {disc.o !== null && disc.o > 0 && (
+                                    <div className="text-sm font-semibold text-green-500">
+                                        Overage: {disc.o}
+                                    </div>
+                                )}
+                                <div className="flex flex-col space-y-1.5 border-t border-dashed pt-2">
+                                    <Label className="text-xs font-semibold text-muted-foreground">
+                                        Remarks
+                                    </Label>
+                                    {isDraft ? (
+                                        <Input
+                                            className="h-9 text-sm"
+                                            placeholder="Enter remarks..."
+                                            value={item.form_remarks}
+                                            onChange={(e) =>
+                                                handleRemarksChange(
+                                                    item.id,
+                                                    e.target.value,
+                                                )
+                                            }
+                                        />
+                                    ) : (
+                                        <span className="text-sm">
+                                            {item.remarks || '-'}
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+                        );
+                    })}
+                    {localItems.length === 0 && (
+                        <div className="rounded-xl border bg-card p-6 text-center text-sm text-muted-foreground shadow-xs">
+                            No items found for this physical count.
+                        </div>
+                    )}
                 </div>
             </div>
         </>

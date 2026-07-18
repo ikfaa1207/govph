@@ -36,6 +36,7 @@ interface DashboardProps {
         totalProperties: number;
         totalPpeValue?: number;
         pendingRequests: number;
+        pendingCounts: number;
     };
     recentIssuances: Array<any>;
     recentReceiving: Array<any>;
@@ -92,7 +93,7 @@ export default function Dashboard({
                 )}
 
                 {/* Metrics Cards Grid */}
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
                     {/* Metrics 1: Total Stock Value */}
                     <Card className="relative z-0 flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-emerald-500 bg-card bg-linear-to-tr from-transparent to-emerald-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
                         <div className="absolute -right-4 -bottom-4 text-emerald-500/5">
@@ -170,6 +171,30 @@ export default function Dashboard({
                             </p>
                         </div>
                     </Card>
+
+                    {/* Metrics 5: Pending Physical Counts */}
+                    <Link
+                        href="/inventory/physical-counts?status=draft"
+                        className="relative z-0 block flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-rose-500 bg-card bg-linear-to-tr from-transparent to-rose-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[4px] hover:shadow-lg focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 focus:outline-hidden"
+                    >
+                        <div className="absolute -right-4 -bottom-4 text-rose-500/5 transition-transform duration-300 hover:scale-110">
+                            <ClipboardList
+                                className={`h-28 w-28 ${stats.pendingCounts > 0 ? 'animate-pulse text-rose-500/10' : ''}`}
+                                strokeWidth={1.5}
+                            />
+                        </div>
+                        <div className="relative z-10 space-y-1">
+                            <p className="flex items-center justify-between text-[11px] font-medium tracking-wider text-rose-500 uppercase">
+                                <span>Items to Count</span>
+                                <span className="rounded-full bg-rose-500/10 px-2 py-0.5 text-[9px] font-bold text-rose-500">
+                                    Action Needed
+                                </span>
+                            </p>
+                            <p className="truncate text-2xl font-bold text-foreground transition-colors group-hover:text-rose-600">
+                                {stats.pendingCounts} Pending Counts
+                            </p>
+                        </div>
+                    </Link>
                 </div>
 
                 {/* Stock Warning Banners if there are stock issues */}

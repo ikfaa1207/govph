@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 
 /**
@@ -29,28 +30,40 @@ use Illuminate\Support\Carbon;
 ])]
 class PhysicalCount extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $casts = [
         'as_of_date' => 'date',
         'status' => PhysicalCountStatus::class,
     ];
 
+    /**
+     * @return HasMany<PhysicalCountItem, $this>
+     */
     public function items(): HasMany
     {
         return $this->hasMany(PhysicalCountItem::class);
     }
 
+    /**
+     * @return BelongsTo<Employee, $this>
+     */
     public function creator(): BelongsTo
     {
         return $this->belongsTo(Employee::class, 'created_by');
     }
 
+    /**
+     * @return HasMany<PhysicalCountCommittee, $this>
+     */
     public function committees(): HasMany
     {
         return $this->hasMany(PhysicalCountCommittee::class);
     }
 
+    /**
+     * @return BelongsTo<Employee, $this>
+     */
     public function coaRepresentative(): BelongsTo
     {
         return $this->belongsTo(Employee::class, 'coa_representative_id');

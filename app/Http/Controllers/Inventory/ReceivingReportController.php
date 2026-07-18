@@ -17,6 +17,7 @@ use App\Models\Supplier;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
@@ -133,19 +134,33 @@ class ReceivingReportController extends Controller
             $inspectors = Employee::whereNotIn('id', $receivers->pluck('id'))->get();
         }
 
+        $pendingPoIds = PurchaseOrder::whereIn('status', ['sent', 'partially_received'])->pluck('id');
+
+        // Pre-fetch all accepted quantities for the pending POs in a single query to prevent N+1
+        $acceptedQuantitiesRaw = DB::table('receiving_report_items')
+            ->join('receiving_reports', 'receiving_report_items.receiving_report_id', '=', 'receiving_reports.id')
+            ->whereIn('receiving_reports.purchase_order_id', $pendingPoIds)
+            ->where('receiving_reports.status', 'finalized')
+            ->select('receiving_reports.purchase_order_id', 'receiving_report_items.item_id', DB::raw('SUM(receiving_report_items.quantity_accepted) as total_accepted'))
+            ->groupBy('receiving_reports.purchase_order_id', 'receiving_report_items.item_id')
+            ->get();
+
+        $acceptedQuantitiesMap = [];
+        foreach ($acceptedQuantitiesRaw as $row) {
+            $acceptedQuantitiesMap[$row->purchase_order_id][$row->item_id] = (int) $row->total_accepted;
+        }
+
         $pendingPOs = PurchaseOrder::with(['supplier', 'items.item.unit'])
-            ->whereIn('status', ['sent', 'partially_received'])
+            ->whereIn('id', $pendingPoIds)
             ->get()
-            ->map(function ($po) {
+            ->map(function ($po) use ($acceptedQuantitiesMap) {
                 return [
                     'id' => $po->id,
                     'po_number' => $po->po_number,
                     'supplier_id' => $po->supplier_id,
                     'po_date' => $po->po_date,
-                    'items' => array_values(array_filter($po->items->map(function ($item) use ($po) {
-                        $totalAccepted = ReceivingReportItem::whereHas('receivingReport', function ($q) use ($po) {
-                            $q->where('purchase_order_id', $po->id)->where('status', 'finalized');
-                        })->where('item_id', $item->item_id)->sum('quantity_accepted');
+                    'items' => array_values(array_filter($po->items->map(function ($item) use ($po, $acceptedQuantitiesMap) {
+                        $totalAccepted = $acceptedQuantitiesMap[$po->id][$item->item_id] ?? 0;
 
                         return [
                             'item_id' => $item->item_id,

@@ -7,6 +7,8 @@ import {
     User,
     AlertTriangle,
     Pencil,
+    ShieldAlert,
+    ShieldCheck,
 } from 'lucide-react';
 import { RowActionsMenu } from '@/components/row-actions-menu';
 import { SimplePagination } from '@/components/simple-pagination';
@@ -19,7 +21,6 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-import { usePermissions } from '@/hooks/use-permissions';
 import { formatCurrency } from '@/lib/utils';
 import type { Property } from '../index';
 
@@ -30,33 +31,29 @@ interface PropertyTableProps {
     };
     selectedPropIds: number[];
     setSelectedPropIds: React.Dispatch<React.SetStateAction<number[]>>;
-    canManage: boolean;
-    isDeptHead: boolean;
     openAssignModal: (prop: Property) => void;
     openTransferModal: (prop: Property) => void;
     openSubAssignModal: (prop: Property) => void;
     openReturnSubAssignModal: (prop: Property) => void;
     openDisposeModal: (prop: Property) => void;
     openEditModal: (prop: Property) => void;
+    openAcknowledgeModal: (prop: Property) => void;
+    currentEmployee: any;
 }
 
 export function PropertyTable({
     properties,
     selectedPropIds,
     setSelectedPropIds,
-    canManage,
-    isDeptHead,
     openAssignModal,
     openTransferModal,
     openSubAssignModal,
     openReturnSubAssignModal,
     openDisposeModal,
     openEditModal,
+    openAcknowledgeModal,
+    currentEmployee,
 }: PropertyTableProps) {
-    const { hasPermission } = usePermissions();
-    const canManageSubAssign =
-        hasPermission('property.subassign') || isDeptHead;
-
     const renderStatusBadge = (status: Property['status']) => {
         switch (status) {
             case 'available':
@@ -227,11 +224,9 @@ export function PropertyTable({
                         <TableHead className="text-center whitespace-nowrap">
                             Status
                         </TableHead>
-                        {(canManage || canManageSubAssign) && (
-                            <TableHead className="text-right whitespace-nowrap">
-                                Actions
-                            </TableHead>
-                        )}
+                        <TableHead className="text-right whitespace-nowrap">
+                            Actions
+                        </TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -303,20 +298,30 @@ export function PropertyTable({
                             <TableCell className="text-right font-medium whitespace-nowrap">
                                 {formatCurrency(prop.unit_cost)}
                             </TableCell>
-                            <TableCell className="hidden text-[11px] leading-tight font-medium md:table-cell">
+                            <TableCell className="hidden md:table-cell">
                                 {prop.active_assignment ? (
-                                    <div className="flex flex-col gap-0.5">
-                                        <span>
-                                            {prop.active_assignment.assignee
-                                                ?.name || (
-                                                <span className="font-semibold">
-                                                    {
-                                                        prop.active_assignment
-                                                            .non_system_name
-                                                    }
-                                                </span>
+                                    <div className="flex flex-col gap-1">
+                                        <div className="flex items-center gap-1.5">
+                                            <span className="font-medium text-blue-700 dark:text-blue-400">
+                                                {prop.active_assignment
+                                                    .is_non_system
+                                                    ? prop.active_assignment
+                                                          .non_system_name
+                                                    : prop.active_assignment
+                                                          .assignee?.name}
+                                            </span>
+                                            {prop.active_assignment
+                                                .acknowledged_at && (
+                                                <Badge
+                                                    variant="outline"
+                                                    title={`Digitally Signed on ${new Date(prop.active_assignment.acknowledged_at).toLocaleString()}`}
+                                                    className="inline-flex h-4 cursor-help items-center gap-0.5 border-emerald-200 bg-emerald-50 px-1 text-[9px] text-emerald-700 dark:border-emerald-800/30 dark:bg-emerald-950/30 dark:text-emerald-400"
+                                                >
+                                                    <ShieldCheck className="h-2.5 w-2.5" />
+                                                    Signed
+                                                </Badge>
                                             )}
-                                        </span>
+                                        </div>
                                         {!prop.active_assignment.assignee && (
                                             <span className="w-fit rounded border border-amber-200/50 bg-amber-50 px-1 py-0.5 text-[10px] text-amber-600 dark:bg-amber-950/30">
                                                 External (
@@ -328,17 +333,35 @@ export function PropertyTable({
                                             </span>
                                         )}
                                         {prop.active_sub_assignment && (
-                                            <div className="mt-1 flex flex-col gap-0.5 rounded-md border border-blue-200/50 bg-blue-50 p-1.5 dark:bg-blue-950/30">
-                                                <span className="text-[10px] font-semibold tracking-wider text-blue-700 uppercase dark:text-blue-400">
-                                                    Sub-Assigned To (MR)
+                                            <div className="mt-1 flex flex-col gap-1 rounded border border-muted-foreground/10 bg-muted/50 p-1.5 px-2 text-xs">
+                                                <span className="text-[10px] font-semibold tracking-wider text-muted-foreground uppercase">
+                                                    Sub-Assigned To:
                                                 </span>
-                                                <span className="text-xs text-blue-900 dark:text-blue-300">
-                                                    {prop.active_sub_assignment
-                                                        .assignee?.name ||
-                                                        prop
+                                                <div className="flex items-center gap-1.5">
+                                                    <span className="font-medium text-indigo-700 dark:text-indigo-400">
+                                                        {prop
                                                             .active_sub_assignment
-                                                            .non_system_name}
-                                                </span>
+                                                            .is_non_system
+                                                            ? prop
+                                                                  .active_sub_assignment
+                                                                  .non_system_name
+                                                            : prop
+                                                                  .active_sub_assignment
+                                                                  .assignee
+                                                                  ?.name}
+                                                    </span>
+                                                    {prop.active_sub_assignment
+                                                        .acknowledged_at && (
+                                                        <Badge
+                                                            variant="outline"
+                                                            title={`Digitally Signed on ${new Date(prop.active_sub_assignment.acknowledged_at).toLocaleString()}`}
+                                                            className="inline-flex h-4 cursor-help items-center gap-0.5 border-emerald-200 bg-emerald-50 px-1 text-[9px] text-emerald-700 dark:border-emerald-800/30 dark:bg-emerald-950/30 dark:text-emerald-400"
+                                                        >
+                                                            <ShieldCheck className="h-2.5 w-2.5" />
+                                                            Signed
+                                                        </Badge>
+                                                    )}
+                                                </div>
                                             </div>
                                         )}
                                     </div>
@@ -375,82 +398,88 @@ export function PropertyTable({
                             <TableCell className="hidden text-center capitalize lg:table-cell">
                                 {renderConditionBadge(prop.condition)}
                             </TableCell>
-                            <TableCell className="text-center capitalize">
+                            <TableCell className="text-center">
                                 {renderStatusBadge(prop.status)}
                             </TableCell>
-                            {(canManage || canManageSubAssign) && (
-                                <TableCell className="text-right whitespace-nowrap">
-                                    <RowActionsMenu
-                                        actions={[
-                                            {
-                                                label: 'Edit Equipment Details',
-                                                icon: Pencil,
-                                                onClick: () =>
-                                                    openEditModal(prop),
-                                                permission: 'property.assign',
-                                                show:
-                                                    prop.status !== 'disposed',
-                                            },
-                                            {
-                                                label: 'Assign Equipment',
-                                                icon: UserCheck,
-                                                onClick: () =>
-                                                    openAssignModal(prop),
-                                                permission: 'property.assign',
-                                                show:
-                                                    prop.status === 'available',
-                                            },
-                                            {
-                                                label: 'Transfer Property (PTR)',
-                                                icon: RefreshCw,
-                                                onClick: () =>
-                                                    openTransferModal(prop),
-                                                permission: 'property.transfer',
-                                                show:
+                            <TableCell className="text-right whitespace-nowrap">
+                                <RowActionsMenu
+                                    actions={[
+                                        {
+                                            label: 'Acknowledge Receipt',
+                                            icon: ShieldAlert,
+                                            onClick: () =>
+                                                openAcknowledgeModal(prop),
+                                            show:
+                                                currentEmployee &&
+                                                ((prop.active_assignment
+                                                    ?.assigned_to ===
+                                                    currentEmployee.id &&
+                                                    !prop.active_assignment
+                                                        ?.acknowledged_at) ||
+                                                    (prop.active_sub_assignment
+                                                        ?.assigned_to ===
+                                                        currentEmployee.id &&
+                                                        !prop
+                                                            .active_sub_assignment
+                                                            ?.acknowledged_at)),
+                                        },
+                                        {
+                                            label: 'Edit Equipment Details',
+                                            icon: Pencil,
+                                            onClick: () => openEditModal(prop),
+                                            permission: 'property.assign',
+                                            show: prop.status !== 'disposed',
+                                        },
+                                        {
+                                            label: 'Assign Equipment',
+                                            icon: UserCheck,
+                                            onClick: () =>
+                                                openAssignModal(prop),
+                                            permission: 'property.assign',
+                                            show: prop.status === 'available',
+                                        },
+                                        {
+                                            label: 'Transfer Property (PTR)',
+                                            icon: RefreshCw,
+                                            onClick: () =>
+                                                openTransferModal(prop),
+                                            permission: 'property.transfer',
+                                            show:
+                                                prop.status === 'assigned' ||
+                                                prop.status === 'transferred',
+                                        },
+                                        {
+                                            label: 'Issue Memo Receipt (MR)',
+                                            icon: UserCheck,
+                                            onClick: () =>
+                                                openSubAssignModal(prop),
+                                            permission: 'property.subassign',
+                                            show:
+                                                (prop.status === 'assigned' ||
                                                     prop.status ===
-                                                        'assigned' ||
-                                                    prop.status ===
-                                                        'transferred',
-                                            },
-                                            {
-                                                label: 'Issue Memo Receipt (MR)',
-                                                icon: UserCheck,
-                                                onClick: () =>
-                                                    openSubAssignModal(prop),
-                                                permission:
-                                                    'property.subassign',
-                                                show:
-                                                    (prop.status ===
-                                                        'assigned' ||
-                                                        prop.status ===
-                                                            'transferred') &&
-                                                    !prop.active_sub_assignment,
-                                            },
-                                            {
-                                                label: 'Return Memo Receipt',
-                                                icon: RefreshCw,
-                                                onClick: () =>
-                                                    openReturnSubAssignModal(
-                                                        prop,
-                                                    ),
-                                                permission:
-                                                    'property.subassign',
-                                                show: !!prop.active_sub_assignment,
-                                            },
-                                            {
-                                                label: 'Dispose Property',
-                                                icon: Trash2,
-                                                onClick: () =>
-                                                    openDisposeModal(prop),
-                                                permission: 'property.dispose',
-                                                show:
-                                                    prop.status !== 'disposed',
-                                                destructive: true,
-                                            },
-                                        ]}
-                                    />
-                                </TableCell>
-                            )}
+                                                        'transferred') &&
+                                                !prop.active_sub_assignment,
+                                        },
+                                        {
+                                            label: 'Return Memo Receipt',
+                                            icon: RefreshCw,
+                                            onClick: () =>
+                                                openReturnSubAssignModal(prop),
+                                            permission: 'property.subassign',
+                                            show: !!prop.active_sub_assignment,
+                                        },
+                                        {
+                                            label: 'Dispose Property',
+                                            icon: Trash2,
+                                            onClick: () =>
+                                                openDisposeModal(prop),
+                                            permission: 'property.dispose',
+                                            show: prop.status !== 'disposed',
+                                            destructive: true,
+                                        },
+                                    ]}
+                                />
+                            </TableCell>
                         </TableRow>
                     ))}
                 </TableBody>

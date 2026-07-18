@@ -809,7 +809,7 @@ test('users with inventory.create permission can create units of measurement inl
         'abbreviation' => 'mt',
     ]);
 
-    $response->assertOk();
+    $response->assertRedirect();
     $this->assertDatabaseHas('units', [
         'name' => 'Metric Ton',
         'abbreviation' => 'mt',

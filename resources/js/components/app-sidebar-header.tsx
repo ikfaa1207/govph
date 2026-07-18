@@ -1,5 +1,5 @@
 import { usePage } from '@inertiajs/react';
-import { Shield, Clock } from 'lucide-react';
+import { Shield, Clock, Search } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { Badge } from '@/components/ui/badge';
@@ -66,6 +66,24 @@ export function AppSidebarHeader({
 
             {/* GovPH Global Agency Header Bar */}
             <div className="hidden items-center gap-4 text-xs md:flex">
+                <button
+                    onClick={() =>
+                        document.dispatchEvent(
+                            new KeyboardEvent('keydown', {
+                                key: 'k',
+                                metaKey: true,
+                            }),
+                        )
+                    }
+                    className="flex h-8 items-center gap-2 rounded-md border border-input bg-muted/50 px-3 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+                >
+                    <Search className="h-3.5 w-3.5" />
+                    <span>Search GIMS...</span>
+                    <kbd className="pointer-events-none inline-flex h-5 items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100 select-none">
+                        <span className="text-xs">⌘</span>K
+                    </kbd>
+                </button>
+
                 {/* Localized Live Clock */}
                 {time && (
                     <div className="flex h-5 items-center gap-1.5 border-r border-border pr-4 font-medium text-muted-foreground">

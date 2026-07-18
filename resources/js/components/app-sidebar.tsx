@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, FolderGit2 } from 'lucide-react';
+import { FolderGit2 } from 'lucide-react';
 import {
     LayoutGrid,
     Package,
@@ -13,7 +13,6 @@ import {
     FileBox,
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
-import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import {
@@ -31,7 +30,6 @@ import properties from '@/routes/inventory/properties';
 import reports from '@/routes/inventory/reports';
 import requisitions from '@/routes/inventory/requisitions';
 import type { NavItem } from '@/types';
-
 interface GimsNavItem extends NavItem {
     permission?: string | string[];
 }
@@ -92,14 +90,6 @@ const mainNavItems: GimsNavItem[] = [
         // viewAny policy allows everyone, but conceptually requires view rights
         permission: ['reports.view', 'inventory.view', 'warehouse.view'],
     },
-];
-
-const footerNavItems: NavItem[] = [
-    {
-        title: 'COA Regulations',
-        href: 'https://www.coa.gov.ph/',
-        icon: BookOpen,
-    },
     {
         title: 'System Helpdesk',
         href: '/inventory/helpdesk',
@@ -124,6 +114,11 @@ export function AppSidebar() {
     });
 
     if (permissions.includes('users.manage')) {
+        filteredNavItems.push({
+            title: 'System Libraries',
+            href: '/inventory/master-data',
+            icon: Database,
+        });
         filteredNavItems.push({
             title: 'User Management',
             href: '/inventory/admin/users',
@@ -164,7 +159,6 @@ export function AppSidebar() {
             </SidebarContent>
 
             <SidebarFooter>
-                <NavFooter items={footerNavItems} className="mt-auto" />
                 <NavUser />
             </SidebarFooter>
         </Sidebar>

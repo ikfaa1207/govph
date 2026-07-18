@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Inventory;
 
+use App\Actions\PurchaseOrder\CreatePurchaseOrderAction;
+use App\Actions\PurchaseOrder\UpdatePurchaseOrderAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StorePurchaseOrderRequest;
 use App\Models\PurchaseOrder;
@@ -76,7 +78,7 @@ class PurchaseOrderController extends Controller
     /**
      * Store a newly created purchase order.
      */
-    public function store(StorePurchaseOrderRequest $request): RedirectResponse
+    public function store(StorePurchaseOrderRequest $request, CreatePurchaseOrderAction $action): RedirectResponse
     {
         Gate::authorize('create', PurchaseOrder::class);
 
@@ -91,28 +93,7 @@ class PurchaseOrderController extends Controller
             return back()->withErrors(['purchase_request_id' => 'Purchase Request must be approved before creating a PO.']);
         }
 
-        $poNumber = 'PO-'.now()->format('Ymd').'-'.str_pad(
-            strval(PurchaseOrder::whereDate('created_at', today())->count() + 1),
-            4,
-            '0',
-            STR_PAD_LEFT,
-        );
-
-        $po = PurchaseOrder::create([
-            'purchase_request_id' => $pr->id,
-            'po_number' => $poNumber,
-            'supplier_id' => $validated['supplier_id'],
-            'po_date' => $validated['po_date'],
-            'delivery_date' => $validated['delivery_date'] ?? null,
-            'status' => 'draft',
-        ]);
-
-        foreach ($validated['items'] as $item) {
-            $po->items()->create($item);
-        }
-
-        // Mark PR as ordered
-        $pr->update(['status' => 'ordered']);
+        $action->execute($pr, $validated);
 
         return back()->with('success', 'Purchase Order created successfully.');
     }
@@ -120,7 +101,7 @@ class PurchaseOrderController extends Controller
     /**
      * Update a draft purchase order.
      */
-    public function update(Request $request, PurchaseOrder $purchaseOrder): RedirectResponse
+    public function update(Request $request, PurchaseOrder $purchaseOrder, UpdatePurchaseOrderAction $action): RedirectResponse
     {
         Gate::authorize('update', $purchaseOrder);
 
@@ -135,16 +116,7 @@ class PurchaseOrderController extends Controller
             'items.*.remarks' => ['nullable', 'string', 'max:500'],
         ]);
 
-        $purchaseOrder->update([
-            'supplier_id' => $validated['supplier_id'],
-            'po_date' => $validated['po_date'],
-            'delivery_date' => $validated['delivery_date'] ?? null,
-        ]);
-
-        $purchaseOrder->items()->delete();
-        foreach ($validated['items'] as $item) {
-            $purchaseOrder->items()->create($item);
-        }
+        $action->execute($purchaseOrder, $validated);
 
         return back()->with('success', 'Purchase Order updated successfully.');
     }

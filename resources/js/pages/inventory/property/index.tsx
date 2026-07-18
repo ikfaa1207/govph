@@ -16,10 +16,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { SmartSelect } from '@/components/ui/smart-select';
-import { usePermissions } from '@/hooks/use-permissions';
 import { formatCurrency } from '@/lib/utils';
 
 // Import extracted components
+import { AcknowledgeDialog } from './components/AcknowledgeDialog';
 import { AddPropertyDialog } from './components/AddPropertyDialog';
 import { AssignDialog } from './components/AssignDialog';
 import { BatchAssignDialog } from './components/BatchAssignDialog';
@@ -118,7 +118,7 @@ export default function PropertyIndex({
     employees,
     categories,
     offices,
-    auth,
+
     current_employee,
     stats,
     filters,
@@ -127,15 +127,6 @@ export default function PropertyIndex({
         { title: 'Property Registry (PPE)', href: '/inventory/properties' },
     ];
     setLayoutProps({ breadcrumbs });
-
-    const { hasAnyPermission } = usePermissions();
-    const isDeptHead = auth.user.roles?.includes('Department Head');
-    const canManage =
-        hasAnyPermission([
-            'property.assign',
-            'property.transfer',
-            'property.dispose',
-        ]) || isDeptHead;
 
     const [isAddOpen, setIsAddOpen] = useState(false);
     const [selectedProp, setSelectedProp] = useState<Property | null>(null);
@@ -205,6 +196,7 @@ export default function PropertyIndex({
     const [isReturnSubAssignOpen, setIsReturnSubAssignOpen] = useState(false);
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [isBatchEditOpen, setIsBatchEditOpen] = useState(false);
+    const [isAcknowledgeOpen, setIsAcknowledgeOpen] = useState(false);
 
     const openEditModal = (prop: Property) => {
         setSelectedProp(prop);
@@ -234,6 +226,11 @@ export default function PropertyIndex({
     const openReturnSubAssignModal = (prop: Property) => {
         setSelectedProp(prop);
         setIsReturnSubAssignOpen(true);
+    };
+
+    const openAcknowledgeModal = (prop: Property) => {
+        setSelectedProp(prop);
+        setIsAcknowledgeOpen(true);
     };
 
     return (
@@ -589,8 +586,6 @@ export default function PropertyIndex({
                                 properties={properties}
                                 selectedPropIds={selectedPropIds}
                                 setSelectedPropIds={setSelectedPropIds}
-                                canManage={canManage}
-                                isDeptHead={isDeptHead}
                                 openAssignModal={openAssignModal}
                                 openTransferModal={openTransferModal}
                                 openSubAssignModal={openSubAssignModal}
@@ -599,6 +594,8 @@ export default function PropertyIndex({
                                 }
                                 openDisposeModal={openDisposeModal}
                                 openEditModal={openEditModal}
+                                openAcknowledgeModal={openAcknowledgeModal}
+                                currentEmployee={current_employee}
                             />
                         )}
                     </CardContent>
@@ -689,6 +686,14 @@ export default function PropertyIndex({
                     />
                 )}
             </div>
+            <AcknowledgeDialog
+                isOpen={isAcknowledgeOpen}
+                onClose={() => {
+                    setIsAcknowledgeOpen(false);
+                    setSelectedProp(null);
+                }}
+                property={selectedProp}
+            />
         </>
     );
 }

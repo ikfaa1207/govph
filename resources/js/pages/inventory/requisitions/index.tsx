@@ -11,9 +11,11 @@ import {
     ChevronDown,
     Plus,
     Minus,
+    FileText,
 } from 'lucide-react';
 import { useState, useRef } from 'react';
 import { toast } from 'sonner';
+import { EmptyState } from '@/components/empty-state';
 import { SimplePagination } from '@/components/simple-pagination';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -964,13 +966,45 @@ export default function RequisitionsIndex({
                 <div className="grid gap-6">
                     {requisitions.data.length === 0 ? (
                         <Card>
-                            <CardContent className="py-12 text-center text-muted-foreground">
-                                {search ||
-                                status !== 'all' ||
-                                startDate ||
-                                endDate
-                                    ? 'No matching requisitions (RIS) found.'
-                                    : 'No requisitions (RIS) found on the board.'}
+                            <CardContent className="p-4 md:p-8">
+                                <EmptyState
+                                    icon={FileText}
+                                    title={
+                                        search ||
+                                        status !== 'all' ||
+                                        startDate ||
+                                        endDate
+                                            ? 'No matching requisitions (RIS) found'
+                                            : 'No requisitions (RIS) filed'
+                                    }
+                                    description={
+                                        search ||
+                                        status !== 'all' ||
+                                        startDate ||
+                                        endDate
+                                            ? 'Try adjusting your search terms or filters.'
+                                            : 'Get started by creating a new requisition for supplies or equipment.'
+                                    }
+                                    action={
+                                        canCreate &&
+                                        !(
+                                            search ||
+                                            status !== 'all' ||
+                                            startDate ||
+                                            endDate
+                                        ) ? (
+                                            <Button
+                                                className="gap-2"
+                                                onClick={() =>
+                                                    setIsRequestOpen(true)
+                                                }
+                                            >
+                                                <PlusCircle className="h-4 w-4" />
+                                                Create Requisition
+                                            </Button>
+                                        ) : undefined
+                                    }
+                                />
                             </CardContent>
                         </Card>
                     ) : (

@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable([
     'property_id',
@@ -17,10 +18,21 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'reason',
     'approved_by',
     'status',
+    'digital_signature',
+    'transferred_at',
+    'acknowledged_at',
 ])]
 class PropertyTransfer extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
+
+    protected function casts(): array
+    {
+        return [
+            'transfer_date' => 'date',
+            'acknowledged_at' => 'datetime',
+        ];
+    }
 
     /**
      * Get the property transferred.
@@ -70,5 +82,16 @@ class PropertyTransfer extends Model
     public function approver(): BelongsTo
     {
         return $this->belongsTo(Employee::class, 'approved_by');
+    }
+
+    /**
+     * Acknowledge the transfer and generate a digital signature.
+     */
+    public function acknowledge(int $userId): void
+    {
+        $timestamp = now()->timestamp;
+        $this->acknowledged_at = now();
+        $this->digital_signature = hash('sha256', "PT-{$this->id}-{$userId}-{$timestamp}");
+        $this->save();
     }
 }

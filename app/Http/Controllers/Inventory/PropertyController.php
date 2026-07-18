@@ -104,12 +104,21 @@ class PropertyController extends Controller
         $categories = Category::all();
         $offices = Office::all();
 
+        // Optimize 5 separate queries into a single aggregate query
+        $aggregates = Property::selectRaw("
+                count(*) as total_items,
+                sum(case when status = 'available' then 1 else 0 end) as available,
+                sum(case when status = 'assigned' then 1 else 0 end) as assigned,
+                sum(unit_cost) as total_value,
+                sum(case when created_at >= ? then 1 else 0 end) as recently_added
+            ", [now()->subDays(7)])->first();
+
         $stats = [
-            'total_items' => Property::count(),
-            'available' => Property::where('status', 'available')->count(),
-            'assigned' => Property::where('status', 'assigned')->count(),
-            'total_value' => Property::sum('unit_cost'),
-            'recently_added' => Property::where('created_at', '>=', now()->subDays(7))->count(),
+            'total_items' => (int) ($aggregates->total_items ?? 0),
+            'available' => (int) ($aggregates->available ?? 0),
+            'assigned' => (int) ($aggregates->assigned ?? 0),
+            'total_value' => (float) ($aggregates->total_value ?? 0),
+            'recently_added' => (int) ($aggregates->recently_added ?? 0),
         ];
 
         return Inertia::render('inventory/property/index', [

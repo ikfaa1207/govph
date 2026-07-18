@@ -9,10 +9,12 @@ import {
     Package,
     ClipboardList,
     Users,
+    FileText,
 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Can } from '@/components/can';
+import { EmptyState } from '@/components/empty-state';
 import { RowActionsMenu } from '@/components/row-actions-menu';
 import { SimplePagination } from '@/components/simple-pagination';
 import { Button } from '@/components/ui/button';
@@ -38,6 +40,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import type { BreadcrumbItem } from '@/types';
+import { RpcppeViewerDialog } from './components/RpcppeViewerDialog';
 
 interface PhysicalCount {
     id: number;
@@ -82,6 +85,7 @@ export default function PhysicalCountsIndex({
     const [countToDelete, setCountToDelete] = useState<PhysicalCount | null>(
         null,
     );
+    const [rpcppeViewerId, setRpcppeViewerId] = useState<number | null>(null);
 
     // Search and Filter States
     const [search, setSearch] = useState(filters.search || '');
@@ -625,6 +629,12 @@ export default function PhysicalCountsIndex({
                     </Can>
                 </div>
 
+                <RpcppeViewerDialog
+                    isOpen={rpcppeViewerId !== null}
+                    onClose={() => setRpcppeViewerId(null)}
+                    physicalCountId={rpcppeViewerId}
+                />
+
                 {/* Search and Filters Bar */}
                 <Card>
                     <CardHeader className="pb-3">
@@ -741,8 +751,8 @@ export default function PhysicalCountsIndex({
                     </CardContent>
                 </Card>
 
-                <div className="overflow-hidden rounded-xl border bg-card shadow-xs">
-                    <Table>
+                <div className="hidden w-full overflow-x-auto overflow-y-hidden rounded-xl border bg-card shadow-xs md:block">
+                    <Table className="min-w-[800px]">
                         <TableHeader>
                             <TableRow>
                                 <TableHead>Report Type</TableHead>
@@ -760,13 +770,44 @@ export default function PhysicalCountsIndex({
                                 <TableRow>
                                     <TableCell
                                         colSpan={6}
-                                        className="h-24 text-center text-muted-foreground"
+                                        className="p-4 md:p-8"
                                     >
-                                        {search ||
-                                        typeFilter !== 'all' ||
-                                        statusFilter !== 'all'
-                                            ? 'No matching physical counts found.'
-                                            : 'No physical counts initiated yet.'}
+                                        <EmptyState
+                                            icon={ClipboardList}
+                                            title={
+                                                search ||
+                                                typeFilter !== 'all' ||
+                                                statusFilter !== 'all'
+                                                    ? 'No matching physical counts found'
+                                                    : 'No physical counts initiated yet'
+                                            }
+                                            description={
+                                                search ||
+                                                typeFilter !== 'all' ||
+                                                statusFilter !== 'all'
+                                                    ? 'Try adjusting your search terms or filters.'
+                                                    : 'Get started by creating your first physical count for reporting.'
+                                            }
+                                            action={
+                                                !(
+                                                    search ||
+                                                    typeFilter !== 'all' ||
+                                                    statusFilter !== 'all'
+                                                ) ? (
+                                                    <Button
+                                                        className="gap-2"
+                                                        onClick={() =>
+                                                            setIsCreateOpen(
+                                                                true,
+                                                            )
+                                                        }
+                                                    >
+                                                        <PlusCircle className="h-4 w-4" />
+                                                        Initiate Physical Count
+                                                    </Button>
+                                                ) : undefined
+                                            }
+                                        />
                                     </TableCell>
                                 </TableRow>
                             ) : (
@@ -815,6 +856,21 @@ export default function PhysicalCountsIndex({
                                                             href: `/inventory/physical-counts/${count.id}`,
                                                         },
                                                         {
+                                                            label: 'Generate RPCPPE',
+                                                            icon: FileText,
+                                                            onClick: () =>
+                                                                setRpcppeViewerId(
+                                                                    count.id,
+                                                                ),
+                                                            show:
+                                                                (count.status ===
+                                                                    'finalized' ||
+                                                                    count.status ===
+                                                                        'pending_review') &&
+                                                                count.type ===
+                                                                    'RPCPPE',
+                                                        },
+                                                        {
                                                             label: 'Export CSV',
                                                             icon: FileSpreadsheet,
                                                             href: `/inventory/physical-counts/${count.id}/export`,
@@ -842,6 +898,71 @@ export default function PhysicalCountsIndex({
                             )}
                         </TableBody>
                     </Table>
+                </div>
+
+                <div className="mt-2 grid gap-4 md:hidden">
+                    {counts.data.length === 0 ? (
+                        <div className="rounded-xl border bg-card p-6 text-center text-sm text-muted-foreground shadow-xs">
+                            {search ||
+                            typeFilter !== 'all' ||
+                            statusFilter !== 'all'
+                                ? 'No matching physical counts found.'
+                                : 'No physical counts initiated yet.'}
+                        </div>
+                    ) : (
+                        counts.data.map((count) => {
+                            return (
+                                <div
+                                    key={count.id}
+                                    className="flex flex-col space-y-3 rounded-xl border bg-card p-4 shadow-xs"
+                                >
+                                    <div className="flex items-start justify-between">
+                                        <div>
+                                            <div className="font-bold text-indigo-600 dark:text-indigo-400">
+                                                {count.type}
+                                            </div>
+                                            <div className="mt-0.5 text-sm text-muted-foreground">
+                                                As of:{' '}
+                                                {new Date(
+                                                    count.as_of_date,
+                                                ).toLocaleDateString()}
+                                            </div>
+                                        </div>
+                                        <span
+                                            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${
+                                                count.status === 'draft'
+                                                    ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300'
+                                                    : 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+                                            }`}
+                                        >
+                                            {count.status.toUpperCase()}
+                                        </span>
+                                    </div>
+                                    <div className="text-sm">
+                                        <span className="text-muted-foreground">
+                                            Prepared By:
+                                        </span>{' '}
+                                        {count.creator?.name}
+                                    </div>
+                                    <div className="flex justify-end pt-2">
+                                        <Button
+                                            asChild
+                                            variant="outline"
+                                            size="sm"
+                                            className="w-full"
+                                        >
+                                            <Link
+                                                href={`/inventory/physical-counts/${count.id}`}
+                                            >
+                                                <ListChecks className="mr-2 h-4 w-4" />
+                                                Manage Count
+                                            </Link>
+                                        </Button>
+                                    </div>
+                                </div>
+                            );
+                        })
+                    )}
                 </div>
 
                 <div className="mt-4">

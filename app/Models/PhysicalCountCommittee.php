@@ -20,11 +20,17 @@ class PhysicalCountCommittee extends Model
         'approved_at' => 'datetime',
     ];
 
+    /**
+     * @return BelongsTo<PhysicalCount, $this>
+     */
     public function physicalCount(): BelongsTo
     {
         return $this->belongsTo(PhysicalCount::class);
     }
 
+    /**
+     * @return BelongsTo<Employee, $this>
+     */
     public function employee(): BelongsTo
     {
         return $this->belongsTo(Employee::class);

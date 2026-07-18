@@ -16,8 +16,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $position
  * @property int|null $office_id
  * @property int|null $department_id
+ * @property string|null $address
+ * @property string|null $contact_number
+ * @property string|null $date_of_birth
+ * @property string|null $tin
  */
-#[Fillable(['user_id', 'employee_id', 'name', 'position', 'office_id', 'department_id'])]
+#[Fillable(['user_id', 'employee_id', 'name', 'position', 'office_id', 'department_id', 'address', 'contact_number', 'date_of_birth', 'tin'])]
 class Employee extends Model
 {
     use HasFactory;
@@ -60,5 +64,20 @@ class Employee extends Model
     public function propertyAssignments(): HasMany
     {
         return $this->hasMany(PropertyAssignment::class, 'assigned_to');
+    }
+
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'address' => 'encrypted',
+            'contact_number' => 'encrypted',
+            'date_of_birth' => 'encrypted',
+            'tin' => 'encrypted',
+        ];
     }
 }

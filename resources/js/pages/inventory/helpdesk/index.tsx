@@ -932,22 +932,22 @@ export default function HelpdeskIndex({ tickets, isAdmin }: Props) {
                                                 .map((ticket) => (
                                                     <div
                                                         key={ticket.id}
-                                                        className="vintage-ticket"
+                                                        className="relative rounded-md border bg-card/80 p-4 shadow-sm backdrop-blur-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
                                                     >
                                                         <div className="mb-2 flex items-center justify-between">
-                                                            <span className="vintage-ticket-id">
+                                                            <span className="font-mono text-[11px] tracking-wide text-muted-foreground">
                                                                 ID: #{ticket.id}
                                                             </span>
                                                             <div className="flex items-center gap-2">
                                                                 <span
-                                                                    className={`vintage-priority-tag ${
+                                                                    className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 font-mono text-[10px] font-semibold tracking-wide uppercase ${
                                                                         ticket.priority ===
                                                                         'high'
-                                                                            ? 'vintage-priority-critical'
+                                                                            ? 'bg-destructive/15 text-destructive'
                                                                             : ticket.priority ===
                                                                                 'medium'
-                                                                              ? 'vintage-priority-high'
-                                                                              : 'vintage-priority-low'
+                                                                              ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
+                                                                              : 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
                                                                     }`}
                                                                 >
                                                                     {
@@ -960,11 +960,11 @@ export default function HelpdeskIndex({ tickets, isAdmin }: Props) {
                                                             </div>
                                                         </div>
 
-                                                        <h3 className="vintage-ticket-title mb-2">
+                                                        <h3 className="mb-2 font-sans text-sm leading-snug font-semibold text-foreground">
                                                             {ticket.title}
                                                         </h3>
 
-                                                        <div className="mt-3 rounded-sm border border-[var(--ticket-line)]/50 bg-[var(--ticket-paper-deep)] p-3 text-xs leading-relaxed text-[var(--ticket-ink-soft)]">
+                                                        <div className="mt-3 rounded-sm border border-border/50 bg-secondary p-3 text-xs leading-relaxed text-muted-foreground">
                                                             <p className="whitespace-pre-wrap">
                                                                 {
                                                                     ticket.description
@@ -973,13 +973,13 @@ export default function HelpdeskIndex({ tickets, isAdmin }: Props) {
 
                                                             {ticket.attachment_url && (
                                                                 <div className="mt-3">
-                                                                    <p className="mb-1 font-semibold text-[var(--ticket-ink)]">
+                                                                    <p className="mb-1 font-semibold text-foreground">
                                                                         Attachment:
                                                                     </p>
                                                                     {isImage(
                                                                         ticket.attachment_path,
                                                                     ) ? (
-                                                                        <div className="group relative max-w-xs overflow-hidden rounded-md border border-[var(--ticket-line)] bg-background">
+                                                                        <div className="group relative max-w-xs overflow-hidden rounded-md border border-border bg-background">
                                                                             <img
                                                                                 src={
                                                                                     ticket.attachment_url
@@ -1000,9 +1000,9 @@ export default function HelpdeskIndex({ tickets, isAdmin }: Props) {
                                                                             }
                                                                             target="_blank"
                                                                             rel="noopener noreferrer"
-                                                                            className="inline-flex items-center gap-2 rounded-md border border-[var(--ticket-line)] bg-[var(--ticket-paper)] px-3 py-2 text-xs font-semibold text-[var(--ticket-ink)] transition-colors hover:bg-[var(--ticket-paper-deep)]"
+                                                                            className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground transition-colors hover:bg-secondary"
                                                                         >
-                                                                            <FileText className="size-4 text-[var(--ticket-ink)]" />
+                                                                            <FileText className="size-4 text-foreground" />
                                                                             <span>
                                                                                 View
                                                                                 /
@@ -1010,22 +1010,22 @@ export default function HelpdeskIndex({ tickets, isAdmin }: Props) {
                                                                                 PDF
                                                                                 Document
                                                                             </span>
-                                                                            <ArrowRight className="size-3 text-[var(--ticket-steel-light)]" />
+                                                                            <ArrowRight className="size-3 text-muted-foreground/80" />
                                                                         </a>
                                                                     )}
                                                                 </div>
                                                             )}
 
                                                             {ticket.admin_notes && (
-                                                                <div className="mt-3 rounded-md border border-[var(--ticket-line)] bg-[var(--ticket-paper)] p-3">
-                                                                    <p className="mb-1 flex items-center gap-1.5 font-semibold text-[var(--ticket-ink)]">
+                                                                <div className="mt-3 rounded-md border border-border bg-card p-3">
+                                                                    <p className="mb-1 flex items-center gap-1.5 font-semibold text-foreground">
                                                                         <MessageSquare className="size-3.5" />
                                                                         Resolution
                                                                         Notes
                                                                         from IT
                                                                         / Admin:
                                                                     </p>
-                                                                    <p className="leading-normal text-[var(--ticket-ink-soft)]">
+                                                                    <p className="leading-normal text-muted-foreground">
                                                                         {
                                                                             ticket.admin_notes
                                                                         }
@@ -1034,9 +1034,9 @@ export default function HelpdeskIndex({ tickets, isAdmin }: Props) {
                                                             )}
                                                         </div>
 
-                                                        <div className="mt-3 flex items-center justify-between border-t border-dashed border-[var(--ticket-line)] pt-2">
-                                                            <div className="vintage-ticket-requester">
-                                                                <span className="vintage-ticket-avatar">
+                                                        <div className="mt-3 flex items-center justify-between border-t border-dashed border-border pt-2">
+                                                            <div className="flex items-center gap-1.5 text-[11.5px] text-muted-foreground">
+                                                                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-foreground font-mono text-[9.5px] font-semibold text-background">
                                                                     {getInitials(
                                                                         ticket
                                                                             .user
@@ -1054,12 +1054,12 @@ export default function HelpdeskIndex({ tickets, isAdmin }: Props) {
                                                                             .name}
                                                                 </span>
                                                             </div>
-                                                            <span className="vintage-ticket-category capitalize">
+                                                            <span className="rounded-sm bg-secondary px-2 py-0.5 text-[11px] text-muted-foreground capitalize">
                                                                 {
                                                                     ticket.category
                                                                 }
                                                             </span>
-                                                            <span className="vintage-ticket-age">
+                                                            <span className="font-mono text-[10px] text-muted-foreground/80">
                                                                 {getTicketAge(
                                                                     ticket.created_at,
                                                                 )}
@@ -1106,11 +1106,11 @@ export default function HelpdeskIndex({ tickets, isAdmin }: Props) {
                                             {tickets.data.map((ticket) => (
                                                 <div
                                                     key={ticket.id}
-                                                    className={`vintage-ticket cursor-pointer transition-all duration-150 ${
+                                                    className={`relative cursor-pointer rounded-md border bg-card/80 p-4 shadow-sm backdrop-blur-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md ${
                                                         selectedTicket?.id ===
                                                         ticket.id
-                                                            ? 'bg-[var(--ticket-paper-deep)] ring-2 ring-indigo-600 dark:ring-indigo-400'
-                                                            : 'hover:bg-[var(--ticket-paper-deep)]/50'
+                                                            ? 'bg-secondary ring-2 ring-indigo-600 dark:ring-indigo-400'
+                                                            : 'hover:bg-secondary/50'
                                                     }`}
                                                     onClick={() =>
                                                         selectTicketForEdit(
@@ -1119,19 +1119,19 @@ export default function HelpdeskIndex({ tickets, isAdmin }: Props) {
                                                     }
                                                 >
                                                     <div className="mb-2 flex items-center justify-between">
-                                                        <span className="vintage-ticket-id">
+                                                        <span className="font-mono text-[11px] tracking-wide text-muted-foreground">
                                                             ID: #{ticket.id}
                                                         </span>
                                                         <div className="flex items-center gap-2">
                                                             <span
-                                                                className={`vintage-priority-tag ${
+                                                                className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 font-mono text-[10px] font-semibold tracking-wide uppercase ${
                                                                     ticket.priority ===
                                                                     'high'
-                                                                        ? 'vintage-priority-critical'
+                                                                        ? 'bg-destructive/15 text-destructive'
                                                                         : ticket.priority ===
                                                                             'medium'
-                                                                          ? 'vintage-priority-high'
-                                                                          : 'vintage-priority-low'
+                                                                          ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
+                                                                          : 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
                                                                 }`}
                                                             >
                                                                 {
@@ -1144,11 +1144,11 @@ export default function HelpdeskIndex({ tickets, isAdmin }: Props) {
                                                         </div>
                                                     </div>
 
-                                                    <h3 className="vintage-ticket-title mb-2">
+                                                    <h3 className="mb-2 font-sans text-sm leading-snug font-semibold text-foreground">
                                                         {ticket.title}
                                                     </h3>
 
-                                                    <div className="mt-3 rounded-sm border border-[var(--ticket-line)]/50 bg-[var(--ticket-paper-deep)] p-3 text-xs leading-relaxed text-[var(--ticket-ink-soft)]">
+                                                    <div className="mt-3 rounded-sm border border-border/50 bg-secondary p-3 text-xs leading-relaxed text-muted-foreground">
                                                         <p className="line-clamp-2">
                                                             {ticket.description}
                                                         </p>
@@ -1160,9 +1160,9 @@ export default function HelpdeskIndex({ tickets, isAdmin }: Props) {
                                                         )}
                                                     </div>
 
-                                                    <div className="mt-3 flex items-center justify-between border-t border-dashed border-[var(--ticket-line)] pt-2">
-                                                        <div className="vintage-ticket-requester">
-                                                            <span className="vintage-ticket-avatar">
+                                                    <div className="mt-3 flex items-center justify-between border-t border-dashed border-border pt-2">
+                                                        <div className="flex items-center gap-1.5 text-[11.5px] text-muted-foreground">
+                                                            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-foreground font-mono text-[9.5px] font-semibold text-background">
                                                                 {getInitials(
                                                                     ticket.user
                                                                         ?.name ||
@@ -1178,7 +1178,7 @@ export default function HelpdeskIndex({ tickets, isAdmin }: Props) {
                                                                 ?.employee
                                                                 ?.department
                                                                 ?.name && (
-                                                                <span className="max-w-[80px] truncate text-[10px] text-[var(--ticket-steel-light)]">
+                                                                <span className="max-w-[80px] truncate text-[10px] text-muted-foreground/80">
                                                                     (
                                                                     {
                                                                         ticket
@@ -1191,10 +1191,10 @@ export default function HelpdeskIndex({ tickets, isAdmin }: Props) {
                                                                 </span>
                                                             )}
                                                         </div>
-                                                        <span className="vintage-ticket-category capitalize">
+                                                        <span className="rounded-sm bg-secondary px-2 py-0.5 text-[11px] text-muted-foreground capitalize">
                                                             {ticket.category}
                                                         </span>
-                                                        <span className="vintage-ticket-age">
+                                                        <span className="font-mono text-[10px] text-muted-foreground/80">
                                                             {getTicketAge(
                                                                 ticket.created_at,
                                                             )}

@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { EmptyState } from '@/components/empty-state';
 import { SimplePagination } from '@/components/simple-pagination';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -731,11 +732,42 @@ export default function PurchaseOrdersIndex({
                     <TableBody>
                         {purchaseOrders.data.length === 0 ? (
                             <TableRow>
-                                <TableCell
-                                    colSpan={8}
-                                    className="py-8 text-center text-muted-foreground"
-                                >
-                                    No purchase orders found.
+                                <TableCell colSpan={8} className="p-4 md:p-8">
+                                    <EmptyState
+                                        icon={FileText}
+                                        title={
+                                            search ||
+                                            status !== 'all' ||
+                                            supplierId !== 'all'
+                                                ? 'No matching purchase orders found'
+                                                : 'No purchase orders generated'
+                                        }
+                                        description={
+                                            search ||
+                                            status !== 'all' ||
+                                            supplierId !== 'all'
+                                                ? 'Try adjusting your search terms or filters.'
+                                                : 'Get started by generating your first purchase order from an approved request.'
+                                        }
+                                        action={
+                                            canCreate &&
+                                            !(
+                                                search ||
+                                                status !== 'all' ||
+                                                supplierId !== 'all'
+                                            ) ? (
+                                                <Button
+                                                    className="gap-2"
+                                                    onClick={() =>
+                                                        setIsCreateOpen(true)
+                                                    }
+                                                >
+                                                    <PlusCircle className="h-4 w-4" />
+                                                    Generate Purchase Order
+                                                </Button>
+                                            ) : undefined
+                                        }
+                                    />
                                 </TableCell>
                             </TableRow>
                         ) : (

@@ -1,5 +1,6 @@
 import { Head, Link, setLayoutProps } from '@inertiajs/react';
 import { ArrowLeft, Clock, ShieldAlert } from 'lucide-react';
+import { EmptyState } from '@/components/empty-state';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -216,10 +217,13 @@ export default function ItemShow({ item, transactions }: ItemShowProps) {
                                         <TableRow>
                                             <TableCell
                                                 colSpan={6}
-                                                className="py-8 text-center text-sm text-muted-foreground"
+                                                className="p-8 text-center"
                                             >
-                                                No stock transactions recorded
-                                                for this item.
+                                                <EmptyState
+                                                    icon={Clock}
+                                                    title="No stock transactions"
+                                                    description="Historical receipts and issuances for this item will appear here."
+                                                />
                                             </TableCell>
                                         </TableRow>
                                     </TableBody>

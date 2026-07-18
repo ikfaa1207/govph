@@ -42,11 +42,7 @@ test('authorized users can create a supplier', function () {
             'address' => 'Manila, Philippines',
         ]);
 
-    $response->assertStatus(201);
-    $response->assertJsonFragment([
-        'name' => 'New Supplier Inc.',
-        'tin' => '123-456-789-000',
-    ]);
+    $response->assertRedirect();
 
     $this->assertDatabaseHas('suppliers', [
         'name' => 'New Supplier Inc.',

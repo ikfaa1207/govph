@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable([
     'property_id',
@@ -18,10 +19,22 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'date_assigned',
     'returned_date',
     'remarks',
+    'digital_signature',
+    'acknowledged_at',
 ])]
 class PropertyAssignment extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
+
+    protected function casts(): array
+    {
+        return [
+            'assignment_date' => 'date',
+            'expected_return_date' => 'date',
+            'actual_return_date' => 'date',
+            'acknowledged_at' => 'datetime',
+        ];
+    }
 
     /**
      * Get the property assigned.
@@ -51,5 +64,16 @@ class PropertyAssignment extends Model
     public function assigner(): BelongsTo
     {
         return $this->belongsTo(Employee::class, 'assigned_by');
+    }
+
+    /**
+     * Acknowledge the assignment and generate a digital signature.
+     */
+    public function acknowledge(int $userId): void
+    {
+        $timestamp = now()->timestamp;
+        $this->acknowledged_at = now();
+        $this->digital_signature = hash('sha256', "PA-{$this->id}-{$userId}-{$timestamp}");
+        $this->save();
     }
 }

@@ -124,6 +124,11 @@ class DashboardController extends Controller
             ];
         }
 
+        $pendingCountsCount = PhysicalCount::whereIn('status', [
+            PhysicalCountStatus::Draft,
+            PhysicalCountStatus::PendingReview,
+        ])->count();
+
         return Inertia::render('inventory/dashboard', [
             'stats' => [
                 'inventoryType' => $seesGlobalInventory || ! $employee ? 'Central Supply' : 'Department',
@@ -134,6 +139,7 @@ class DashboardController extends Controller
                 'totalProperties' => $totalProperties,
                 'totalPpeValue' => round($totalPpeValue, 2),
                 'pendingRequests' => $pendingRequisitionsCount,
+                'pendingCounts' => $pendingCountsCount,
             ],
             'recentIssuances' => $recentIssuances,
             'recentReceiving' => $recentReceiving,

@@ -23,6 +23,7 @@ import {
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import AlertError from '@/components/alert-error';
+import { EmptyState } from '@/components/empty-state';
 import { RowActionsMenu } from '@/components/row-actions-menu';
 import { SimplePagination } from '@/components/simple-pagination';
 import { Badge } from '@/components/ui/badge';
@@ -1425,39 +1426,42 @@ export default function ReceivingIndex({
                             </div>
                         )}
                         {reports.data.length === 0 ? (
-                            <div className="overflow-x-auto">
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead>IAR Number</TableHead>
-                                            <TableHead>PO Number</TableHead>
-                                            <TableHead>Supplier</TableHead>
-                                            <TableHead>DR / Invoice</TableHead>
-                                            <TableHead>Date Received</TableHead>
-                                            <TableHead>Status</TableHead>
-                                            <TableHead>Items Count</TableHead>
-                                            <TableHead>Receiver</TableHead>
-                                            <TableHead className="text-right">
-                                                Actions
-                                            </TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        <TableRow>
-                                            <TableCell
-                                                colSpan={9}
-                                                className="space-y-2 py-12 text-center text-muted-foreground"
+                            <div className="p-4 md:p-8">
+                                <EmptyState
+                                    icon={ArrowDownToLine}
+                                    title={
+                                        search ||
+                                        status !== 'all' ||
+                                        supplierId !== 'all'
+                                            ? 'No matching receiving reports found'
+                                            : 'No receiving reports logged'
+                                    }
+                                    description={
+                                        search ||
+                                        status !== 'all' ||
+                                        supplierId !== 'all'
+                                            ? 'Try adjusting your search terms or filters.'
+                                            : 'Get started by recording a new receiving report for a supplier delivery.'
+                                    }
+                                    action={
+                                        !(
+                                            search ||
+                                            status !== 'all' ||
+                                            supplierId !== 'all'
+                                        ) ? (
+                                            <Button
+                                                className="gap-2"
+                                                onClick={() => {
+                                                    setIsOpen(true);
+                                                    setEditMode(false);
+                                                }}
                                             >
-                                                <ArrowDownToLine className="mx-auto h-8 w-8 text-muted-foreground" />
-                                                <p>
-                                                    No receiving reports
-                                                    recorded yet. Click "Receive
-                                                    Delivery" above.
-                                                </p>
-                                            </TableCell>
-                                        </TableRow>
-                                    </TableBody>
-                                </Table>
+                                                <PlusCircle className="h-4 w-4" />
+                                                Receive Delivery
+                                            </Button>
+                                        ) : undefined
+                                    }
+                                />
                             </div>
                         ) : (
                             <div className="overflow-x-auto">
