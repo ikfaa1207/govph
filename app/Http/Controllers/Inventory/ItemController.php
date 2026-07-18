@@ -236,8 +236,8 @@ class ItemController extends Controller
     {
         Gate::authorize('inventory.update');
 
-        $newStatus = $item->status === ItemStatus::Active 
-            ? ItemStatus::Inactive 
+        $newStatus = $item->status === ItemStatus::Active
+            ? ItemStatus::Inactive
             : ItemStatus::Active;
 
         $item->status = $newStatus->value;

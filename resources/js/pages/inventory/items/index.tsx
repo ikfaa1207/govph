@@ -15,7 +15,6 @@ import {
     PhilippinePeso,
     Clock,
     Pencil,
-    Trash2,
     Power,
     PowerOff,
 } from 'lucide-react';
@@ -328,7 +327,10 @@ export default function ItemsIndex({
             {},
             {
                 preserveScroll: true,
-                onSuccess: () => toast.success(`Item ${item.status === 'active' ? 'deactivated' : 'activated'} successfully.`),
+                onSuccess: () =>
+                    toast.success(
+                        `Item ${item.status === 'active' ? 'deactivated' : 'activated'} successfully.`,
+                    ),
                 onError: (err: any) => {
                     const message =
                         err.error ||
@@ -1763,8 +1765,16 @@ export default function ItemsIndex({
                                                                     href: `/inventory/items/${item.id}`,
                                                                 },
                                                                 {
-                                                                    label: item.status === 'active' ? 'Deactivate Item' : 'Activate Item',
-                                                                    icon: item.status === 'active' ? PowerOff : Power,
+                                                                    label:
+                                                                        item.status ===
+                                                                        'active'
+                                                                            ? 'Deactivate Item'
+                                                                            : 'Activate Item',
+                                                                    icon:
+                                                                        item.status ===
+                                                                        'active'
+                                                                            ? PowerOff
+                                                                            : Power,
                                                                     onClick:
                                                                         () =>
                                                                             handleToggleStatus(
@@ -1772,7 +1782,9 @@ export default function ItemsIndex({
                                                                             ),
                                                                     permission:
                                                                         'inventory.update',
-                                                                    destructive: item.status === 'active',
+                                                                    destructive:
+                                                                        item.status ===
+                                                                        'active',
                                                                 },
                                                             ]}
                                                         />
