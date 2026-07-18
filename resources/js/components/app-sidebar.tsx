@@ -33,7 +33,7 @@ import requisitions from '@/routes/inventory/requisitions';
 import type { NavItem } from '@/types';
 
 interface GimsNavItem extends NavItem {
-    permission?: string;
+    permission?: string | string[];
 }
 
 const mainNavItems: GimsNavItem[] = [
@@ -53,13 +53,13 @@ const mainNavItems: GimsNavItem[] = [
         title: 'Purchase Requests (PR)',
         href: '/inventory/purchase-requests',
         icon: FileBox,
-        permission: 'inventory.view',
+        permission: 'procurement.view',
     },
     {
         title: 'Purchase Orders (PO)',
         href: '/inventory/purchase-orders',
         icon: ShoppingCart,
-        permission: 'inventory.view',
+        permission: 'procurement.view',
     },
     {
         title: 'Receiving (Stock In)',
@@ -71,7 +71,7 @@ const mainNavItems: GimsNavItem[] = [
         title: 'Requisitions (RIS)',
         href: requisitions.index.url(),
         icon: ClipboardList,
-        permission: 'inventory.view',
+        permission: ['request.create', 'request.approve', 'warehouse.issue'],
     },
     {
         title: 'Property Registry (PPE)',
@@ -89,7 +89,8 @@ const mainNavItems: GimsNavItem[] = [
         title: 'Physical Counts',
         href: '/inventory/physical-counts',
         icon: FileText,
-        permission: 'inventory.view',
+        // viewAny policy allows everyone, but conceptually requires view rights
+        permission: ['reports.view', 'inventory.view', 'warehouse.view'],
     },
 ];
 
@@ -113,6 +114,10 @@ export function AppSidebar() {
     const filteredNavItems = mainNavItems.filter((item) => {
         if (!item.permission) {
             return true;
+        }
+
+        if (Array.isArray(item.permission)) {
+            return item.permission.some((p) => permissions.includes(p));
         }
 
         return permissions.includes(item.permission);
