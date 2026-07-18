@@ -290,7 +290,7 @@ export default function PropertyIndex({
                 {/* Statistics Overview */}
                 {stats && (
                     <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
-                        <Card className="relative flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-blue-500 bg-card bg-linear-to-tr from-transparent to-blue-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
+                        <Card className="relative z-0 flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-blue-500 bg-card bg-linear-to-tr from-transparent to-blue-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
                             <div className="absolute -right-4 -bottom-4 text-blue-500/5">
                                 <Package
                                     className="h-28 w-28"
@@ -307,7 +307,7 @@ export default function PropertyIndex({
                             </div>
                         </Card>
 
-                        <Card className="relative flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-emerald-500 bg-card bg-linear-to-tr from-transparent to-emerald-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
+                        <Card className="relative z-0 flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-emerald-500 bg-card bg-linear-to-tr from-transparent to-emerald-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
                             <div className="absolute -right-4 -bottom-4 text-emerald-500/5">
                                 <PhilippinePeso
                                     className="h-28 w-28"
@@ -324,7 +324,7 @@ export default function PropertyIndex({
                             </div>
                         </Card>
 
-                        <Card className="relative flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-violet-500 bg-card bg-linear-to-tr from-transparent to-violet-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
+                        <Card className="relative z-0 flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-violet-500 bg-card bg-linear-to-tr from-transparent to-violet-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
                             <div className="absolute -right-4 -bottom-4 text-violet-500/5">
                                 <Clock
                                     className="h-28 w-28"
@@ -341,7 +341,7 @@ export default function PropertyIndex({
                             </div>
                         </Card>
 
-                        <Card className="relative flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-amber-500 bg-card bg-linear-to-tr from-transparent to-amber-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
+                        <Card className="relative z-0 flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-amber-500 bg-card bg-linear-to-tr from-transparent to-amber-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
                             <div className="absolute -right-4 -bottom-4 text-amber-500/5">
                                 <CheckCircle
                                     className="h-28 w-28"
@@ -358,7 +358,7 @@ export default function PropertyIndex({
                             </div>
                         </Card>
 
-                        <Card className="relative flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-rose-500 bg-card bg-linear-to-tr from-transparent to-rose-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
+                        <Card className="relative z-0 flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-rose-500 bg-card bg-linear-to-tr from-transparent to-rose-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
                             <div className="absolute -right-4 -bottom-4 text-rose-500/5">
                                 <PackageOpen
                                     className="h-28 w-28"

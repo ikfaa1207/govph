@@ -29,26 +29,38 @@ class CreateReceivingReportAction
         $status = $data['status'] ?? 'finalized';
 
         return DB::transaction(function () use ($data, $status) {
+            // Find the Purchase Order
+            $po = PurchaseOrder::where('po_number', $data['po_number'])->firstOrFail();
+
             // Check for PO supplier mismatch
-            $existingPo = PurchaseOrder::where('po_number', $data['po_number'])->first();
-            if ($existingPo && (int) $existingPo->supplier_id !== (int) $data['supplier_id']) {
+            if ((int) $po->supplier_id !== (int) $data['supplier_id']) {
                 throw ValidationException::withMessages([
-                    'po_number' => ['The Purchase Order number already exists but is associated with a different supplier.'],
+                    'po_number' => ['The Purchase Order is associated with a different supplier.'],
                 ]);
             }
 
-            // Find or create Purchase Order
-            $po = PurchaseOrder::firstOrCreate(
-                ['po_number' => $data['po_number']],
-                [
-                    'supplier_id' => $data['supplier_id'],
-                    'po_date' => $data['po_date'],
-                    'status' => $status === 'finalized' ? 'received' : 'draft',
-                ]
-            );
+            if ($status === 'finalized') {
+                $allFulfilled = true;
+                foreach ($po->items as $poItem) {
+                    $totalAccepted = ReceivingReportItem::whereHas('receivingReport', function ($q) use ($po) {
+                        $q->where('purchase_order_id', $po->id)->where('status', 'finalized');
+                    })->where('item_id', $poItem->item_id)->sum('quantity_accepted');
 
-            if ($status === 'finalized' && $po->status !== 'received') {
-                $po->update(['status' => 'received']);
+                    // Add current request's accepted quantity
+                    $currentQty = 0;
+                    foreach ($data['items'] as $itemData) {
+                        if ((int) $itemData['item_id'] === $poItem->item_id) {
+                            $currentQty += (int) ($itemData['quantity_accepted'] ?? 0);
+                        }
+                    }
+
+                    if (($totalAccepted + $currentQty) < $poItem->quantity) {
+                        $allFulfilled = false;
+                        break;
+                    }
+                }
+
+                $po->update(['status' => $allFulfilled ? 'received' : 'partially_received']);
             }
 
             // Create Receiving Report

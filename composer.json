@@ -43,6 +43,13 @@
         }
     },
     "scripts": {
+        "check-all": [
+            "npm run format",
+            "npm run lint",
+            "@lint",
+            "@types:check",
+            "@php artisan test"
+        ],
         "setup": [
             "composer install",
             "@php -r \"file_exists('.env') || copy('.env.example', '.env');\"",

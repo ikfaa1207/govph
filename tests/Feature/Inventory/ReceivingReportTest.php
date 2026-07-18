@@ -99,6 +99,17 @@ test('can create receiving report and update stock and moving average cost', fun
         'status' => 'active',
     ]);
 
+    PurchaseOrder::create([
+        'po_number' => 'PO-2026-99',
+        'supplier_id' => $supplier->id,
+        'po_date' => '2026-06-01',
+        'status' => 'sent',
+    ])->items()->create([
+        'item_id' => $item->id,
+        'quantity' => 10,
+        'unit_cost' => 150.00,
+    ]);
+
     // Submit receiving report
     $response = $this->actingAs($user)
         ->from(route('inventory.receiving.index'))
@@ -205,6 +216,17 @@ test('can create draft receiving report without updating stock', function () {
         'status' => 'active',
     ]);
 
+    PurchaseOrder::create([
+        'po_number' => 'PO-2026-100',
+        'supplier_id' => $supplier->id,
+        'po_date' => '2026-06-01',
+        'status' => 'sent',
+    ])->items()->create([
+        'item_id' => $item->id,
+        'quantity' => 10,
+        'unit_cost' => 150.00,
+    ]);
+
     // Submit draft receiving report (iar_number, delivery_receipt_number, received_by, inspected_by are optional/nullable in draft)
     $response = $this->actingAs($user)
         ->from(route('inventory.receiving.index'))
@@ -236,7 +258,7 @@ test('can create draft receiving report without updating stock', function () {
     // Assert databases updated with draft receiving report
     $this->assertDatabaseHas('purchase_orders', [
         'po_number' => 'PO-2026-100',
-        'status' => 'draft',
+        'status' => 'sent',
     ]);
 
     $this->assertDatabaseHas('receiving_reports', [
@@ -318,7 +340,13 @@ test('can finalize a draft receiving report and update stock', function () {
         'po_number' => 'PO-2026-200',
         'supplier_id' => $supplier->id,
         'po_date' => '2026-06-01',
-        'status' => 'draft',
+        'status' => 'sent',
+    ]);
+
+    $po->items()->create([
+        'item_id' => $item->id,
+        'quantity' => 10,
+        'unit_cost' => 150.00,
     ]);
 
     $report = ReceivingReport::create([
@@ -449,6 +477,12 @@ test('cannot revert a finalized receiving report to draft', function () {
         'status' => 'received',
     ]);
 
+    $po->items()->create([
+        'item_id' => $item->id,
+        'quantity' => 10,
+        'unit_cost' => 150.00,
+    ]);
+
     $report = ReceivingReport::create([
         'purchase_order_id' => $po->id,
         'status' => 'finalized',
@@ -545,6 +579,17 @@ test('accepted quantity cannot exceed received quantity on validation', function
         'status' => 'active',
     ]);
 
+    PurchaseOrder::create([
+        'po_number' => 'PO-VAL-99',
+        'supplier_id' => $supplier->id,
+        'po_date' => '2026-06-01',
+        'status' => 'sent',
+    ])->items()->create([
+        'item_id' => $item->id,
+        'quantity' => 50,
+        'unit_cost' => 100.00,
+    ]);
+
     // Try storing with accepted > received
     $response = $this->actingAs($user)
         ->post(route('inventory.receiving.store'), [
@@ -614,7 +659,11 @@ test('submitting a receiving report for existing PO with different supplier thro
         'po_number' => 'PO-SHARED-123',
         'supplier_id' => $supplierA->id,
         'po_date' => '2026-06-01',
-        'status' => 'received',
+        'status' => 'sent',
+    ])->items()->create([
+        'item_id' => $item->id,
+        'quantity' => 10,
+        'unit_cost' => 150.00,
     ]);
 
     // Try creating receiving report with the same PO number but Supplier B
@@ -683,6 +732,17 @@ test('updating finalized report without changing stock quantity or cost does not
         'reorder_level' => 5,
         'maximum_stock' => 50,
         'status' => 'active',
+    ]);
+
+    PurchaseOrder::create([
+        'po_number' => 'PO-TX-99',
+        'supplier_id' => $supplier->id,
+        'po_date' => '2026-06-01',
+        'status' => 'sent',
+    ])->items()->create([
+        'item_id' => $item->id,
+        'quantity' => 10,
+        'unit_cost' => 150.00,
     ]);
 
     // Create report via store
@@ -806,6 +866,17 @@ test('finalizing IAR with PPE item auto spawns Property records', function () {
         'reorder_level' => 5,
         'maximum_stock' => 50,
         'status' => 'active',
+    ]);
+
+    PurchaseOrder::create([
+        'po_number' => 'PO-PPE-123',
+        'supplier_id' => $supplier->id,
+        'po_date' => '2026-06-01',
+        'status' => 'sent',
+    ])->items()->create([
+        'item_id' => $item->id,
+        'quantity' => 10,
+        'unit_cost' => 45000.00,
     ]);
 
     // 1. Create a finalized report with 3 accepted laptops

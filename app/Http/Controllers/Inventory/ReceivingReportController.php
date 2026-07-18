@@ -10,6 +10,7 @@ use App\Http\Requests\UpdateReceivingReportRequest;
 use App\Models\AuditLog;
 use App\Models\Employee;
 use App\Models\Item;
+use App\Models\PurchaseOrder;
 use App\Models\ReceivingReport;
 use App\Models\ReceivingReportItem;
 use App\Models\Supplier;
@@ -17,6 +18,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -131,6 +133,38 @@ class ReceivingReportController extends Controller
             $inspectors = Employee::whereNotIn('id', $receivers->pluck('id'))->get();
         }
 
+        $pendingPOs = PurchaseOrder::with(['supplier', 'items.item.unit'])
+            ->whereIn('status', ['sent', 'partially_received'])
+            ->get()
+            ->map(function ($po) {
+                return [
+                    'id' => $po->id,
+                    'po_number' => $po->po_number,
+                    'supplier_id' => $po->supplier_id,
+                    'po_date' => $po->po_date,
+                    'items' => array_values(array_filter($po->items->map(function ($item) use ($po) {
+                        $totalAccepted = ReceivingReportItem::whereHas('receivingReport', function ($q) use ($po) {
+                            $q->where('purchase_order_id', $po->id)->where('status', 'finalized');
+                        })->where('item_id', $item->item_id)->sum('quantity_accepted');
+
+                        return [
+                            'item_id' => $item->item_id,
+                            'quantity_ordered' => $item->quantity,
+                            'quantity_accepted' => $totalAccepted,
+                            'quantity_remaining' => max(0, $item->quantity - $totalAccepted),
+                            'unit_cost' => $item->unit_cost,
+                            'item' => [
+                                'id' => $item->item->id,
+                                'name' => $item->item->name,
+                                'unit' => $item->item->unit ? $item->item->unit->abbreviation : null,
+                            ],
+                        ];
+                    })->toArray(), function (array $item) {
+                        return $item['quantity_remaining'] > 0;
+                    })),
+                ];
+            });
+
         return Inertia::render('inventory/receiving/index', [
             'reports' => $reports,
             'stats' => $stats,
@@ -139,6 +173,7 @@ class ReceivingReportController extends Controller
             'inspectors' => $inspectors,
             'items' => Item::with('unit')->where('status', 'active')->get(),
             'filters' => $request->only(['search', 'status', 'supplier_id']),
+            'pending_purchase_orders' => $pendingPOs,
         ]);
     }
 
@@ -157,7 +192,9 @@ class ReceivingReportController extends Controller
         } catch (ValidationException $e) {
             throw $e;
         } catch (\Exception $e) {
-            return redirect()->back()->withErrors(['error' => 'Failed to create receiving report: '.$e->getMessage()]);
+            Log::error('Failed to create receiving report: '.$e->getMessage(), ['exception' => $e]);
+
+            return redirect()->back()->withErrors(['error' => 'An unexpected error occurred while creating the receiving report. Please try again.']);
         }
     }
 
@@ -183,7 +220,9 @@ class ReceivingReportController extends Controller
         } catch (ValidationException $e) {
             throw $e;
         } catch (\Exception $e) {
-            return redirect()->back()->withErrors(['error' => 'Failed to update receiving report: '.$e->getMessage()]);
+            Log::error('Failed to update receiving report: '.$e->getMessage(), ['exception' => $e]);
+
+            return redirect()->back()->withErrors(['error' => 'An unexpected error occurred while updating the receiving report. Please try again.']);
         }
     }
 

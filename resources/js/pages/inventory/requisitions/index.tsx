@@ -752,7 +752,7 @@ export default function RequisitionsIndex({
                 {/* Statistics Overview */}
                 {stats && (
                     <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-                        <Card className="relative flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-blue-500 bg-card bg-linear-to-tr from-transparent to-blue-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
+                        <Card className="relative z-0 flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-blue-500 bg-card bg-linear-to-tr from-transparent to-blue-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
                             <div className="absolute -right-4 -bottom-4 text-blue-500/5">
                                 <ClipboardList
                                     className="h-28 w-28"
@@ -769,7 +769,7 @@ export default function RequisitionsIndex({
                             </div>
                         </Card>
 
-                        <Card className="relative flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-violet-500 bg-card bg-linear-to-tr from-transparent to-violet-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
+                        <Card className="relative z-0 flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-violet-500 bg-card bg-linear-to-tr from-transparent to-violet-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
                             <div className="absolute -right-4 -bottom-4 text-violet-500/5">
                                 <ClipboardCheck
                                     className="h-28 w-28"
@@ -786,7 +786,7 @@ export default function RequisitionsIndex({
                             </div>
                         </Card>
 
-                        <Card className="relative flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-amber-500 bg-card bg-linear-to-tr from-transparent to-amber-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
+                        <Card className="relative z-0 flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-amber-500 bg-card bg-linear-to-tr from-transparent to-amber-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
                             <div className="absolute -right-4 -bottom-4 text-amber-500/5">
                                 <Package2
                                     className="h-28 w-28"
@@ -803,7 +803,7 @@ export default function RequisitionsIndex({
                             </div>
                         </Card>
 
-                        <Card className="relative flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-emerald-500 bg-card bg-linear-to-tr from-transparent to-emerald-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
+                        <Card className="relative z-0 flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-emerald-500 bg-card bg-linear-to-tr from-transparent to-emerald-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
                             <div className="absolute -right-4 -bottom-4 text-emerald-500/5">
                                 <ClipboardCheck
                                     className="h-28 w-28"

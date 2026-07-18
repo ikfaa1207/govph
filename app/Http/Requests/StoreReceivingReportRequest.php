@@ -2,8 +2,11 @@
 
 namespace App\Http\Requests;
 
+use App\Models\PurchaseOrder;
+use App\Models\ReceivingReportItem;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Validator;
 
 class StoreReceivingReportRequest extends FormRequest
 {
@@ -26,7 +29,7 @@ class StoreReceivingReportRequest extends FormRequest
 
         return [
             'status' => ['nullable', 'in:draft,finalized'],
-            'po_number' => ['required', 'string', 'max:255'],
+            'po_number' => ['required', 'string', 'max:255', 'exists:purchase_orders,po_number'],
             'supplier_id' => ['required', 'exists:suppliers,id'],
             'po_date' => ['required', 'date'],
             'iar_number' => [
@@ -68,6 +71,62 @@ class StoreReceivingReportRequest extends FormRequest
             'items.*.batch_number' => ['nullable', 'string', 'max:255'],
             'items.*.expiration_date' => ['nullable', 'date'],
             'items.*.rejection_reason' => ['nullable', 'string'],
+        ];
+    }
+
+    /**
+     * Get the "after" validation callables for the request.
+     */
+    public function after(): array
+    {
+        return [
+            function (Validator $validator) {
+                $poNumber = $this->input('po_number');
+                if (! $poNumber) {
+                    return;
+                }
+
+                $po = PurchaseOrder::where('po_number', $poNumber)->first();
+                if (! $po) {
+                    return; // Already handled by the exists rule
+                }
+
+                // Check PO status
+                if (! in_array($po->status, ['sent', 'partially_received'])) {
+                    $validator->errors()->add('po_number', "Purchase Order is in '{$po->status}' status and cannot be received against.");
+                }
+
+                // Check item validity and quantities
+                $items = $this->input('items', []);
+                foreach ($items as $index => $itemData) {
+                    $itemId = $itemData['item_id'] ?? null;
+                    $qtyReceived = (int) ($itemData['quantity_received'] ?? 0);
+
+                    if (! $itemId) {
+                        continue;
+                    }
+
+                    $poItem = $po->items()->where('item_id', $itemId)->first();
+                    if (! $poItem) {
+                        $validator->errors()->add("items.{$index}.item_id", 'This item is not part of the specified Purchase Order.');
+
+                        continue;
+                    }
+
+                    // Calculate previously accepted quantity across all finalized receiving reports for this PO
+                    $previouslyAccepted = ReceivingReportItem::whereHas('receivingReport', function ($q) use ($po) {
+                        $q->where('purchase_order_id', $po->id)
+                            ->where('status', 'finalized');
+                    })->where('item_id', $itemId)->sum('quantity_accepted');
+
+                    if (($previouslyAccepted + $qtyReceived) > $poItem->quantity) {
+                        $validator->errors()->add(
+                            "items.{$index}.quantity_received",
+                            'Total received quantity ('.($previouslyAccepted + $qtyReceived).") exceeds ordered quantity ({$poItem->quantity})."
+                        );
+                    }
+                }
+            },
         ];
     }
 }

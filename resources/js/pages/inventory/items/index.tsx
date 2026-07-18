@@ -432,7 +432,7 @@ export default function ItemsIndex({
                                     </Button>
                                 </DialogTrigger>
                                 <DialogContent
-                                    className="max-h-[85vh] max-w-md overflow-y-auto"
+                                    className="max-h-[85vh] overflow-y-auto sm:max-w-2xl"
                                     onPointerDownOutside={(e) => {
                                         // Prevent closing on clicking outside the parent dialog
                                         e.preventDefault();
@@ -527,8 +527,11 @@ export default function ItemsIndex({
                                                         }
                                                         required
                                                     >
-                                                        <SelectTrigger className="flex-1">
-                                                            <SelectValue placeholder="Select Category" />
+                                                        <SelectTrigger className="flex-1 overflow-hidden">
+                                                            <SelectValue
+                                                                placeholder="Select Category"
+                                                                className="truncate"
+                                                            />
                                                         </SelectTrigger>
                                                         <SelectContent>
                                                             {categories.map(
@@ -585,8 +588,11 @@ export default function ItemsIndex({
                                                         }
                                                         required
                                                     >
-                                                        <SelectTrigger className="flex-1">
-                                                            <SelectValue placeholder="Select Unit" />
+                                                        <SelectTrigger className="flex-1 overflow-hidden">
+                                                            <SelectValue
+                                                                placeholder="Select Unit"
+                                                                className="truncate"
+                                                            />
                                                         </SelectTrigger>
                                                         <SelectContent>
                                                             {units.map((u) => (
@@ -689,8 +695,11 @@ export default function ItemsIndex({
                                                         )
                                                     }
                                                 >
-                                                    <SelectTrigger className="flex-1">
-                                                        <SelectValue placeholder="Select Location" />
+                                                    <SelectTrigger className="flex-1 overflow-hidden">
+                                                        <SelectValue
+                                                            placeholder="Select Location"
+                                                            className="truncate"
+                                                        />
                                                     </SelectTrigger>
                                                     <SelectContent>
                                                         {locations.map((l) => (
@@ -831,8 +840,11 @@ export default function ItemsIndex({
                                                         }
                                                         required
                                                     >
-                                                        <SelectTrigger>
-                                                            <SelectValue placeholder="Select Category" />
+                                                        <SelectTrigger className="flex-1 overflow-hidden">
+                                                            <SelectValue
+                                                                placeholder="Select Category"
+                                                                className="truncate"
+                                                            />
                                                         </SelectTrigger>
                                                         <SelectContent>
                                                             {categories.map(
@@ -875,8 +887,11 @@ export default function ItemsIndex({
                                                         }
                                                         required
                                                     >
-                                                        <SelectTrigger>
-                                                            <SelectValue placeholder="Select Unit" />
+                                                        <SelectTrigger className="flex-1 overflow-hidden">
+                                                            <SelectValue
+                                                                placeholder="Select Unit"
+                                                                className="truncate"
+                                                            />
                                                         </SelectTrigger>
                                                         <SelectContent>
                                                             {units.map(
@@ -923,8 +938,11 @@ export default function ItemsIndex({
                                                             )
                                                         }
                                                     >
-                                                        <SelectTrigger>
-                                                            <SelectValue placeholder="Select Location" />
+                                                        <SelectTrigger className="flex-1 overflow-hidden">
+                                                            <SelectValue
+                                                                placeholder="Select Location"
+                                                                className="truncate"
+                                                            />
                                                         </SelectTrigger>
                                                         <SelectContent>
                                                             {locations.map(
@@ -1242,8 +1260,11 @@ export default function ItemsIndex({
                                                 }
                                                 required
                                             >
-                                                <SelectTrigger className="flex-1">
-                                                    <SelectValue placeholder="Select Warehouse" />
+                                                <SelectTrigger className="flex-1 overflow-hidden">
+                                                    <SelectValue
+                                                        placeholder="Select Warehouse"
+                                                        className="truncate"
+                                                    />
                                                 </SelectTrigger>
                                                 <SelectContent>
                                                     {warehouses.map((w) => (
@@ -1406,7 +1427,7 @@ export default function ItemsIndex({
                 {/* Statistics Overview */}
                 {stats && (
                     <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
-                        <Card className="relative flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-blue-500 bg-card bg-linear-to-tr from-transparent to-blue-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
+                        <Card className="relative z-0 flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-blue-500 bg-card bg-linear-to-tr from-transparent to-blue-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
                             <div className="absolute -right-4 -bottom-4 text-blue-500/5">
                                 <Package
                                     className="h-28 w-28"
@@ -1423,7 +1444,7 @@ export default function ItemsIndex({
                             </div>
                         </Card>
 
-                        <Card className="relative flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-emerald-500 bg-card bg-linear-to-tr from-transparent to-emerald-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
+                        <Card className="relative z-0 flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-emerald-500 bg-card bg-linear-to-tr from-transparent to-emerald-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
                             <div className="absolute -right-4 -bottom-4 text-emerald-500/5">
                                 <PhilippinePeso
                                     className="h-28 w-28"
@@ -1440,7 +1461,7 @@ export default function ItemsIndex({
                             </div>
                         </Card>
 
-                        <Card className="relative flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-violet-500 bg-card bg-linear-to-tr from-transparent to-violet-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
+                        <Card className="relative z-0 flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-violet-500 bg-card bg-linear-to-tr from-transparent to-violet-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
                             <div className="absolute -right-4 -bottom-4 text-violet-500/5">
                                 <Clock
                                     className="h-28 w-28"
@@ -1457,7 +1478,7 @@ export default function ItemsIndex({
                             </div>
                         </Card>
 
-                        <Card className="relative flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-amber-500 bg-card bg-linear-to-tr from-transparent to-amber-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
+                        <Card className="relative z-0 flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-amber-500 bg-card bg-linear-to-tr from-transparent to-amber-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
                             <div className="absolute -right-4 -bottom-4 text-amber-500/5">
                                 <AlertTriangle
                                     className="h-28 w-28"
@@ -1474,7 +1495,7 @@ export default function ItemsIndex({
                             </div>
                         </Card>
 
-                        <Card className="relative flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-rose-500 bg-card bg-linear-to-tr from-transparent to-rose-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
+                        <Card className="relative z-0 flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-rose-500 bg-card bg-linear-to-tr from-transparent to-rose-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
                             <div className="absolute -right-4 -bottom-4 text-rose-500/5">
                                 <AlertOctagon
                                     className="h-28 w-28"

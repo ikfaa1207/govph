@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
+import AlertError from '@/components/alert-error';
 import { RowActionsMenu } from '@/components/row-actions-menu';
 import { SimplePagination } from '@/components/simple-pagination';
 import { Badge } from '@/components/ui/badge';
@@ -109,6 +110,7 @@ interface ReceivingIndexProps {
         status?: string;
         supplier_id?: string;
     };
+    pending_purchase_orders?: any[];
 }
 
 export default function ReceivingIndex({
@@ -119,6 +121,7 @@ export default function ReceivingIndex({
     inspectors,
     items,
     filters = {},
+    pending_purchase_orders = [],
 }: ReceivingIndexProps) {
     const breadcrumbs = [
         { title: 'Receiving (Stock In)', href: '/inventory/receiving-reports' },
@@ -142,6 +145,30 @@ export default function ReceivingIndex({
     const [search, setSearch] = useState(filters.search || '');
     const [status, setStatus] = useState(filters.status || 'all');
     const [supplierId, setSupplierId] = useState(filters.supplier_id || 'all');
+
+    const poOptions = React.useMemo(() => {
+        const options = pending_purchase_orders.map((po: any) => ({
+            value: po.po_number,
+            label: `${po.po_number} - ${po.supplier?.name || ''}`,
+            po_data: po,
+        }));
+
+        if (editMode && selectedReport && selectedReport.purchase_order) {
+            const exists = options.find(
+                (o) => o.value === selectedReport.purchase_order.po_number,
+            );
+
+            if (!exists) {
+                options.push({
+                    value: selectedReport.purchase_order.po_number,
+                    label: `${selectedReport.purchase_order.po_number} - ${selectedReport.purchase_order.supplier_name}`,
+                    po_data: null,
+                });
+            }
+        }
+
+        return options;
+    }, [pending_purchase_orders, editMode, selectedReport]);
 
     const handleFilterChange = (
         newSearch: string,
@@ -495,6 +522,16 @@ export default function ReceivingIndex({
                                     onSubmit={(e) => e.preventDefault()}
                                     className="space-y-8"
                                 >
+                                    {Object.keys(errors).length > 0 && (
+                                        <AlertError
+                                            errors={
+                                                Object.values(
+                                                    errors,
+                                                ) as string[]
+                                            }
+                                            title="Please fix the following validation errors:"
+                                        />
+                                    )}
                                     {/* Section 1: PO & Reference Details */}
                                     <div className="space-y-4">
                                         <div className="mb-1 flex items-center gap-2.5 text-sm font-semibold text-primary">
@@ -510,17 +547,66 @@ export default function ReceivingIndex({
                                                 >
                                                     Purchase Order No.
                                                 </Label>
-                                                <Input
-                                                    id="po_number"
-                                                    placeholder="e.g. PO-2026-0032"
-                                                    value={data.po_number}
-                                                    onChange={(e) =>
-                                                        setData(
-                                                            'po_number',
-                                                            e.target.value,
-                                                        )
+                                                <SmartSelect
+                                                    options={poOptions}
+                                                    value={
+                                                        data.po_number ||
+                                                        undefined
                                                     }
-                                                    required
+                                                    onValueChange={(val) => {
+                                                        const selectedPO =
+                                                            poOptions.find(
+                                                                (o) =>
+                                                                    o.value ===
+                                                                    val,
+                                                            )?.po_data;
+
+                                                        if (selectedPO) {
+                                                            setData((prev) => ({
+                                                                ...prev,
+                                                                po_number: val,
+                                                                supplier_id:
+                                                                    String(
+                                                                        selectedPO.supplier_id,
+                                                                    ),
+                                                                po_date:
+                                                                    selectedPO.po_date,
+                                                                items: selectedPO.items.map(
+                                                                    (
+                                                                        item: any,
+                                                                    ) => ({
+                                                                        id:
+                                                                            Date.now() +
+                                                                            Math.random(),
+                                                                        item_id:
+                                                                            String(
+                                                                                item.item_id,
+                                                                            ),
+                                                                        quantity_received:
+                                                                            item.quantity_remaining,
+                                                                        quantity_accepted:
+                                                                            item.quantity_remaining,
+                                                                        quantity_rejected: 0,
+                                                                        unit_cost:
+                                                                            item.unit_cost,
+                                                                        batch_number:
+                                                                            '',
+                                                                        expiration_date:
+                                                                            '',
+                                                                        rejection_reason:
+                                                                            '',
+                                                                    }),
+                                                                ),
+                                                            }));
+                                                        } else {
+                                                            setData(
+                                                                'po_number',
+                                                                val,
+                                                            );
+                                                        }
+                                                    }}
+                                                    placeholder="Select Purchase Order"
+                                                    className="w-full"
                                                 />
                                                 {errors.po_number && (
                                                     <p className="text-xs text-rose-500">
@@ -1166,7 +1252,7 @@ export default function ReceivingIndex({
                 {/* Statistics Overview */}
                 {stats && (
                     <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-                        <Card className="relative flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-blue-500 bg-card bg-linear-to-tr from-transparent to-blue-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
+                        <Card className="relative z-0 flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-blue-500 bg-card bg-linear-to-tr from-transparent to-blue-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
                             <div className="absolute -right-4 -bottom-4 text-blue-500/5">
                                 <FileText
                                     className="h-28 w-28"
@@ -1183,7 +1269,7 @@ export default function ReceivingIndex({
                             </div>
                         </Card>
 
-                        <Card className="relative flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-violet-500 bg-card bg-linear-to-tr from-transparent to-violet-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
+                        <Card className="relative z-0 flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-violet-500 bg-card bg-linear-to-tr from-transparent to-violet-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
                             <div className="absolute -right-4 -bottom-4 text-violet-500/5">
                                 <Calendar
                                     className="h-28 w-28"
@@ -1200,7 +1286,7 @@ export default function ReceivingIndex({
                             </div>
                         </Card>
 
-                        <Card className="relative flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-emerald-500 bg-card bg-linear-to-tr from-transparent to-emerald-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
+                        <Card className="relative z-0 flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-emerald-500 bg-card bg-linear-to-tr from-transparent to-emerald-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
                             <div className="absolute -right-4 -bottom-4 text-emerald-500/5">
                                 <Package2
                                     className="h-28 w-28"
@@ -1217,7 +1303,7 @@ export default function ReceivingIndex({
                             </div>
                         </Card>
 
-                        <Card className="relative flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-rose-500 bg-card bg-linear-to-tr from-transparent to-rose-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
+                        <Card className="relative z-0 flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-rose-500 bg-card bg-linear-to-tr from-transparent to-rose-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
                             <div className="absolute -right-4 -bottom-4 text-rose-500/5">
                                 <X className="h-28 w-28" strokeWidth={1.5} />
                             </div>

@@ -35,26 +35,14 @@ class UpdateReceivingReportAction
             $report->load('items');
             $oldState = $report->toArray();
 
+            // Find the Purchase Order
+            $po = PurchaseOrder::where('po_number', $data['po_number'])->firstOrFail();
+
             // Check for PO supplier mismatch
-            $existingPo = PurchaseOrder::where('po_number', $data['po_number'])->first();
-            if ($existingPo && (int) $existingPo->supplier_id !== (int) $data['supplier_id']) {
+            if ((int) $po->supplier_id !== (int) $data['supplier_id']) {
                 throw ValidationException::withMessages([
-                    'po_number' => ['The Purchase Order number already exists but is associated with a different supplier.'],
+                    'po_number' => ['The Purchase Order is associated with a different supplier.'],
                 ]);
-            }
-
-            // Find or update Purchase Order
-            $po = PurchaseOrder::firstOrCreate(
-                ['po_number' => $data['po_number']],
-                [
-                    'supplier_id' => $data['supplier_id'],
-                    'po_date' => $data['po_date'],
-                    'status' => $status === 'finalized' ? 'received' : 'draft',
-                ]
-            );
-
-            if ($status === 'finalized' && $po->status !== 'received') {
-                $po->update(['status' => 'received']);
             }
 
             // Update Report Details
@@ -196,6 +184,28 @@ class UpdateReceivingReportAction
             $report->refresh();
             $report->load('items');
             $newState = $report->toArray();
+
+            // Recalculate PO status based on finalized reports
+            if (in_array($po->status, ['sent', 'partially_received', 'received'])) {
+                $hasAnyFinalized = ReceivingReport::where('purchase_order_id', $po->id)->where('status', 'finalized')->exists();
+
+                if (! $hasAnyFinalized) {
+                    $po->update(['status' => 'sent']);
+                } else {
+                    $allFulfilled = true;
+                    foreach ($po->items as $poItem) {
+                        $totalAccepted = ReceivingReportItem::whereHas('receivingReport', function ($q) use ($po) {
+                            $q->where('purchase_order_id', $po->id)->where('status', 'finalized');
+                        })->where('item_id', $poItem->item_id)->sum('quantity_accepted');
+
+                        if ($totalAccepted < $poItem->quantity) {
+                            $allFulfilled = false;
+                            break;
+                        }
+                    }
+                    $po->update(['status' => $allFulfilled ? 'received' : 'partially_received']);
+                }
+            }
 
             // Log update
             AuditLogger::log('UPDATE_RECEIVING_REPORT', $report, $oldState, $newState);

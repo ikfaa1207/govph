@@ -1,11 +1,18 @@
 import { Head, useForm, setLayoutProps, router } from '@inertiajs/react';
-import { PlusCircle, Eye } from 'lucide-react';
+import {
+    PlusCircle,
+    Eye,
+    FileText,
+    ClipboardList,
+    Truck,
+    PackageCheck,
+} from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { SimplePagination } from '@/components/simple-pagination';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { DatePicker } from '@/components/ui/date-picker';
 import {
     Dialog,
@@ -580,52 +587,61 @@ export default function PurchaseOrdersIndex({
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-                <Card>
-                    <CardHeader className="py-2">
-                        <CardTitle className="text-xs font-medium text-muted-foreground uppercase">
+            <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+                <Card className="relative z-0 flex min-h-[88px] flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-blue-500 bg-card bg-linear-to-tr from-transparent to-blue-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
+                    <div className="absolute -right-4 -bottom-4 text-blue-500/5">
+                        <FileText className="h-28 w-28" strokeWidth={1.5} />
+                    </div>
+                    <div className="relative z-10 space-y-1">
+                        <p className="text-[11px] font-medium tracking-wider text-blue-500 uppercase">
                             Total Orders
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="py-2">
-                        <div className="text-2xl font-bold">{stats.total}</div>
-                    </CardContent>
+                        </p>
+                        <p className="truncate text-2xl font-bold text-foreground">
+                            {stats.total}
+                        </p>
+                    </div>
                 </Card>
-                <Card>
-                    <CardHeader className="py-2">
-                        <CardTitle className="text-xs font-medium text-slate-500 uppercase">
+                <Card className="relative z-0 flex min-h-[88px] flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-slate-500 bg-card bg-linear-to-tr from-transparent to-slate-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
+                    <div className="absolute -right-4 -bottom-4 text-slate-500/5">
+                        <ClipboardList
+                            className="h-28 w-28"
+                            strokeWidth={1.5}
+                        />
+                    </div>
+                    <div className="relative z-10 space-y-1">
+                        <p className="text-[11px] font-medium tracking-wider text-slate-500 uppercase">
                             Draft POs
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="py-2">
-                        <div className="text-2xl font-bold text-slate-500">
+                        </p>
+                        <p className="truncate text-2xl font-bold text-foreground">
                             {stats.draft}
-                        </div>
-                    </CardContent>
+                        </p>
+                    </div>
                 </Card>
-                <Card>
-                    <CardHeader className="py-2">
-                        <CardTitle className="text-xs font-medium text-amber-500 uppercase">
+                <Card className="relative z-0 flex min-h-[88px] flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-amber-500 bg-card bg-linear-to-tr from-transparent to-amber-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
+                    <div className="absolute -right-4 -bottom-4 text-amber-500/5">
+                        <Truck className="h-28 w-28" strokeWidth={1.5} />
+                    </div>
+                    <div className="relative z-10 space-y-1">
+                        <p className="text-[11px] font-medium tracking-wider text-amber-500 uppercase">
                             Sent to Supplier
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="py-2">
-                        <div className="text-2xl font-bold text-amber-500">
+                        </p>
+                        <p className="truncate text-2xl font-bold text-foreground">
                             {stats.sent}
-                        </div>
-                    </CardContent>
+                        </p>
+                    </div>
                 </Card>
-                <Card>
-                    <CardHeader className="py-2">
-                        <CardTitle className="text-xs font-medium text-emerald-600 uppercase">
+                <Card className="relative z-0 flex min-h-[88px] flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-emerald-500 bg-card bg-linear-to-tr from-transparent to-emerald-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
+                    <div className="absolute -right-4 -bottom-4 text-emerald-500/5">
+                        <PackageCheck className="h-28 w-28" strokeWidth={1.5} />
+                    </div>
+                    <div className="relative z-10 space-y-1">
+                        <p className="text-[11px] font-medium tracking-wider text-emerald-500 uppercase">
                             Received (Deliveries)
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="py-2">
-                        <div className="text-2xl font-bold text-emerald-600">
+                        </p>
+                        <p className="truncate text-2xl font-bold text-foreground">
                             {stats.received}
-                        </div>
-                    </CardContent>
+                        </p>
+                    </div>
                 </Card>
             </div>
 

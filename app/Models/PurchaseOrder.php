@@ -21,6 +21,22 @@ class PurchaseOrder extends Model
     use HasFactory;
 
     /**
+     * Boot the model.
+     */
+    protected static function booted(): void
+    {
+        static::saved(function (PurchaseOrder $po) {
+            if ($po->wasChanged('status') && $po->purchase_request_id) {
+                if ($po->status === 'received') {
+                    $po->purchaseRequest()->update(['status' => 'completed']);
+                } elseif (in_array($po->status, ['sent', 'partially_received'])) {
+                    $po->purchaseRequest()->update(['status' => 'ordered']);
+                }
+            }
+        });
+    }
+
+    /**
      * Get the associated Purchase Request.
      *
      * @return BelongsTo<PurchaseRequest, $this>
