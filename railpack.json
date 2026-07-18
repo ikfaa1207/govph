@@ -1,6 +1,0 @@
-{
-  "$schema": "https://schema.railpack.com",
-  "deploy": {
-    "startCommand": "php artisan optimize && php artisan view:cache && php artisan event:cache && php artisan migrate --force && php artisan storage:link && bash /assets/scripts/start.sh"
-  }
-}
