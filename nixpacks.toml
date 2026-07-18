@@ -1,0 +1,19 @@
+[providers.laravel]
+
+[phases.install]
+# We override the default install phase to use `npm install` instead of `npm ci`. 
+# This prevents the cross-platform lockfile errors (like @emnapi/core missing).
+cmds = [
+    "npm install",
+    "composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev"
+]
+
+[phases.build]
+# Compile the frontend assets
+cmds = [
+    "npm run build"
+]
+
+[start]
+# Run production optimizations and migrations, then boot up the production Nginx/PHP-FPM web server.
+cmd = "php artisan optimize && php artisan view:cache && php artisan event:cache && php artisan migrate --force && php artisan storage:link && bash /assets/scripts/start.sh"
