@@ -12,9 +12,10 @@ parameters:
 
     level: 7
 
+    treatPhpDocTypesAsCertain: false
+
     ignoreErrors:
         - identifier: missingType.generics
         - identifier: missingType.iterableValue
         - identifier: method.nonObject
-        - identifier: function.alreadyNarrowedType
         - identifier: offsetAccess.notFound
