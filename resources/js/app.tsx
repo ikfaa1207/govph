@@ -6,10 +6,36 @@ import AppLayout from '@/layouts/app-layout';
 import AuthLayout from '@/layouts/auth-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 
-const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
+const getAppName = (): string => {
+    const envName = import.meta.env.VITE_APP_NAME || 'Govph';
+
+    if (envName.includes('${')) {
+        try {
+            const appEl = document.getElementById('app');
+
+            if (appEl && appEl.dataset.page) {
+                const page = JSON.parse(appEl.dataset.page);
+
+                if (page.props && page.props.name) {
+                    return page.props.name;
+                }
+            }
+        } catch {
+            // Ignore JSON parsing errors
+        }
+
+        return 'Govph';
+    }
+
+    return envName;
+};
 
 createInertiaApp({
-    title: (title) => (title ? `${title} - ${appName}` : appName),
+    title: (title) => {
+        const appName = getAppName();
+
+        return title ? `${title} - ${appName}` : appName;
+    },
     layout: (name) => {
         switch (true) {
             case name === 'welcome' || name === 'inventory/requisitions/print':
