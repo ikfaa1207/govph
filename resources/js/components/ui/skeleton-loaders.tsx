@@ -57,6 +57,19 @@ export function CardSkeleton({ className }: CardSkeletonProps) {
   )
 }
 
+interface MetricCardSkeletonProps {
+  className?: string
+}
+
+export function MetricCardSkeleton({ className }: MetricCardSkeletonProps) {
+  return (
+    <div className={cn("border border-t-4 border-border rounded-xl p-5 space-y-2 bg-card", className)}>
+      <Skeleton className="h-3 w-[100px]" />
+      <Skeleton className="h-7 w-[140px]" />
+    </div>
+  )
+}
+
 interface FormSkeletonProps {
   fields?: number
   className?: string

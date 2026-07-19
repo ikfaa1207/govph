@@ -17,7 +17,7 @@ import {
     CardTitle,
 } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { CardSkeleton } from '@/components/ui/skeleton-loaders';
+import { MetricCardSkeleton } from '@/components/ui/skeleton-loaders';
 import {
     Table,
     TableBody,
@@ -162,7 +162,7 @@ export default function Dashboard({
                                       ? 4
                                       : 5,
                         }).map((_, i) => (
-                            <CardSkeleton key={i} className="h-[110px]" />
+                            <MetricCardSkeleton key={i} />
                         ))}
                     </div>
                 ) : (
