@@ -225,12 +225,12 @@ class DashboardController extends Controller
 
         return Inertia::render('inventory/dashboard', [
             'userScope' => $userScope,
-            'stats' => Inertia::optional(fn () => $statsData),
-            'recentIssuances' => Inertia::optional(fn () => $recentIssuances),
-            'recentReceiving' => Inertia::optional(fn () => $recentReceiving),
-            'pendingRequests' => Inertia::optional(fn () => $pendingRequests),
+            'stats' => Inertia::defer(fn () => $statsData),
+            'recentIssuances' => Inertia::defer(fn () => $recentIssuances),
+            'recentReceiving' => Inertia::defer(fn () => $recentReceiving),
+            'pendingRequests' => Inertia::defer(fn () => $pendingRequests),
             'complianceAlerts' => $complianceAlerts,
-            'myProperties' => Inertia::optional(fn () => $myProperties),
+            'myProperties' => Inertia::defer(fn () => $myProperties),
         ]);
     }
 }
