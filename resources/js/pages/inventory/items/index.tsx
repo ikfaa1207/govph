@@ -4,6 +4,7 @@ import {
     useHttp,
     setLayoutProps,
     router,
+    usePage,
 } from '@inertiajs/react';
 import {
     PlusCircle,
@@ -53,6 +54,8 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { TourGuide } from '@/components/ui/tour-guide';
+import type { TourStep } from '@/components/ui/tour-guide';
 import { formatCurrency } from '@/lib/utils';
 interface Item {
     id: number;
@@ -360,14 +363,50 @@ export default function ItemsIndex({
         });
     };
 
+    const { auth } = usePage().props as any;
+    const canCreate = auth?.user?.permissions?.includes('inventory.create');
+    const tourSteps: TourStep[] = [
+        {
+            target: '#items-tour-header',
+            title: 'Supplies Catalog',
+            description:
+                'This is the active stock ledger where you manage stock numbers, UOMs, unit costs, and storage shelf details.',
+        },
+    ];
+
+    if (canCreate) {
+        tourSteps.push({
+            target: '#items-tour-create',
+            title: 'Add Supply Item',
+            description:
+                'Click here to register a new supply item into the catalog databases, categories, and warehouses.',
+        });
+    }
+
+    tourSteps.push(
+        {
+            target: '#items-tour-filters',
+            title: 'Filters & Search',
+            description:
+                'Quickly find items by search name, barcode, or filter them by stock status (e.g. low stock, out of stock).',
+        },
+        {
+            target: '#items-tour-list',
+            title: 'Supplies Table',
+            description:
+                'View active stock counts, unit costs, and current storage locations.',
+        },
+    );
+
     return (
         <>
             <Head title="Supplies Catalog - GIMS" />
+            <TourGuide tourId="items-index" steps={tourSteps} />
 
             <div className="space-y-6 p-6">
                 {/* Header Section */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
+                    <div id="items-tour-header">
                         <h1 className="text-xl font-bold tracking-tight">
                             Supplies & Materials Catalog
                         </h1>
@@ -396,7 +435,10 @@ export default function ItemsIndex({
                                 }}
                             >
                                 <DialogTrigger asChild>
-                                    <Button className="gap-2">
+                                    <Button
+                                        id="items-tour-create"
+                                        className="gap-2"
+                                    >
                                         <PlusCircle className="h-4 w-4" />
                                         Add Supply Item
                                     </Button>
@@ -1493,7 +1535,10 @@ export default function ItemsIndex({
                     </CardHeader>
                     <CardContent>
                         {/* Search and Filters Bar */}
-                        <div className="mb-6 grid grid-cols-1 items-end gap-4 md:grid-cols-4">
+                        <div
+                            id="items-tour-filters"
+                            className="mb-6 grid grid-cols-1 items-end gap-4 md:grid-cols-4"
+                        >
                             <div className="space-y-1.5 md:col-span-2">
                                 <Label className="text-xs font-semibold text-muted-foreground">
                                     Search Catalog
@@ -1640,7 +1685,10 @@ export default function ItemsIndex({
                                 />
                             </div>
                         ) : (
-                            <div className="overflow-x-auto">
+                            <div
+                                id="items-tour-list"
+                                className="overflow-x-auto"
+                            >
                                 <Table className="text-xs">
                                     <TableHeader>
                                         <TableRow>

@@ -1,4 +1,4 @@
-import { Head, setLayoutProps, router } from '@inertiajs/react';
+import { Head, setLayoutProps, router, usePage } from '@inertiajs/react';
 import {
     PlusCircle,
     UserCheck,
@@ -16,6 +16,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { SmartSelect } from '@/components/ui/smart-select';
+import { TourGuide } from '@/components/ui/tour-guide';
+import type { TourStep } from '@/components/ui/tour-guide';
 import { formatCurrency } from '@/lib/utils';
 
 // Import extracted components
@@ -233,13 +235,49 @@ export default function PropertyIndex({
         setIsAcknowledgeOpen(true);
     };
 
+    const { auth } = usePage().props as any;
+    const canAssign = auth?.user?.permissions?.includes('property.assign');
+    const tourSteps: TourStep[] = [
+        {
+            target: '#properties-tour-header',
+            title: 'Property Registry (PPE)',
+            description:
+                'This is the government assets and capitalized equipment registry where you manage inventory tags, serials, and condition states.',
+        },
+    ];
+
+    if (canAssign) {
+        tourSteps.push({
+            target: '#properties-tour-create',
+            title: 'Register Equipment',
+            description:
+                'Click here to catalog a new property unit or physical asset into the repository.',
+        });
+    }
+
+    tourSteps.push(
+        {
+            target: '#properties-tour-filters',
+            title: 'Filters & Search',
+            description:
+                'Search properties by serial numbers or filter by physical condition and availability.',
+        },
+        {
+            target: '#properties-tour-list',
+            title: 'Properties List',
+            description:
+                'View property tags, current assignees, edit details, or trigger transfer handovers (PAR/ICS).',
+        },
+    );
+
     return (
         <>
             <Head title="Property Registry - GIMS" />
+            <TourGuide tourId="property-index" steps={tourSteps} />
             <div className="space-y-6 p-6">
                 {/* Header Section */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
+                    <div id="properties-tour-header">
                         <h1 className="text-xl font-bold tracking-tight">
                             Property, Plant, and Equipment (PPE)
                         </h1>
@@ -274,6 +312,7 @@ export default function PropertyIndex({
                                 </>
                             )}
                             <Button
+                                id="properties-tour-create"
                                 className="gap-2"
                                 onClick={() => setIsAddOpen(true)}
                             >
@@ -383,7 +422,10 @@ export default function PropertyIndex({
                     </CardHeader>
                     <CardContent>
                         {/* Search and Filters Bar */}
-                        <div className="mb-6 grid grid-cols-1 items-end gap-4 md:grid-cols-5">
+                        <div
+                            id="properties-tour-filters"
+                            className="mb-6 grid grid-cols-1 items-end gap-4 md:grid-cols-5"
+                        >
                             <div className="space-y-1.5 md:col-span-2">
                                 <Label className="text-xs font-semibold text-muted-foreground">
                                     Search Registry
@@ -582,21 +624,23 @@ export default function PropertyIndex({
                                 )}
                             </div>
                         ) : (
-                            <PropertyTable
-                                properties={properties}
-                                selectedPropIds={selectedPropIds}
-                                setSelectedPropIds={setSelectedPropIds}
-                                openAssignModal={openAssignModal}
-                                openTransferModal={openTransferModal}
-                                openSubAssignModal={openSubAssignModal}
-                                openReturnSubAssignModal={
-                                    openReturnSubAssignModal
-                                }
-                                openDisposeModal={openDisposeModal}
-                                openEditModal={openEditModal}
-                                openAcknowledgeModal={openAcknowledgeModal}
-                                currentEmployee={current_employee}
-                            />
+                            <div id="properties-tour-list">
+                                <PropertyTable
+                                    properties={properties}
+                                    selectedPropIds={selectedPropIds}
+                                    setSelectedPropIds={setSelectedPropIds}
+                                    openAssignModal={openAssignModal}
+                                    openTransferModal={openTransferModal}
+                                    openSubAssignModal={openSubAssignModal}
+                                    openReturnSubAssignModal={
+                                        openReturnSubAssignModal
+                                    }
+                                    openDisposeModal={openDisposeModal}
+                                    openEditModal={openEditModal}
+                                    openAcknowledgeModal={openAcknowledgeModal}
+                                    currentEmployee={current_employee}
+                                />
+                            </div>
                         )}
                     </CardContent>
                 </Card>

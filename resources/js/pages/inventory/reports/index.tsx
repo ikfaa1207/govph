@@ -21,6 +21,8 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { TourGuide } from '@/components/ui/tour-guide';
+import type { TourStep } from '@/components/ui/tour-guide';
 import { formatCurrency, formatDateTime } from '@/lib/utils';
 
 interface ReportType {
@@ -76,13 +78,29 @@ export default function ReportsIndex({ reportTypes }: ReportsIndexProps) {
         window.print();
     };
 
+    const tourSteps: TourStep[] = [
+        {
+            target: '#reports-tour-header',
+            title: 'Reports Centre',
+            description:
+                'This is the COA and Auditing reports generator where you compile officially formatted government inventory sheets.',
+        },
+        {
+            target: '#reports-tour-options',
+            title: 'Report Parameters',
+            description:
+                'Choose a template layout (like RPCI, RPCPPE, or Stock Ledgers), fill in the target options, and click Compile to display and print the spreadsheet.',
+        },
+    ];
+
     return (
         <>
+            <TourGuide tourId="reports-index" steps={tourSteps} />
             <Head title="COA Reports Centre - GIMS" />
             <div className="space-y-6 p-6 print:m-0 print:p-0">
                 {/* Header Section */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between print:hidden">
-                    <div>
+                    <div id="reports-tour-header">
                         <h1 className="text-xl font-bold tracking-tight">
                             COA Reports & Auditing Centre
                         </h1>
@@ -106,7 +124,7 @@ export default function ReportsIndex({ reportTypes }: ReportsIndexProps) {
                 </div>
 
                 {/* Configurations Card */}
-                <Card className="print:hidden">
+                <Card id="reports-tour-options" className="print:hidden">
                     <CardHeader>
                         <CardTitle className="text-base font-semibold">
                             Report Parameters

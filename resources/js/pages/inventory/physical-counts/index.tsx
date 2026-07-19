@@ -39,6 +39,8 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { TourGuide } from '@/components/ui/tour-guide';
+import type { TourStep } from '@/components/ui/tour-guide';
 import type { BreadcrumbItem } from '@/types';
 import { RpcppeViewerDialog } from './components/RpcppeViewerDialog';
 
@@ -180,8 +182,37 @@ export default function PhysicalCountsIndex({
         });
     };
 
+    const canManageCounts =
+        auth?.user?.permissions?.includes('reports.view') ||
+        auth?.user?.permissions?.includes('inventory.create');
+    const tourSteps: TourStep[] = [
+        {
+            target: '#counts-tour-header',
+            title: 'Physical Counts',
+            description:
+                'Conduct and manage physical inventory counts (RPCPPE for equipment, RPCI for supplies) for statutory compliance.',
+        },
+    ];
+
+    if (canManageCounts) {
+        tourSteps.push({
+            target: '#counts-tour-create',
+            title: 'Initiate Physical Count',
+            description:
+                'Click here to start a new physical count. This freezes stock metrics and generates count worksheets.',
+        });
+    }
+
+    tourSteps.push({
+        target: '#counts-tour-list',
+        title: 'Counts Registry',
+        description:
+            'View initiated counts, check committee feedback, finalize reconciliation reports, and export COA sheets.',
+    });
+
     return (
         <>
+            <TourGuide tourId="counts-index" steps={tourSteps} />
             <Head title="Physical Counts" />
 
             <Dialog
@@ -218,7 +249,7 @@ export default function PhysicalCountsIndex({
 
             <div className="space-y-6 p-6">
                 <div className="flex items-center justify-between">
-                    <div>
+                    <div id="counts-tour-header">
                         <h1 className="text-xl font-bold tracking-tight">
                             Physical Counts & COA Reporting
                         </h1>
@@ -233,7 +264,10 @@ export default function PhysicalCountsIndex({
                             onOpenChange={setIsCreateOpen}
                         >
                             <DialogTrigger asChild>
-                                <Button className="gap-2">
+                                <Button
+                                    id="counts-tour-create"
+                                    className="gap-2"
+                                >
                                     <PlusCircle className="h-4 w-4" />
                                     Initiate Physical Count
                                 </Button>
@@ -751,7 +785,10 @@ export default function PhysicalCountsIndex({
                     </CardContent>
                 </Card>
 
-                <div className="hidden w-full overflow-x-auto overflow-y-hidden rounded-xl border bg-card shadow-xs md:block">
+                <div
+                    id="counts-tour-list"
+                    className="hidden w-full overflow-x-auto overflow-y-hidden rounded-xl border bg-card shadow-xs md:block"
+                >
                     <Table className="min-w-[800px]">
                         <TableHeader>
                             <TableRow>

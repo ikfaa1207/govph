@@ -4,6 +4,7 @@ import {
     useHttp,
     setLayoutProps,
     router,
+    usePage,
 } from '@inertiajs/react';
 import {
     PlusCircle,
@@ -50,6 +51,8 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { TourGuide } from '@/components/ui/tour-guide';
+import type { TourStep } from '@/components/ui/tour-guide';
 import { formatCurrency } from '@/lib/utils';
 
 interface ReceivingReportItem {
@@ -463,13 +466,51 @@ export default function ReceivingIndex({
         );
     }, 0);
 
+    const { auth } = usePage().props as any;
+    const userCanReceive =
+        auth?.user?.permissions?.includes('receiving.create') ||
+        auth?.user?.permissions?.includes('inventory.create');
+    const tourSteps: TourStep[] = [
+        {
+            target: '#receiving-tour-header',
+            title: 'Receiving Reports',
+            description:
+                'This is the Inspection & Acceptance Workspace where incoming supplier deliveries are logged and verified against POs.',
+        },
+    ];
+
+    if (userCanReceive) {
+        tourSteps.push({
+            target: '#receiving-tour-create',
+            title: 'Receive Delivery',
+            description:
+                'Click here to log a new delivery, input inspector findings, and automatically increase stock levels.',
+        });
+    }
+
+    tourSteps.push(
+        {
+            target: '#receiving-tour-filters',
+            title: 'Filters & Search',
+            description:
+                'Quickly look up receiving records by IAR number, PO number, or supplier.',
+        },
+        {
+            target: '#receiving-tour-list',
+            title: 'Acceptance List',
+            description:
+                'View active receiving reports, check finalized statuses, print official IAR sheets, or review edit histories.',
+        },
+    );
+
     return (
         <>
             <Head title="Receiving Reports - GIMS" />
+            <TourGuide tourId="receiving-index" steps={tourSteps} />
             <div className="space-y-6 p-6">
                 {/* Header */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
+                    <div id="receiving-tour-header">
                         <h1 className="text-xl font-bold tracking-tight">
                             Receiving & Inspection Reports
                         </h1>
@@ -494,6 +535,7 @@ export default function ReceivingIndex({
                         >
                             <DialogTrigger asChild>
                                 <Button
+                                    id="receiving-tour-create"
                                     className="gap-2"
                                     onClick={() => setEditMode(false)}
                                 >
@@ -1329,7 +1371,10 @@ export default function ReceivingIndex({
                     </CardHeader>
                     <CardContent>
                         {/* Search and Filters Bar */}
-                        <div className="mb-6 grid grid-cols-1 items-end gap-4 md:grid-cols-4">
+                        <div
+                            id="receiving-tour-filters"
+                            className="mb-6 grid grid-cols-1 items-end gap-4 md:grid-cols-4"
+                        >
                             <div className="space-y-1.5 md:col-span-2">
                                 <Label className="text-xs font-semibold text-muted-foreground">
                                     Search Reports
@@ -1464,7 +1509,10 @@ export default function ReceivingIndex({
                                 />
                             </div>
                         ) : (
-                            <div className="overflow-x-auto">
+                            <div
+                                id="receiving-tour-list"
+                                className="overflow-x-auto"
+                            >
                                 <Table>
                                     <TableHeader>
                                         <TableRow>

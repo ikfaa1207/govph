@@ -34,87 +34,98 @@ export function TourGuide({ tourId, steps }: TourGuideProps) {
         }
     }, [tourId, steps]);
 
+    // Scroll the highlighted element into view only when the step changes
+    useEffect(() => {
+        if (!isActive || steps.length === 0) return;
+        const step = steps[currentStep];
+        const element = document.querySelector(step.target);
+        if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }, [currentStep, isActive, steps]);
+
     // Recalculate target positions when step or active state changes
     useEffect(() => {
         if (!isActive || steps.length === 0) return;
 
+        let animationFrameId: number;
+
         const handlePositionUpdate = () => {
-            const step = steps[currentStep];
-            const element = document.querySelector(step.target);
+            animationFrameId = requestAnimationFrame(() => {
+                const step = steps[currentStep];
+                const element = document.querySelector(step.target);
 
-            if (element) {
-                const rect = element.getBoundingClientRect();
-                const scrollY = window.scrollY;
-                const scrollX = window.scrollX;
-                const padding = 8;
+                if (element) {
+                    const rect = element.getBoundingClientRect();
+                    const scrollY = window.scrollY;
+                    const scrollX = window.scrollX;
+                    const padding = 8;
 
-                const top = rect.top + scrollY - padding;
-                const left = rect.left + scrollX - padding;
-                const width = rect.width + padding * 2;
-                const height = rect.height + padding * 2;
+                    const top = rect.top + scrollY - padding;
+                    const left = rect.left + scrollX - padding;
+                    const width = rect.width + padding * 2;
+                    const height = rect.height + padding * 2;
 
-                setHighlightStyle({
-                    position: 'absolute',
-                    top: `${top}px`,
-                    left: `${left}px`,
-                    width: `${width}px`,
-                    height: `${height}px`,
-                    borderRadius: '8px',
-                    boxShadow: '0 0 0 9999px rgba(15, 23, 42, 0.65)',
-                    zIndex: 9999,
-                    pointerEvents: 'none',
-                    transition: 'all 0.3s ease-in-out',
-                });
+                    setHighlightStyle({
+                        position: 'absolute',
+                        top: `${top}px`,
+                        left: `${left}px`,
+                        width: `${width}px`,
+                        height: `${height}px`,
+                        borderRadius: '8px',
+                        boxShadow: '0 0 0 9999px rgba(15, 23, 42, 0.65)',
+                        zIndex: 9999,
+                        pointerEvents: 'none',
+                        transition: 'all 0.3s ease-in-out',
+                    });
 
-                // Calculate popover positioning
-                let cardTop = top + height + 12;
-                let cardLeft = left + width / 2 - 160; // Center popover (w-80 = 320px)
+                    // Calculate popover positioning
+                    let cardTop = top + height + 12;
+                    let cardLeft = left + width / 2 - 160; // Center popover (w-80 = 320px)
 
-                // Ensure popover stays within horizontal viewport
-                if (cardLeft < 16) {
-                    cardLeft = 16;
-                } else if (cardLeft + 320 > window.innerWidth - 16) {
-                    cardLeft = window.innerWidth - 336;
+                    // Ensure popover stays within horizontal viewport
+                    if (cardLeft < 16) {
+                        cardLeft = 16;
+                    } else if (cardLeft + 320 > window.innerWidth - 16) {
+                        cardLeft = window.innerWidth - 336;
+                    }
+
+                    // If element is near bottom, position popover above it instead
+                    if (rect.bottom + 250 > window.innerHeight) {
+                        cardTop = top - 180;
+                        if (cardTop < 16) cardTop = 16;
+                    }
+
+                    setCardStyle({
+                        position: 'absolute',
+                        top: `${cardTop}px`,
+                        left: `${cardLeft}px`,
+                        width: '320px',
+                        zIndex: 10000,
+                        transition: 'all 0.3s ease-in-out',
+                    });
+                } else {
+                    // Element not found - render fallback modal in the center of the screen
+                    setHighlightStyle({
+                        position: 'fixed',
+                        top: '0px',
+                        left: '0px',
+                        width: '100%',
+                        height: '100%',
+                        backgroundColor: 'rgba(15, 23, 42, 0.65)',
+                        zIndex: 9999,
+                    });
+
+                    setCardStyle({
+                        position: 'fixed',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        width: '320px',
+                        zIndex: 10000,
+                    });
                 }
-
-                // If element is near bottom, position popover above it instead
-                if (rect.bottom + 250 > window.innerHeight) {
-                    cardTop = top - 180;
-                    if (cardTop < 16) cardTop = 16;
-                }
-
-                setCardStyle({
-                    position: 'absolute',
-                    top: `${cardTop}px`,
-                    left: `${cardLeft}px`,
-                    width: '320px',
-                    zIndex: 10000,
-                    transition: 'all 0.3s ease-in-out',
-                });
-
-                // Scroll the highlighted element into view
-                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            } else {
-                // Element not found - render fallback modal in the center of the screen
-                setHighlightStyle({
-                    position: 'fixed',
-                    top: '0px',
-                    left: '0px',
-                    width: '100%',
-                    height: '100%',
-                    backgroundColor: 'rgba(15, 23, 42, 0.65)',
-                    zIndex: 9999,
-                });
-
-                setCardStyle({
-                    position: 'fixed',
-                    top: '50%',
-                    left: '50%',
-                    transform: 'translate(-50%, -50%)',
-                    width: '320px',
-                    zIndex: 10000,
-                });
-            }
+            });
         };
 
         handlePositionUpdate();
@@ -122,6 +133,7 @@ export function TourGuide({ tourId, steps }: TourGuideProps) {
         window.addEventListener('scroll', handlePositionUpdate);
 
         return () => {
+            cancelAnimationFrame(animationFrameId);
             window.removeEventListener('resize', handlePositionUpdate);
             window.removeEventListener('scroll', handlePositionUpdate);
         };
