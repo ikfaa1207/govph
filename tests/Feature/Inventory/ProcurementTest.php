@@ -428,4 +428,22 @@ test('procurement visibility is correctly scoped by role and department', functi
     $response->assertOk();
     // They did not request any PRs personally, so they should see 0 (not 2 or 1 from other departments)
     $this->assertCount(0, $response->viewData('page')['props']['purchaseRequests']['data']);
+
+    // Verification 6: User with procurement.create is scoped to department/personal if they don't have global roles
+    $procurementCreator = User::factory()->create();
+    $procurementCreator->givePermissionTo('procurement.view', 'procurement.create');
+    $creatorEmployee = Employee::create([
+        'user_id' => $procurementCreator->id,
+        'employee_id' => 'EMP-CREAT1',
+        'name' => 'Procurement Creator',
+        'position' => 'Staff',
+        'office_id' => $otherOffice->id,
+        'department_id' => $otherDept->id,
+    ]);
+
+    $this->actingAs($procurementCreator);
+    $response = $this->get(route('inventory.purchase-requests.index'));
+    $response->assertOk();
+    // They did not request any PRs personally, so they should see 0
+    $this->assertCount(0, $response->viewData('page')['props']['purchaseRequests']['data']);
 });

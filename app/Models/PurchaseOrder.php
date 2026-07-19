@@ -87,7 +87,7 @@ class PurchaseOrder extends Model
     {
         $employee ??= Employee::where('user_id', $user->id)->first();
 
-        if ($user->hasPermissionTo('admin.super') || $user->hasPermissionTo('warehouse.issue') || $user->hasPermissionTo('audit.view') || $user->hasPermissionTo('procurement.create')) {
+        if ($user->hasPermissionTo('admin.super') || $user->hasPermissionTo('warehouse.issue') || $user->hasPermissionTo('audit.view')) {
             return $query;
         }
 
