@@ -26,7 +26,6 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
-import { CoachMark } from '@/components/ui/coach-mark';
 import {
     Collapsible,
     CollapsibleContent,
@@ -53,6 +52,8 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { TourGuide } from '@/components/ui/tour-guide';
+import type { TourStep } from '@/components/ui/tour-guide';
 import { formatDateTime } from '@/lib/utils';
 
 interface RequisitionItem {
@@ -396,13 +397,39 @@ export default function RequisitionsIndex({
         });
     };
 
+    const tourSteps: TourStep[] = [
+        {
+            target: '#ris-tour-header',
+            title: 'Requisitions Board',
+            description:
+                'This is the Requisitions & Issue Slips (RIS) workspace where you request office supplies and track current approvals.',
+        },
+    ];
+
+    if (canCreate) {
+        tourSteps.push({
+            target: '#ris-tour-create',
+            title: 'New Requisitions',
+            description:
+                'Click here to submit a new supply request. You can search the supplies catalog, select items, and submit for Department Head approval.',
+        });
+    }
+
+    tourSteps.push({
+        target: '#ris-tour-list',
+        title: 'Track Requests',
+        description:
+            'Your submitted requests will appear here. You can track their approval status, print standard government RIS forms, or witness delivery updates.',
+    });
+
     return (
         <>
             <Head title="Requisitions Board - GIMS" />
+            <TourGuide tourId="requisitions-index" steps={tourSteps} />
             <div className="space-y-6 p-6">
                 {/* Header Section */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
+                    <div id="ris-tour-header">
                         <h1 className="text-xl font-bold tracking-tight">
                             Requisitions & Issue Slips (RIS)
                         </h1>
@@ -413,341 +440,329 @@ export default function RequisitionsIndex({
                     </div>
 
                     {canCreate && (
-                        <CoachMark
-                            id="requisitions-new-ris"
-                            title="Welcome to Requisitions!"
-                            description="Start here to request new supplies. Once submitted, your Department Head will review it."
-                        >
-                            <Dialog
-                                open={isRequestOpen}
-                                onOpenChange={(open) => {
-                                    setIsRequestOpen(open);
+                        <Dialog
+                            open={isRequestOpen}
+                            onOpenChange={(open) => {
+                                setIsRequestOpen(open);
 
-                                    if (!open) {
-                                        setShowSummaryPreview(false);
-                                    }
-                                }}
+                                if (!open) {
+                                    setShowSummaryPreview(false);
+                                }
+                            }}
+                        >
+                            <DialogTrigger asChild>
+                                <Button id="ris-tour-create" className="gap-2">
+                                    <PlusCircle className="h-4 w-4" />
+                                    New Requisition (RIS)
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent
+                                className="max-h-[85vh] overflow-y-auto sm:max-w-2xl sm:p-8"
+                                onPointerDownOutside={(e) => e.preventDefault()}
+                                onInteractOutside={(e) => e.preventDefault()}
                             >
-                                <DialogTrigger asChild>
-                                    <Button className="gap-2">
-                                        <PlusCircle className="h-4 w-4" />
-                                        New Requisition (RIS)
-                                    </Button>
-                                </DialogTrigger>
-                                <DialogContent
-                                    className="max-h-[85vh] overflow-y-auto sm:max-w-2xl sm:p-8"
-                                    onPointerDownOutside={(e) =>
-                                        e.preventDefault()
-                                    }
-                                    onInteractOutside={(e) =>
-                                        e.preventDefault()
-                                    }
+                                <DialogHeader className="mb-2">
+                                    <DialogTitle className="text-xl">
+                                        File Requisition Slip (RIS)
+                                    </DialogTitle>
+                                    <DialogDescription className="text-sm">
+                                        Select supplies from the catalog and
+                                        specify quantities requested.
+                                    </DialogDescription>
+                                </DialogHeader>
+                                <form
+                                    onSubmit={handleRequestSubmit}
+                                    className="space-y-6"
                                 >
-                                    <DialogHeader className="mb-2">
-                                        <DialogTitle className="text-xl">
-                                            File Requisition Slip (RIS)
-                                        </DialogTitle>
-                                        <DialogDescription className="text-sm">
-                                            Select supplies from the catalog and
-                                            specify quantities requested.
-                                        </DialogDescription>
-                                    </DialogHeader>
-                                    <form
-                                        onSubmit={handleRequestSubmit}
-                                        className="space-y-6"
+                                    <div
+                                        ref={tableContainerRef}
+                                        className="max-h-[30vh] overflow-y-auto rounded-md border border-border"
                                     >
-                                        <div
-                                            ref={tableContainerRef}
-                                            className="max-h-[30vh] overflow-y-auto rounded-md border border-border"
+                                        <Table className="text-xs">
+                                            <TableHeader>
+                                                <TableRow className="bg-muted/50">
+                                                    <TableHead className="p-3">
+                                                        Item *
+                                                    </TableHead>
+                                                    <TableHead className="w-36 p-3">
+                                                        Qty Requested *
+                                                    </TableHead>
+                                                    <TableHead className="w-12 p-3 text-center"></TableHead>
+                                                </TableRow>
+                                            </TableHeader>
+                                            <TableBody>
+                                                {requestForm.data.items.map(
+                                                    (item, idx) => {
+                                                        return (
+                                                            <TableRow
+                                                                key={
+                                                                    item.isNew
+                                                                        ? `new-${idx}`
+                                                                        : idx
+                                                                }
+                                                            >
+                                                                <TableCell className="p-2.5">
+                                                                    <SmartSelect
+                                                                        options={items.map(
+                                                                            (
+                                                                                i,
+                                                                            ) => ({
+                                                                                value: String(
+                                                                                    i.id,
+                                                                                ),
+                                                                                label: `${i.name} (Qty Available: ${i.current_stock} ${i.unit})`,
+                                                                            }),
+                                                                        )}
+                                                                        value={
+                                                                            item.item_id
+                                                                                ? String(
+                                                                                      item.item_id,
+                                                                                  )
+                                                                                : undefined
+                                                                        }
+                                                                        onValueChange={(
+                                                                            val,
+                                                                        ) => {
+                                                                            const newItems =
+                                                                                [
+                                                                                    ...requestForm
+                                                                                        .data
+                                                                                        .items,
+                                                                                ];
+                                                                            newItems[
+                                                                                idx
+                                                                            ].item_id =
+                                                                                val;
+                                                                            requestForm.setData(
+                                                                                'items',
+                                                                                newItems,
+                                                                            );
+                                                                        }}
+                                                                        placeholder="Select Item"
+                                                                        className="h-8 w-full bg-background text-xs"
+                                                                        searchThreshold={
+                                                                            0
+                                                                        }
+                                                                        defaultOpen={
+                                                                            item.isNew
+                                                                        }
+                                                                    />
+                                                                </TableCell>
+                                                                <TableCell className="p-2.5">
+                                                                    <Input
+                                                                        type="number"
+                                                                        min="1"
+                                                                        value={
+                                                                            item.quantity
+                                                                        }
+                                                                        onChange={(
+                                                                            e,
+                                                                        ) => {
+                                                                            const newItems =
+                                                                                [
+                                                                                    ...requestForm
+                                                                                        .data
+                                                                                        .items,
+                                                                                ];
+                                                                            newItems[
+                                                                                idx
+                                                                            ].quantity =
+                                                                                parseInt(
+                                                                                    e
+                                                                                        .target
+                                                                                        .value,
+                                                                                ) ||
+                                                                                0;
+                                                                            requestForm.setData(
+                                                                                'items',
+                                                                                newItems,
+                                                                            );
+                                                                        }}
+                                                                        className="h-8 p-1.5 text-xs"
+                                                                        required
+                                                                    />
+                                                                </TableCell>
+                                                                <TableCell className="p-2.5 text-center">
+                                                                    {requestForm
+                                                                        .data
+                                                                        .items
+                                                                        .length >
+                                                                        1 && (
+                                                                        <Button
+                                                                            type="button"
+                                                                            variant="ghost"
+                                                                            size="icon"
+                                                                            className="h-7 w-7 text-rose-500 hover:bg-rose-50 hover:text-rose-600"
+                                                                            onClick={() =>
+                                                                                handleRemoveRequestItem(
+                                                                                    idx,
+                                                                                )
+                                                                            }
+                                                                        >
+                                                                            <X className="h-4 w-4" />
+                                                                        </Button>
+                                                                    )}
+                                                                </TableCell>
+                                                            </TableRow>
+                                                        );
+                                                    },
+                                                )}
+                                            </TableBody>
+                                        </Table>
+                                    </div>
+
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={handleAddRequestItem}
+                                        className="w-full"
+                                    >
+                                        Add Another Item
+                                    </Button>
+
+                                    <div className="space-y-2">
+                                        <Label
+                                            htmlFor="purpose"
+                                            className="text-xs font-semibold"
                                         >
-                                            <Table className="text-xs">
-                                                <TableHeader>
-                                                    <TableRow className="bg-muted/50">
-                                                        <TableHead className="p-3">
-                                                            Item *
-                                                        </TableHead>
-                                                        <TableHead className="w-36 p-3">
-                                                            Qty Requested *
-                                                        </TableHead>
-                                                        <TableHead className="w-12 p-3 text-center"></TableHead>
-                                                    </TableRow>
-                                                </TableHeader>
-                                                <TableBody>
+                                            Purpose / Remarks
+                                        </Label>
+                                        <textarea
+                                            id="purpose"
+                                            className="min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-hidden"
+                                            placeholder="e.g. Office consumption for Q3"
+                                            value={requestForm.data.purpose}
+                                            onChange={(e) =>
+                                                requestForm.setData(
+                                                    'purpose',
+                                                    e.target.value,
+                                                )
+                                            }
+                                        />
+                                    </div>
+
+                                    {showSummaryPreview && (
+                                        <div className="animate-in space-y-3 rounded-lg border border-border bg-muted/40 p-4 duration-200 fade-in">
+                                            <div className="flex items-center gap-2 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+                                                <ClipboardList className="h-4 w-4 text-primary" />
+                                                Requisition Summary Preview
+                                            </div>
+                                            <div className="space-y-1.5 text-xs text-foreground">
+                                                <div className="grid grid-cols-12 border-b border-border pb-1 font-medium text-muted-foreground">
+                                                    <span className="col-span-8">
+                                                        Item Name
+                                                    </span>
+                                                    <span className="col-span-4 text-right">
+                                                        Quantity
+                                                    </span>
+                                                </div>
+                                                <div className="max-h-[120px] space-y-1 overflow-y-auto pr-1">
                                                     {requestForm.data.items.map(
                                                         (item, idx) => {
+                                                            const selectedItem =
+                                                                items.find(
+                                                                    (i) =>
+                                                                        String(
+                                                                            i.id,
+                                                                        ) ===
+                                                                        String(
+                                                                            item.item_id,
+                                                                        ),
+                                                                );
+
                                                             return (
-                                                                <TableRow
-                                                                    key={
-                                                                        item.isNew
-                                                                            ? `new-${idx}`
-                                                                            : idx
-                                                                    }
+                                                                <div
+                                                                    key={idx}
+                                                                    className="grid grid-cols-12 py-0.5"
                                                                 >
-                                                                    <TableCell className="p-2.5">
-                                                                        <SmartSelect
-                                                                            options={items.map(
-                                                                                (
-                                                                                    i,
-                                                                                ) => ({
-                                                                                    value: String(
-                                                                                        i.id,
-                                                                                    ),
-                                                                                    label: `${i.name} (Qty Available: ${i.current_stock} ${i.unit})`,
-                                                                                }),
-                                                                            )}
-                                                                            value={
-                                                                                item.item_id
-                                                                                    ? String(
-                                                                                          item.item_id,
-                                                                                      )
-                                                                                    : undefined
-                                                                            }
-                                                                            onValueChange={(
-                                                                                val,
-                                                                            ) => {
-                                                                                const newItems =
-                                                                                    [
-                                                                                        ...requestForm
-                                                                                            .data
-                                                                                            .items,
-                                                                                    ];
-                                                                                newItems[
-                                                                                    idx
-                                                                                ].item_id =
-                                                                                    val;
-                                                                                requestForm.setData(
-                                                                                    'items',
-                                                                                    newItems,
-                                                                                );
-                                                                            }}
-                                                                            placeholder="Select Item"
-                                                                            className="h-8 w-full bg-background text-xs"
-                                                                            searchThreshold={
-                                                                                0
-                                                                            }
-                                                                            defaultOpen={
-                                                                                item.isNew
-                                                                            }
-                                                                        />
-                                                                    </TableCell>
-                                                                    <TableCell className="p-2.5">
-                                                                        <Input
-                                                                            type="number"
-                                                                            min="1"
-                                                                            value={
-                                                                                item.quantity
-                                                                            }
-                                                                            onChange={(
-                                                                                e,
-                                                                            ) => {
-                                                                                const newItems =
-                                                                                    [
-                                                                                        ...requestForm
-                                                                                            .data
-                                                                                            .items,
-                                                                                    ];
-                                                                                newItems[
-                                                                                    idx
-                                                                                ].quantity =
-                                                                                    parseInt(
-                                                                                        e
-                                                                                            .target
-                                                                                            .value,
-                                                                                    ) ||
-                                                                                    0;
-                                                                                requestForm.setData(
-                                                                                    'items',
-                                                                                    newItems,
-                                                                                );
-                                                                            }}
-                                                                            className="h-8 p-1.5 text-xs"
-                                                                            required
-                                                                        />
-                                                                    </TableCell>
-                                                                    <TableCell className="p-2.5 text-center">
-                                                                        {requestForm
-                                                                            .data
-                                                                            .items
-                                                                            .length >
-                                                                            1 && (
-                                                                            <Button
-                                                                                type="button"
-                                                                                variant="ghost"
-                                                                                size="icon"
-                                                                                className="h-7 w-7 text-rose-500 hover:bg-rose-50 hover:text-rose-600"
-                                                                                onClick={() =>
-                                                                                    handleRemoveRequestItem(
-                                                                                        idx,
-                                                                                    )
-                                                                                }
-                                                                            >
-                                                                                <X className="h-4 w-4" />
-                                                                            </Button>
+                                                                    <span className="col-span-8 truncate font-medium">
+                                                                        {selectedItem ? (
+                                                                            selectedItem.name
+                                                                        ) : (
+                                                                            <em className="text-muted-foreground">
+                                                                                Unselected
+                                                                            </em>
                                                                         )}
-                                                                    </TableCell>
-                                                                </TableRow>
+                                                                    </span>
+                                                                    <span className="col-span-4 text-right font-mono text-muted-foreground">
+                                                                        {
+                                                                            item.quantity
+                                                                        }{' '}
+                                                                        {selectedItem?.unit ||
+                                                                            ''}
+                                                                    </span>
+                                                                </div>
                                                             );
                                                         },
                                                     )}
-                                                </TableBody>
-                                            </Table>
+                                                </div>
+                                                <div className="flex justify-between border-t border-border pt-1.5 font-semibold">
+                                                    <span>
+                                                        Total Items:{' '}
+                                                        {
+                                                            requestForm.data.items.filter(
+                                                                (i) =>
+                                                                    i.item_id,
+                                                            ).length
+                                                        }
+                                                    </span>
+                                                    <span>
+                                                        Total Qty:{' '}
+                                                        {requestForm.data.items.reduce(
+                                                            (sum, i) =>
+                                                                sum +
+                                                                (i.quantity ||
+                                                                    0),
+                                                            0,
+                                                        )}
+                                                    </span>
+                                                </div>
+                                            </div>
                                         </div>
+                                    )}
 
+                                    <div className="mt-6 flex items-center justify-between border-t border-border pt-4">
                                         <Button
                                             type="button"
                                             variant="outline"
                                             size="sm"
-                                            onClick={handleAddRequestItem}
-                                            className="w-full"
+                                            className="gap-2 text-xs"
+                                            onClick={() =>
+                                                setShowSummaryPreview(
+                                                    !showSummaryPreview,
+                                                )
+                                            }
                                         >
-                                            Add Another Item
+                                            <Eye className="h-3.5 w-3.5" />
+                                            {showSummaryPreview
+                                                ? 'Hide Preview'
+                                                : 'View Summary'}
                                         </Button>
-
-                                        <div className="space-y-2">
-                                            <Label
-                                                htmlFor="purpose"
-                                                className="text-xs font-semibold"
-                                            >
-                                                Purpose / Remarks
-                                            </Label>
-                                            <textarea
-                                                id="purpose"
-                                                className="min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-hidden"
-                                                placeholder="e.g. Office consumption for Q3"
-                                                value={requestForm.data.purpose}
-                                                onChange={(e) =>
-                                                    requestForm.setData(
-                                                        'purpose',
-                                                        e.target.value,
-                                                    )
-                                                }
-                                            />
-                                        </div>
-
-                                        {showSummaryPreview && (
-                                            <div className="animate-in space-y-3 rounded-lg border border-border bg-muted/40 p-4 duration-200 fade-in">
-                                                <div className="flex items-center gap-2 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-                                                    <ClipboardList className="h-4 w-4 text-primary" />
-                                                    Requisition Summary Preview
-                                                </div>
-                                                <div className="space-y-1.5 text-xs text-foreground">
-                                                    <div className="grid grid-cols-12 border-b border-border pb-1 font-medium text-muted-foreground">
-                                                        <span className="col-span-8">
-                                                            Item Name
-                                                        </span>
-                                                        <span className="col-span-4 text-right">
-                                                            Quantity
-                                                        </span>
-                                                    </div>
-                                                    <div className="max-h-[120px] space-y-1 overflow-y-auto pr-1">
-                                                        {requestForm.data.items.map(
-                                                            (item, idx) => {
-                                                                const selectedItem =
-                                                                    items.find(
-                                                                        (i) =>
-                                                                            String(
-                                                                                i.id,
-                                                                            ) ===
-                                                                            String(
-                                                                                item.item_id,
-                                                                            ),
-                                                                    );
-
-                                                                return (
-                                                                    <div
-                                                                        key={
-                                                                            idx
-                                                                        }
-                                                                        className="grid grid-cols-12 py-0.5"
-                                                                    >
-                                                                        <span className="col-span-8 truncate font-medium">
-                                                                            {selectedItem ? (
-                                                                                selectedItem.name
-                                                                            ) : (
-                                                                                <em className="text-muted-foreground">
-                                                                                    Unselected
-                                                                                </em>
-                                                                            )}
-                                                                        </span>
-                                                                        <span className="col-span-4 text-right font-mono text-muted-foreground">
-                                                                            {
-                                                                                item.quantity
-                                                                            }{' '}
-                                                                            {selectedItem?.unit ||
-                                                                                ''}
-                                                                        </span>
-                                                                    </div>
-                                                                );
-                                                            },
-                                                        )}
-                                                    </div>
-                                                    <div className="flex justify-between border-t border-border pt-1.5 font-semibold">
-                                                        <span>
-                                                            Total Items:{' '}
-                                                            {
-                                                                requestForm.data.items.filter(
-                                                                    (i) =>
-                                                                        i.item_id,
-                                                                ).length
-                                                            }
-                                                        </span>
-                                                        <span>
-                                                            Total Qty:{' '}
-                                                            {requestForm.data.items.reduce(
-                                                                (sum, i) =>
-                                                                    sum +
-                                                                    (i.quantity ||
-                                                                        0),
-                                                                0,
-                                                            )}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        <div className="mt-6 flex items-center justify-between border-t border-border pt-4">
+                                        <div className="flex gap-2">
                                             <Button
                                                 type="button"
                                                 variant="outline"
-                                                size="sm"
-                                                className="gap-2 text-xs"
                                                 onClick={() =>
-                                                    setShowSummaryPreview(
-                                                        !showSummaryPreview,
-                                                    )
+                                                    setIsRequestOpen(false)
                                                 }
                                             >
-                                                <Eye className="h-3.5 w-3.5" />
-                                                {showSummaryPreview
-                                                    ? 'Hide Preview'
-                                                    : 'View Summary'}
+                                                Cancel
                                             </Button>
-                                            <div className="flex gap-2">
-                                                <Button
-                                                    type="button"
-                                                    variant="outline"
-                                                    onClick={() =>
-                                                        setIsRequestOpen(false)
-                                                    }
-                                                >
-                                                    Cancel
-                                                </Button>
-                                                <Button
-                                                    type="submit"
-                                                    disabled={
-                                                        requestForm.processing
-                                                    }
-                                                    className="px-5"
-                                                >
-                                                    Submit RIS
-                                                </Button>
-                                            </div>
+                                            <Button
+                                                type="submit"
+                                                disabled={
+                                                    requestForm.processing
+                                                }
+                                                className="px-5"
+                                            >
+                                                Submit RIS
+                                            </Button>
                                         </div>
-                                    </form>
-                                </DialogContent>
-                            </Dialog>
-                        </CoachMark>
+                                    </div>
+                                </form>
+                            </DialogContent>
+                        </Dialog>
                     )}
                 </div>
 
@@ -963,7 +978,7 @@ export default function RequisitionsIndex({
                 </Card>
 
                 {/* Requisitions List Board */}
-                <div className="grid gap-6">
+                <div id="ris-tour-list" className="grid gap-6">
                     {requisitions.data.length === 0 ? (
                         <Card>
                             <CardContent className="p-4 md:p-8">

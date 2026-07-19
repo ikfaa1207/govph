@@ -1,5 +1,6 @@
 import { Form, Head } from '@inertiajs/react';
 import { useRef } from 'react';
+import { toast } from 'sonner';
 import SecurityController from '@/actions/App/Http/Controllers/Settings/SecurityController';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
@@ -133,6 +134,40 @@ export default function Security(props: Props) {
                 canManagePasskeys={props.canManagePasskeys}
                 passkeys={props.passkeys}
             />
+
+            <div className="space-y-6 border-t border-border/60 pt-6">
+                <Heading
+                    variant="small"
+                    title="System Tours & Guides"
+                    description="Reset onboarding guides and step-by-step feature walk-throughs"
+                />
+
+                <div className="flex items-center gap-4">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                            let resetCount = 0;
+                            Object.keys(localStorage).forEach((key) => {
+                                if (
+                                    key.startsWith('gims_tour_completed_') ||
+                                    key.startsWith('gims_coachmark_')
+                                ) {
+                                    localStorage.removeItem(key);
+                                    resetCount++;
+                                }
+                            });
+                            toast.success(
+                                resetCount > 0
+                                    ? 'System guides reset successfully! They will show up on your next page visits.'
+                                    : 'All system guides are already active.',
+                            );
+                        }}
+                    >
+                        Reset System Guides
+                    </Button>
+                </div>
+            </div>
         </>
     );
 }
