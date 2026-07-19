@@ -106,7 +106,7 @@ export function BatchEditDialog({
                     <h4 className="mb-3 text-xs font-semibold tracking-wider text-indigo-700 uppercase dark:text-indigo-400">
                         Bulk Fill Column Values (Optional)
                     </h4>
-                    <div className="grid grid-cols-4 items-end gap-3">
+                    <div className="grid grid-cols-2 items-end gap-3 md:grid-cols-4">
                         <div className="space-y-1">
                             <Label className="text-xs">Bulk Brand</Label>
                             <Input

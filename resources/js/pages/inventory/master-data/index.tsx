@@ -104,7 +104,7 @@ export default function MasterDataIndex({
                 </div>
 
                 <Tabs defaultValue="categories" className="w-full">
-                    <TabsList className="grid w-full grid-cols-5">
+                    <TabsList className="grid h-auto w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-5">
                         <TabsTrigger value="categories">Categories</TabsTrigger>
                         <TabsTrigger value="units">Units</TabsTrigger>
                         <TabsTrigger value="locations">Locations</TabsTrigger>
