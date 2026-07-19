@@ -71,4 +71,44 @@ class UnitController extends Controller
 
         return back();
     }
+
+    /**
+     * Seed default COA units of measurement.
+     */
+    public function seedDefaults(Request $request): RedirectResponse
+    {
+        Gate::authorize('inventory.create');
+
+        $defaults = [
+            ['name' => 'piece', 'abbreviation' => 'pc'],
+            ['name' => 'box', 'abbreviation' => 'box'],
+            ['name' => 'pack', 'abbreviation' => 'pack'],
+            ['name' => 'roll', 'abbreviation' => 'roll'],
+            ['name' => 'bottle', 'abbreviation' => 'bot'],
+            ['name' => 'unit', 'abbreviation' => 'unit'],
+            ['name' => 'set', 'abbreviation' => 'set'],
+            ['name' => 'ream', 'abbreviation' => 'ream'],
+            ['name' => 'liter', 'abbreviation' => 'ltr'],
+            ['name' => 'kilogram', 'abbreviation' => 'kg'],
+        ];
+
+        $seededCount = 0;
+        $lastSeeded = null;
+        foreach ($defaults as $data) {
+            $unit = Unit::firstOrCreate(
+                ['abbreviation' => $data['abbreviation']],
+                ['name' => $data['name'], 'is_active' => true]
+            );
+            if ($unit->wasRecentlyCreated) {
+                $seededCount++;
+                $lastSeeded = $unit;
+            }
+        }
+
+        if ($seededCount > 0 && $lastSeeded) {
+            AuditLogger::log('SEED_DEFAULT_UNITS', $lastSeeded, null, ['count' => $seededCount]);
+        }
+
+        return back();
+    }
 }

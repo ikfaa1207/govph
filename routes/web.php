@@ -59,10 +59,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('inventory/suppliers/{supplier}', [SupplierController::class, 'update'])->name('inventory.suppliers.update');
     Route::post('inventory/suppliers/{supplier}/toggle', [SupplierController::class, 'toggleStatus'])->name('inventory.suppliers.toggle');
 
+    Route::post('inventory/categories/seed-defaults', [CategoryController::class, 'seedDefaults'])->name('inventory.categories.seed-defaults');
     Route::post('inventory/categories', [CategoryController::class, 'store'])->name('inventory.categories.store');
     Route::put('inventory/categories/{category}', [CategoryController::class, 'update'])->name('inventory.categories.update');
     Route::post('inventory/categories/{category}/toggle', [CategoryController::class, 'toggleStatus'])->name('inventory.categories.toggle');
 
+    Route::post('inventory/units/seed-defaults', [UnitController::class, 'seedDefaults'])->name('inventory.units.seed-defaults');
     Route::post('inventory/units', [UnitController::class, 'store'])->name('inventory.units.store');
     Route::put('inventory/units/{unit}', [UnitController::class, 'update'])->name('inventory.units.update');
     Route::post('inventory/units/{unit}/toggle', [UnitController::class, 'toggleStatus'])->name('inventory.units.toggle');

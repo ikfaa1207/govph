@@ -1,6 +1,7 @@
-import { Head, setLayoutProps } from '@inertiajs/react';
-import { Plus } from 'lucide-react';
+import { Head, setLayoutProps, router } from '@inertiajs/react';
+import { Plus, Sparkles } from 'lucide-react';
 import { useState } from 'react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -90,6 +91,37 @@ export default function MasterDataIndex({
         setIsSupplierDialogOpen(true);
     };
 
+    const handleSeedDefaultCategories = () => {
+        router.post(
+            '/inventory/categories/seed-defaults',
+            {},
+            {
+                preserveScroll: true,
+                onSuccess: () =>
+                    toast.success(
+                        'Standard COA categories loaded successfully.',
+                    ),
+                onError: () =>
+                    toast.error('Failed to load default categories.'),
+            },
+        );
+    };
+
+    const handleSeedDefaultUnits = () => {
+        router.post(
+            '/inventory/units/seed-defaults',
+            {},
+            {
+                preserveScroll: true,
+                onSuccess: () =>
+                    toast.success(
+                        'Standard COA units of measurement loaded successfully.',
+                    ),
+                onError: () => toast.error('Failed to load default units.'),
+            },
+        );
+    };
+
     return (
         <>
             <Head title="System Libraries" />
@@ -122,12 +154,24 @@ export default function MasterDataIndex({
                                             Manage item categories.
                                         </CardDescription>
                                     </div>
-                                    <Button
-                                        onClick={() => openCategoryDialog()}
-                                    >
-                                        <Plus className="mr-2 h-4 w-4" /> Add
-                                        Category
-                                    </Button>
+                                    <div className="flex gap-2">
+                                        <Button
+                                            variant="outline"
+                                            onClick={
+                                                handleSeedDefaultCategories
+                                            }
+                                            className="text-indigo-650 border-indigo-200 hover:bg-indigo-50/50 dark:border-indigo-900/50 dark:text-indigo-400"
+                                        >
+                                            <Sparkles className="mr-2 h-4 w-4" />{' '}
+                                            Load COA Defaults
+                                        </Button>
+                                        <Button
+                                            onClick={() => openCategoryDialog()}
+                                        >
+                                            <Plus className="mr-2 h-4 w-4" />{' '}
+                                            Add Category
+                                        </Button>
+                                    </div>
                                 </CardHeader>
                                 <CardContent>
                                     <CategoryTab
@@ -149,10 +193,22 @@ export default function MasterDataIndex({
                                             Manage units used for items.
                                         </CardDescription>
                                     </div>
-                                    <Button onClick={() => openUnitDialog()}>
-                                        <Plus className="mr-2 h-4 w-4" /> Add
-                                        Unit
-                                    </Button>
+                                    <div className="flex gap-2">
+                                        <Button
+                                            variant="outline"
+                                            onClick={handleSeedDefaultUnits}
+                                            className="text-indigo-650 border-indigo-200 hover:bg-indigo-50/50 dark:border-indigo-900/50 dark:text-indigo-400"
+                                        >
+                                            <Sparkles className="mr-2 h-4 w-4" />{' '}
+                                            Load COA Defaults
+                                        </Button>
+                                        <Button
+                                            onClick={() => openUnitDialog()}
+                                        >
+                                            <Plus className="mr-2 h-4 w-4" />{' '}
+                                            Add Unit
+                                        </Button>
+                                    </div>
                                 </CardHeader>
                                 <CardContent>
                                     <UnitTab

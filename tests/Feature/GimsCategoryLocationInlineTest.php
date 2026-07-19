@@ -173,3 +173,33 @@ test('warehouse validation enforces uniqueness and required name', function () {
     $response->assertStatus(422);
     $response->assertJsonValidationErrors(['name']);
 });
+
+test('authorized user can seed default categories', function () {
+    $this->actingAs($this->authorizedUser);
+
+    $response = $this->post(route('inventory.categories.seed-defaults'));
+    $response->assertRedirect();
+
+    $this->assertDatabaseHas('categories', [
+        'code' => 'OFF-SUPP',
+        'is_ppe' => false,
+    ]);
+    $this->assertDatabaseHas('categories', [
+        'code' => 'IT-EQPT',
+        'is_ppe' => true,
+    ]);
+});
+
+test('authorized user can seed default units', function () {
+    $this->actingAs($this->authorizedUser);
+
+    $response = $this->post(route('inventory.units.seed-defaults'));
+    $response->assertRedirect();
+
+    $this->assertDatabaseHas('units', [
+        'abbreviation' => 'pc',
+    ]);
+    $this->assertDatabaseHas('units', [
+        'abbreviation' => 'ream',
+    ]);
+});

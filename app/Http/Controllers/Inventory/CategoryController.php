@@ -69,4 +69,42 @@ class CategoryController extends Controller
 
         return back();
     }
+
+    /**
+     * Seed default COA categories.
+     */
+    public function seedDefaults(Request $request): RedirectResponse
+    {
+        Gate::authorize('inventory.create');
+
+        $defaults = [
+            ['name' => 'Office Supplies', 'code' => 'OFF-SUPP', 'is_ppe' => false],
+            ['name' => 'Medical, Dental and Laboratory Supplies', 'code' => 'MED-SUPP', 'is_ppe' => false],
+            ['name' => 'Other Supplies and Materials', 'code' => 'OTH-SUPP', 'is_ppe' => false],
+            ['name' => 'Office Equipment', 'code' => 'OFF-EQPT', 'is_ppe' => true],
+            ['name' => 'IT Equipment and Software', 'code' => 'IT-EQPT', 'is_ppe' => true],
+            ['name' => 'Communication Equipment', 'code' => 'COMM-EQPT', 'is_ppe' => true],
+            ['name' => 'Machinery and Equipment', 'code' => 'MACH-EQPT', 'is_ppe' => true],
+            ['name' => 'Furniture and Fixtures', 'code' => 'FURN-FIXT', 'is_ppe' => true],
+        ];
+
+        $seededCount = 0;
+        $lastSeeded = null;
+        foreach ($defaults as $data) {
+            $category = Category::firstOrCreate(
+                ['code' => $data['code']],
+                ['name' => $data['name'], 'is_ppe' => $data['is_ppe'], 'is_active' => true]
+            );
+            if ($category->wasRecentlyCreated) {
+                $seededCount++;
+                $lastSeeded = $category;
+            }
+        }
+
+        if ($seededCount > 0 && $lastSeeded) {
+            AuditLogger::log('SEED_DEFAULT_CATEGORIES', $lastSeeded, null, ['count' => $seededCount]);
+        }
+
+        return back();
+    }
 }
