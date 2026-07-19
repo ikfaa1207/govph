@@ -166,30 +166,30 @@ export function TourGuide({ tourId, steps }: TourGuideProps) {
             <div style={highlightStyle} className="pointer-events-none border border-indigo-400/40 ring-4 ring-indigo-500/20" />
 
             {/* Popover Card */}
-            <div ref={cardRef} style={cardStyle} className="shadow-2xl">
-                <Card className="border border-indigo-100 dark:border-indigo-900/50 bg-card overflow-hidden">
-                    <CardHeader className="bg-indigo-50/50 dark:bg-indigo-950/20 px-4 py-3 flex flex-row items-center justify-between border-b border-indigo-100/50 dark:border-indigo-900/20">
+            <div ref={cardRef} style={cardStyle} className="shadow-2xl rounded-xl">
+                <Card className="border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 overflow-hidden rounded-xl">
+                    <CardHeader className="bg-slate-50 dark:bg-slate-900/40 px-4 py-3 flex flex-row items-center justify-between border-b border-slate-200 dark:border-slate-800">
                         <div className="flex items-center gap-2">
                             <div className="rounded-md bg-indigo-500/10 p-1 text-indigo-500">
                                 <Lightbulb className="h-4 w-4" />
                             </div>
-                            <CardTitle className="text-sm font-semibold text-indigo-950 dark:text-indigo-200">
+                            <CardTitle className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                                 GIMS Walkthrough
                             </CardTitle>
                         </div>
                         <button
                             onClick={handleComplete}
-                            className="text-muted-foreground hover:text-foreground transition-colors"
+                            className="text-slate-400 hover:text-slate-650 transition-colors"
                         >
                             <X className="h-4 w-4" />
                         </button>
                     </CardHeader>
                     <CardContent className="p-4 space-y-4">
                         <div>
-                            <h4 className="font-bold text-sm text-foreground mb-1">
+                            <h4 className="font-bold text-sm text-slate-900 dark:text-slate-150 mb-1.5">
                                 {steps[currentStep].title}
                             </h4>
-                            <p className="text-xs text-muted-foreground leading-relaxed">
+                            <p className="text-[13px] text-slate-600 dark:text-slate-350 leading-relaxed font-normal">
                                 {steps[currentStep].description}
                             </p>
                         </div>
