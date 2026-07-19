@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Inventory;
 
+use App\Enums\ItemStatus;
 use App\Enums\PhysicalCountStatus;
 use App\Http\Controllers\Controller;
 use App\Models\DepartmentItem;
@@ -128,7 +129,7 @@ class DashboardController extends Controller
 
         } else {
             // Regular requesting employee
-            $totalItems = Item::where('is_active', true)->count();
+            $totalItems = Item::where('status', ItemStatus::Active)->count();
             $lowStocksCount = 0;
             $outOfStocksCount = 0;
             $totalValue = 0.0;
