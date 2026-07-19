@@ -16,6 +16,8 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { CardSkeleton } from '@/components/ui/skeleton-loaders';
 import {
     Table,
     TableBody,
@@ -28,7 +30,7 @@ import { formatCurrency, formatDateTime } from '@/lib/utils';
 
 interface DashboardProps {
     userScope: 'global' | 'dept_head' | 'employee' | 'unassigned';
-    stats: {
+    stats?: {
         inventoryType: string;
         totalItems: number;
         lowStocks: number;
@@ -39,9 +41,9 @@ interface DashboardProps {
         pendingRequests: number;
         pendingCounts: number;
     };
-    recentIssuances: Array<any>;
-    recentReceiving: Array<any>;
-    pendingRequests: Array<any>;
+    recentIssuances?: Array<any>;
+    recentReceiving?: Array<any>;
+    pendingRequests?: Array<any>;
     complianceAlerts?: Array<{ type: string; title: string; message: string }>;
     myProperties?: Array<any>;
 }
@@ -53,7 +55,7 @@ export default function Dashboard({
     recentReceiving,
     pendingRequests,
     complianceAlerts = [],
-    myProperties = [],
+    myProperties,
 }: DashboardProps) {
     const breadcrumbs = [{ title: 'GIMS Dashboard', href: '/dashboard' }];
     setLayoutProps({ breadcrumbs });
@@ -142,133 +144,165 @@ export default function Dashboard({
                 )}
 
                 {/* Metrics Cards Grid */}
-                <div
-                    className={`grid gap-4 ${
-                        userScope === 'employee'
-                            ? 'md:grid-cols-3'
-                            : userScope === 'dept_head'
-                              ? 'md:grid-cols-2 lg:grid-cols-4'
-                              : 'md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5'
-                    }`}
-                >
-                    {/* Metrics 1: Total Stock Value (Hidden for regular employees) */}
-                    {userScope !== 'employee' && (
-                        <Card className="relative z-0 flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-emerald-500 bg-card bg-linear-to-tr from-transparent to-emerald-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
-                            <div className="absolute -right-4 -bottom-4 text-emerald-500/5">
-                                <TrendingDown
+                {!stats ? (
+                    <div
+                        className={`grid gap-4 ${
+                            userScope === 'employee'
+                                ? 'md:grid-cols-3'
+                                : userScope === 'dept_head'
+                                  ? 'md:grid-cols-2 lg:grid-cols-4'
+                                  : 'md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5'
+                        }`}
+                    >
+                        {Array.from({
+                            length:
+                                userScope === 'employee'
+                                    ? 3
+                                    : userScope === 'dept_head'
+                                      ? 4
+                                      : 5,
+                        }).map((_, i) => (
+                            <CardSkeleton key={i} className="h-[110px]" />
+                        ))}
+                    </div>
+                ) : (
+                    <div
+                        className={`grid gap-4 ${
+                            userScope === 'employee'
+                                ? 'md:grid-cols-3'
+                                : userScope === 'dept_head'
+                                  ? 'md:grid-cols-2 lg:grid-cols-4'
+                                  : 'md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5'
+                        }`}
+                    >
+                        {/* Metrics 1: Total Stock Value (Hidden for regular employees) */}
+                        {userScope !== 'employee' && (
+                            <Card className="relative z-0 flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-emerald-500 bg-card bg-linear-to-tr from-transparent to-emerald-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
+                                <div className="absolute -right-4 -bottom-4 text-emerald-500/5">
+                                    <TrendingDown
+                                        className="h-28 w-28"
+                                        strokeWidth={1.5}
+                                    />
+                                </div>
+                                <div className="relative z-10 space-y-1">
+                                    <p className="text-[11px] font-medium tracking-wider text-emerald-500 uppercase">
+                                        {stats.inventoryType} Value
+                                    </p>
+                                    <p className="truncate text-2xl font-bold text-foreground">
+                                        {formatCurrency(stats.totalValue)}
+                                    </p>
+                                </div>
+                            </Card>
+                        )}
+
+                        {/* Metrics 2: Total Items Cataloged */}
+                        <Card className="relative z-0 flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-blue-500 bg-card bg-linear-to-tr from-transparent to-blue-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
+                            <div className="absolute -right-4 -bottom-4 text-blue-500/5">
+                                <Package
                                     className="h-28 w-28"
                                     strokeWidth={1.5}
                                 />
                             </div>
                             <div className="relative z-10 space-y-1">
-                                <p className="text-[11px] font-medium tracking-wider text-emerald-500 uppercase">
-                                    {stats.inventoryType} Value
+                                <p className="text-[11px] font-medium tracking-wider text-blue-500 uppercase">
+                                    {userScope === 'employee'
+                                        ? 'Supplies Catalog'
+                                        : `${stats.inventoryType} Catalog`}
                                 </p>
                                 <p className="truncate text-2xl font-bold text-foreground">
-                                    {formatCurrency(stats.totalValue)}
+                                    {stats.totalItems} Items
                                 </p>
                             </div>
                         </Card>
-                    )}
 
-                    {/* Metrics 2: Total Items Cataloged */}
-                    <Card className="relative z-0 flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-blue-500 bg-card bg-linear-to-tr from-transparent to-blue-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
-                        <div className="absolute -right-4 -bottom-4 text-blue-500/5">
-                            <Package className="h-28 w-28" strokeWidth={1.5} />
-                        </div>
-                        <div className="relative z-10 space-y-1">
-                            <p className="text-[11px] font-medium tracking-wider text-blue-500 uppercase">
-                                {userScope === 'employee'
-                                    ? 'Supplies Catalog'
-                                    : `${stats.inventoryType} Catalog`}
-                            </p>
-                            <p className="truncate text-2xl font-bold text-foreground">
-                                {stats.totalItems} Items
-                            </p>
-                        </div>
-                    </Card>
-
-                    {/* Metrics 3: PPE Property Registry */}
-                    <Card className="relative z-0 flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-violet-500 bg-card bg-linear-to-tr from-transparent to-violet-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
-                        <div className="absolute -right-4 -bottom-4 text-violet-500/5">
-                            <Database className="h-28 w-28" strokeWidth={1.5} />
-                        </div>
-                        <div className="relative z-10 space-y-1">
-                            <p className="text-[11px] font-medium tracking-wider text-violet-500 uppercase">
-                                {userScope === 'employee'
-                                    ? 'My Assigned Assets'
-                                    : 'Accountable Property'}
-                            </p>
-                            <div className="flex items-end gap-2">
-                                <p className="truncate text-2xl font-bold text-foreground">
-                                    {userScope === 'employee'
-                                        ? `${stats.totalProperties} Assets`
-                                        : stats.totalPpeValue !== undefined
-                                          ? formatCurrency(stats.totalPpeValue)
-                                          : `${stats.totalProperties} Assets`}
-                                </p>
-                                {userScope !== 'employee' &&
-                                    stats.totalPpeValue !== undefined && (
-                                        <Badge
-                                            variant="outline"
-                                            className="mb-1 border-violet-500/20 bg-violet-500/10 px-1.5 py-0 text-[10px] whitespace-nowrap text-violet-600"
-                                        >
-                                            {stats.totalProperties} Assets
-                                        </Badge>
-                                    )}
-                            </div>
-                        </div>
-                    </Card>
-
-                    {/* Metrics 4: Pending Requisitions */}
-                    <Card className="relative z-0 flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-amber-500 bg-card bg-linear-to-tr from-transparent to-amber-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
-                        <div className="absolute -right-4 -bottom-4 text-amber-500/5">
-                            <ClipboardList
-                                className={`h-28 w-28 ${stats.pendingRequests > 0 ? 'animate-pulse' : ''}`}
-                                strokeWidth={1.5}
-                            />
-                        </div>
-                        <div className="relative z-10 space-y-1">
-                            <p className="text-[11px] font-medium tracking-wider text-amber-500 uppercase">
-                                {userScope === 'employee'
-                                    ? 'My Pending RIS'
-                                    : 'Pending RIS Requests'}
-                            </p>
-                            <p className="truncate text-2xl font-bold text-foreground">
-                                {stats.pendingRequests} Requisitions
-                            </p>
-                        </div>
-                    </Card>
-
-                    {/* Metrics 5: Pending Physical Counts (Hidden for employees & department heads) */}
-                    {userScope === 'global' && (
-                        <Link
-                            href="/inventory/physical-counts?status=draft"
-                            className="relative z-0 block flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-rose-500 bg-card bg-linear-to-tr from-transparent to-rose-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[4px] hover:shadow-lg focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 focus:outline-hidden"
-                        >
-                            <div className="absolute -right-4 -bottom-4 text-rose-500/5 transition-transform duration-300 hover:scale-110">
-                                <ClipboardList
-                                    className={`h-28 w-28 ${stats.pendingCounts > 0 ? 'animate-pulse text-rose-500/10' : ''}`}
+                        {/* Metrics 3: PPE Property Registry */}
+                        <Card className="relative z-0 flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-violet-500 bg-card bg-linear-to-tr from-transparent to-violet-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
+                            <div className="absolute -right-4 -bottom-4 text-violet-500/5">
+                                <Database
+                                    className="h-28 w-28"
                                     strokeWidth={1.5}
                                 />
                             </div>
                             <div className="relative z-10 space-y-1">
-                                <p className="flex items-center justify-between text-[11px] font-medium tracking-wider text-rose-500 uppercase">
-                                    <span>Items to Count</span>
-                                    <span className="rounded-full bg-rose-500/10 px-2 py-0.5 text-[9px] font-bold text-rose-500">
-                                        Action Needed
-                                    </span>
+                                <p className="text-[11px] font-medium tracking-wider text-violet-500 uppercase">
+                                    {userScope === 'employee'
+                                        ? 'My Assigned Assets'
+                                        : 'Accountable Property'}
                                 </p>
-                                <p className="truncate text-2xl font-bold text-foreground transition-colors group-hover:text-rose-600">
-                                    {stats.pendingCounts} Pending Counts
+                                <div className="flex items-end gap-2">
+                                    <p className="truncate text-2xl font-bold text-foreground">
+                                        {userScope === 'employee'
+                                            ? `${stats.totalProperties} Assets`
+                                            : stats.totalPpeValue !== undefined
+                                              ? formatCurrency(
+                                                    stats.totalPpeValue,
+                                                )
+                                              : `${stats.totalProperties} Assets`}
+                                    </p>
+                                    {userScope !== 'employee' &&
+                                        stats.totalPpeValue !== undefined && (
+                                            <Badge
+                                                variant="outline"
+                                                className="mb-1 border-violet-500/20 bg-violet-500/10 px-1.5 py-0 text-[10px] whitespace-nowrap text-violet-600"
+                                            >
+                                                {stats.totalProperties} Assets
+                                            </Badge>
+                                        )}
+                                </div>
+                            </div>
+                        </Card>
+
+                        {/* Metrics 4: Pending Requisitions */}
+                        <Card className="relative z-0 flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-amber-500 bg-card bg-linear-to-tr from-transparent to-amber-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
+                            <div className="absolute -right-4 -bottom-4 text-amber-500/5">
+                                <ClipboardList
+                                    className={`h-28 w-28 ${stats.pendingRequests > 0 ? 'animate-pulse' : ''}`}
+                                    strokeWidth={1.5}
+                                />
+                            </div>
+                            <div className="relative z-10 space-y-1">
+                                <p className="text-[11px] font-medium tracking-wider text-amber-500 uppercase">
+                                    {userScope === 'employee'
+                                        ? 'My Pending RIS'
+                                        : 'Pending RIS Requests'}
+                                </p>
+                                <p className="truncate text-2xl font-bold text-foreground">
+                                    {stats.pendingRequests} Requisitions
                                 </p>
                             </div>
-                        </Link>
-                    )}
-                </div>
+                        </Card>
+
+                        {/* Metrics 5: Pending Physical Counts (Hidden for employees & department heads) */}
+                        {userScope === 'global' && (
+                            <Link
+                                href="/inventory/physical-counts?status=draft"
+                                className="relative z-0 block flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-rose-500 bg-card bg-linear-to-tr from-transparent to-rose-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[4px] hover:shadow-lg focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 focus:outline-hidden"
+                            >
+                                <div className="absolute -right-4 -bottom-4 text-rose-500/5 transition-transform duration-300 hover:scale-110">
+                                    <ClipboardList
+                                        className={`h-28 w-28 ${stats.pendingCounts > 0 ? 'animate-pulse text-rose-500/10' : ''}`}
+                                        strokeWidth={1.5}
+                                    />
+                                </div>
+                                <div className="relative z-10 space-y-1">
+                                    <p className="flex items-center justify-between text-[11px] font-medium tracking-wider text-rose-500 uppercase">
+                                        <span>Items to Count</span>
+                                        <span className="rounded-full bg-rose-500/10 px-2 py-0.5 text-[9px] font-bold text-rose-500">
+                                            Action Needed
+                                        </span>
+                                    </p>
+                                    <p className="truncate text-2xl font-bold text-foreground transition-colors group-hover:text-rose-600">
+                                        {stats.pendingCounts} Pending Counts
+                                    </p>
+                                </div>
+                            </Link>
+                        )}
+                    </div>
+                )}
 
                 {/* Stock Warning Banners (Hidden for employees) */}
                 {userScope !== 'employee' &&
+                    stats &&
                     (stats.lowStocks > 0 || stats.outOfStocks > 0) && (
                         <div className="grid gap-4 md:grid-cols-2">
                             {stats.lowStocks > 0 && (
@@ -317,7 +351,27 @@ export default function Dashboard({
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
-                            {pendingRequests.length === 0 ? (
+                            {!pendingRequests ? (
+                                <div className="space-y-4">
+                                    <div className="flex space-x-4 border-b pb-2">
+                                        <Skeleton className="h-4 flex-1" />
+                                        <Skeleton className="h-4 flex-1" />
+                                        <Skeleton className="h-4 flex-1" />
+                                        <Skeleton className="h-4 flex-1" />
+                                    </div>
+                                    {Array.from({ length: 5 }).map((_, i) => (
+                                        <div
+                                            key={i}
+                                            className="flex space-x-4 border-b py-2 last:border-0"
+                                        >
+                                            <Skeleton className="h-4 flex-1" />
+                                            <Skeleton className="h-4 flex-1" />
+                                            <Skeleton className="h-4 flex-1" />
+                                            <Skeleton className="h-4 flex-1" />
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : pendingRequests.length === 0 ? (
                                 <div className="overflow-x-auto">
                                     <Table>
                                         <TableHeader>
@@ -433,7 +487,27 @@ export default function Dashboard({
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
-                                    {myProperties.length === 0 ? (
+                                    {!myProperties ? (
+                                        <div className="space-y-4">
+                                            {Array.from({ length: 4 }).map(
+                                                (_, idx) => (
+                                                    <div
+                                                        key={idx}
+                                                        className="flex items-start justify-between border-b border-border pb-3 last:border-0 last:pb-0"
+                                                    >
+                                                        <div className="space-y-1">
+                                                            <Skeleton className="h-4 w-[120px]" />
+                                                            <Skeleton className="h-3 w-[180px]" />
+                                                        </div>
+                                                        <div className="space-y-1 text-right">
+                                                            <Skeleton className="h-4 w-[60px]" />
+                                                            <Skeleton className="h-3 w-[40px]" />
+                                                        </div>
+                                                    </div>
+                                                ),
+                                            )}
+                                        </div>
+                                    ) : myProperties.length === 0 ? (
                                         <div className="py-6 text-center text-sm text-muted-foreground">
                                             No accountable assets currently
                                             assigned to you.
@@ -487,7 +561,27 @@ export default function Dashboard({
                                         </CardDescription>
                                     </CardHeader>
                                     <CardContent className="space-y-4">
-                                        {recentIssuances.length === 0 ? (
+                                        {!recentIssuances ? (
+                                            <div className="space-y-4">
+                                                {Array.from({ length: 4 }).map(
+                                                    (_, idx) => (
+                                                        <div
+                                                            key={idx}
+                                                            className="flex items-start justify-between border-b border-border pb-3 last:border-0 last:pb-0"
+                                                        >
+                                                            <div className="space-y-1">
+                                                                <Skeleton className="h-4 w-[120px]" />
+                                                                <Skeleton className="h-3 w-[180px]" />
+                                                            </div>
+                                                            <div className="space-y-1 text-right">
+                                                                <Skeleton className="h-4 w-[60px]" />
+                                                                <Skeleton className="h-3 w-[40px]" />
+                                                            </div>
+                                                        </div>
+                                                    ),
+                                                )}
+                                            </div>
+                                        ) : recentIssuances.length === 0 ? (
                                             <div className="py-6 text-center text-sm text-muted-foreground">
                                                 No recent stock issuances.
                                             </div>
@@ -535,7 +629,27 @@ export default function Dashboard({
                                             </CardDescription>
                                         </CardHeader>
                                         <CardContent className="space-y-4">
-                                            {recentReceiving.length === 0 ? (
+                                            {!recentReceiving ? (
+                                                <div className="space-y-4">
+                                                    {Array.from({
+                                                        length: 4,
+                                                    }).map((_, idx) => (
+                                                        <div
+                                                            key={idx}
+                                                            className="flex items-start justify-between border-b border-border pb-3 last:border-0 last:pb-0"
+                                                        >
+                                                            <div className="space-y-1">
+                                                                <Skeleton className="h-4 w-[120px]" />
+                                                                <Skeleton className="h-3 w-[180px]" />
+                                                            </div>
+                                                            <div className="space-y-1 text-right">
+                                                                <Skeleton className="h-4 w-[60px]" />
+                                                                <Skeleton className="h-3 w-[40px]" />
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            ) : recentReceiving.length === 0 ? (
                                                 <div className="py-6 text-center text-sm text-muted-foreground">
                                                     No recent deliveries
                                                     recorded.
