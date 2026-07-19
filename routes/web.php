@@ -41,12 +41,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('inventory/purchase-requests', [PurchaseRequestController::class, 'store'])->name('inventory.purchase-requests.store');
     Route::post('inventory/purchase-requests/{purchaseRequest}/approve', [PurchaseRequestController::class, 'approve'])->name('inventory.purchase-requests.approve');
     Route::post('inventory/purchase-requests/{purchaseRequest}/reject', [PurchaseRequestController::class, 'reject'])->name('inventory.purchase-requests.reject');
+    Route::get('inventory/purchase-requests/{purchaseRequest}/print', [PurchaseRequestController::class, 'print'])->name('inventory.purchase-requests.print');
 
     // Purchase Orders
     Route::get('inventory/purchase-orders', [PurchaseOrderController::class, 'index'])->name('inventory.purchase-orders.index');
     Route::post('inventory/purchase-orders', [PurchaseOrderController::class, 'store'])->name('inventory.purchase-orders.store');
     Route::put('inventory/purchase-orders/{purchaseOrder}', [PurchaseOrderController::class, 'update'])->name('inventory.purchase-orders.update');
     Route::post('inventory/purchase-orders/{purchaseOrder}/send', [PurchaseOrderController::class, 'send'])->name('inventory.purchase-orders.send');
+    Route::get('inventory/purchase-orders/{purchaseOrder}/print', [PurchaseOrderController::class, 'print'])->name('inventory.purchase-orders.print');
 
     // Receiving Reports (Stock In)
     Route::get('inventory/receiving-reports', [ReceivingReportController::class, 'index'])->name('inventory.receiving.index');

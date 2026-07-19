@@ -6,6 +6,7 @@ import {
     ClipboardList,
     Truck,
     PackageCheck,
+    Printer,
 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -1045,6 +1046,19 @@ export default function PurchaseOrdersIndex({
                                         onClick={() => setIsDetailOpen(false)}
                                     >
                                         Close
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        className="gap-2 border-indigo-200 text-indigo-600 hover:bg-indigo-50 dark:border-indigo-900/50 dark:text-indigo-400"
+                                        onClick={() => {
+                                            window.open(
+                                                `/inventory/purchase-orders/${selectedPO.id}/print`,
+                                                '_blank',
+                                            );
+                                        }}
+                                    >
+                                        <Printer className="h-4 w-4" />
+                                        Print Order (Appendix 61)
                                     </Button>
                                     {selectedPO.status === 'draft' &&
                                         canCreate && (

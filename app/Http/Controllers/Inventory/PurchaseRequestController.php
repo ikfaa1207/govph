@@ -140,4 +140,23 @@ class PurchaseRequestController extends Controller
 
         return back()->with('success', 'Purchase Request rejected.');
     }
+
+    /**
+     * Print purchase request (Appendix 60 form).
+     */
+    public function print(PurchaseRequest $purchaseRequest): Response
+    {
+        Gate::authorize('view', $purchaseRequest);
+
+        $purchaseRequest->load([
+            'requester.department.office',
+            'department.office',
+            'approver.employee',
+            'items.item.unit',
+        ]);
+
+        return Inertia::render('inventory/purchase-requests/print', [
+            'purchaseRequest' => $purchaseRequest,
+        ]);
+    }
 }

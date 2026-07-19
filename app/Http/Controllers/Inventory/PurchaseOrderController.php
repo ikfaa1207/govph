@@ -132,4 +132,22 @@ class PurchaseOrderController extends Controller
 
         return back()->with('success', 'Purchase Order marked as sent to supplier.');
     }
+
+    /**
+     * Print purchase order (Appendix 61 form).
+     */
+    public function print(PurchaseOrder $purchaseOrder): Response
+    {
+        Gate::authorize('view', $purchaseOrder);
+
+        $purchaseOrder->load([
+            'purchaseRequest.requester.department.office',
+            'supplier',
+            'items.item.unit',
+        ]);
+
+        return Inertia::render('inventory/purchase-orders/print', [
+            'purchaseOrder' => $purchaseOrder,
+        ]);
+    }
 }

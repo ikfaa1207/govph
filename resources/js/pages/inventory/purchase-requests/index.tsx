@@ -9,6 +9,7 @@ import {
     ClipboardCheck,
     CheckCircle2,
     ShoppingCart,
+    Printer,
 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -1030,6 +1031,19 @@ export default function PurchaseRequestsIndex({
                                         onClick={() => setIsDetailOpen(false)}
                                     >
                                         Close
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        className="gap-2 border-indigo-200 text-indigo-600 hover:bg-indigo-50 dark:border-indigo-900/50 dark:text-indigo-400"
+                                        onClick={() => {
+                                            window.open(
+                                                `/inventory/purchase-requests/${selectedPR.id}/print`,
+                                                '_blank',
+                                            );
+                                        }}
+                                    >
+                                        <Printer className="h-4 w-4" />
+                                        Print Request (Appendix 60)
                                     </Button>
                                     {canApprove &&
                                         selectedPR.status === 'pending' && (
