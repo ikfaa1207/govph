@@ -82,10 +82,10 @@ class UserEmployeeSeeder extends Seeder
             'dashboard.view', 'inventory.view', 'warehouse.view', 'procurement.view', 'property.view', 'reports.view', 'reports.print', 'audit.view',
         ]));
 
-        $co = Office::where('code', 'CO')->first();
-        $deptIt = Department::where('code', 'ITD')->first();
-        $deptHr = Department::where('code', 'HRMD')->first();
-        $deptFinance = Department::where('code', 'FAD')->first();
+        $co = Office::where('code', 'MC')->first() ?? Office::where('code', 'CO')->first() ?? Office::first();
+        $deptIt = Department::where('code', 'ITD')->first() ?? Department::first();
+        $deptHr = Department::where('code', 'HRMD')->first() ?? Department::first();
+        $deptFinance = Department::where('code', 'FAD')->first() ?? Department::first();
 
         // 3. Create Fixed Core Users
         $usersData = [

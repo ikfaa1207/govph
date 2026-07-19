@@ -13,49 +13,51 @@ class AgencySeeder extends Seeder
      */
     public function run(): void
     {
-        // Central Office
+        // Main Campus
         $co = Office::create([
-            'code' => 'CO',
-            'name' => 'Central Office',
+            'code' => 'MC',
+            'name' => 'Main Campus',
         ]);
 
         $coDepartments = [
-            ['code' => 'HRMD', 'name' => 'Human Resource Management Department'],
-            ['code' => 'ITD', 'name' => 'Information Technology Division'],
-            ['code' => 'FAD', 'name' => 'Finance & Accounting Division'],
-            ['code' => 'GSD', 'name' => 'General Services Division'],
-            ['code' => 'PMD', 'name' => 'Procurement Management Division'],
-            ['code' => 'PRD', 'name' => 'Planning & Research Division'],
+            ['code' => 'HRMD', 'name' => 'Human Resource Management Office'],
+            ['code' => 'ITD', 'name' => 'College of Computer Studies'],
+            ['code' => 'FAD', 'name' => 'Finance & Accounting Office'],
+            ['code' => 'GSD', 'name' => 'General Services Office'],
+            ['code' => 'PMD', 'name' => 'Procurement & Supply Office'],
+            ['code' => 'PRD', 'name' => 'Planning & Development Office'],
+            ['code' => 'COE', 'name' => 'College of Engineering'],
+            ['code' => 'COED', 'name' => 'College of Education'],
         ];
 
         foreach ($coDepartments as $dept) {
             Department::create(array_merge($dept, ['office_id' => $co->id]));
         }
 
-        // NCR Regional Office
+        // North Campus
         $ncr = Office::create([
-            'code' => 'NCR',
-            'name' => 'National Capital Region Office',
+            'code' => 'NC',
+            'name' => 'North Campus',
         ]);
 
         $ncrDepartments = [
-            ['code' => 'NCR-ADMIN', 'name' => 'NCR Administrative Division'],
-            ['code' => 'NCR-OPS', 'name' => 'NCR Operations Division'],
+            ['code' => 'NC-ADMIN', 'name' => 'North Campus Administrative Division'],
+            ['code' => 'NC-COA', 'name' => 'College of Agriculture'],
         ];
 
         foreach ($ncrDepartments as $dept) {
             Department::create(array_merge($dept, ['office_id' => $ncr->id]));
         }
 
-        // Region 1 Office
+        // South Campus
         $ro1 = Office::create([
-            'code' => 'RO-I',
-            'name' => 'Regional Office I - Ilocos Region',
+            'code' => 'SC',
+            'name' => 'South Campus',
         ]);
 
         $ro1Departments = [
-            ['code' => 'RO1-ADMIN', 'name' => 'RO-I Administrative Division'],
-            ['code' => 'RO1-OPS', 'name' => 'RO-I Operations Division'],
+            ['code' => 'SC-ADMIN', 'name' => 'South Campus Administrative Division'],
+            ['code' => 'SC-COFI', 'name' => 'College of Fisheries'],
         ];
 
         foreach ($ro1Departments as $dept) {
