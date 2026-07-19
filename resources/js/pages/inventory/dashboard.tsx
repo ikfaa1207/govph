@@ -27,6 +27,7 @@ import {
 import { formatCurrency, formatDateTime } from '@/lib/utils';
 
 interface DashboardProps {
+    userScope: 'global' | 'dept_head' | 'employee';
     stats: {
         inventoryType: string;
         totalItems: number;
@@ -42,14 +43,17 @@ interface DashboardProps {
     recentReceiving: Array<any>;
     pendingRequests: Array<any>;
     complianceAlerts?: Array<{ type: string; title: string; message: string }>;
+    myProperties?: Array<any>;
 }
 
 export default function Dashboard({
+    userScope,
     stats,
     recentIssuances,
     recentReceiving,
     pendingRequests,
     complianceAlerts = [],
+    myProperties = [],
 }: DashboardProps) {
     const breadcrumbs = [{ title: 'GIMS Dashboard', href: '/dashboard' }];
     setLayoutProps({ breadcrumbs });
@@ -65,8 +69,9 @@ export default function Dashboard({
                             Government Inventory Management System (GIMS)
                         </h1>
                         <p className="text-sm text-muted-foreground">
-                            COA-compliant asset tracking, supplies monitoring,
-                            and property accountability desk.
+                            {userScope === 'employee'
+                                ? 'Personal equipment and requisition workspace.'
+                                : 'COA-compliant asset tracking, supplies monitoring, and property accountability desk.'}
                         </p>
                     </div>
                 </div>
@@ -93,24 +98,34 @@ export default function Dashboard({
                 )}
 
                 {/* Metrics Cards Grid */}
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-                    {/* Metrics 1: Total Stock Value */}
-                    <Card className="relative z-0 flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-emerald-500 bg-card bg-linear-to-tr from-transparent to-emerald-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
-                        <div className="absolute -right-4 -bottom-4 text-emerald-500/5">
-                            <TrendingDown
-                                className="h-28 w-28"
-                                strokeWidth={1.5}
-                            />
-                        </div>
-                        <div className="relative z-10 space-y-1">
-                            <p className="text-[11px] font-medium tracking-wider text-emerald-500 uppercase">
-                                {stats.inventoryType} Value
-                            </p>
-                            <p className="truncate text-2xl font-bold text-foreground">
-                                {formatCurrency(stats.totalValue)}
-                            </p>
-                        </div>
-                    </Card>
+                <div
+                    className={`grid gap-4 ${
+                        userScope === 'employee'
+                            ? 'md:grid-cols-3'
+                            : userScope === 'dept_head'
+                              ? 'md:grid-cols-2 lg:grid-cols-4'
+                              : 'md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5'
+                    }`}
+                >
+                    {/* Metrics 1: Total Stock Value (Hidden for regular employees) */}
+                    {userScope !== 'employee' && (
+                        <Card className="relative z-0 flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-emerald-500 bg-card bg-linear-to-tr from-transparent to-emerald-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
+                            <div className="absolute -right-4 -bottom-4 text-emerald-500/5">
+                                <TrendingDown
+                                    className="h-28 w-28"
+                                    strokeWidth={1.5}
+                                />
+                            </div>
+                            <div className="relative z-10 space-y-1">
+                                <p className="text-[11px] font-medium tracking-wider text-emerald-500 uppercase">
+                                    {stats.inventoryType} Value
+                                </p>
+                                <p className="truncate text-2xl font-bold text-foreground">
+                                    {formatCurrency(stats.totalValue)}
+                                </p>
+                            </div>
+                        </Card>
+                    )}
 
                     {/* Metrics 2: Total Items Cataloged */}
                     <Card className="relative z-0 flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-blue-500 bg-card bg-linear-to-tr from-transparent to-blue-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
@@ -119,7 +134,9 @@ export default function Dashboard({
                         </div>
                         <div className="relative z-10 space-y-1">
                             <p className="text-[11px] font-medium tracking-wider text-blue-500 uppercase">
-                                {stats.inventoryType} Catalog
+                                {userScope === 'employee'
+                                    ? 'Supplies Catalog'
+                                    : `${stats.inventoryType} Catalog`}
                             </p>
                             <p className="truncate text-2xl font-bold text-foreground">
                                 {stats.totalItems} Items
@@ -134,22 +151,27 @@ export default function Dashboard({
                         </div>
                         <div className="relative z-10 space-y-1">
                             <p className="text-[11px] font-medium tracking-wider text-violet-500 uppercase">
-                                Accountable Property
+                                {userScope === 'employee'
+                                    ? 'My Assigned Assets'
+                                    : 'Accountable Property'}
                             </p>
                             <div className="flex items-end gap-2">
                                 <p className="truncate text-2xl font-bold text-foreground">
-                                    {stats.totalPpeValue !== undefined
-                                        ? formatCurrency(stats.totalPpeValue)
-                                        : `${stats.totalProperties} Assets`}
+                                    {userScope === 'employee'
+                                        ? `${stats.totalProperties} Assets`
+                                        : stats.totalPpeValue !== undefined
+                                          ? formatCurrency(stats.totalPpeValue)
+                                          : `${stats.totalProperties} Assets`}
                                 </p>
-                                {stats.totalPpeValue !== undefined && (
-                                    <Badge
-                                        variant="outline"
-                                        className="mb-1 border-violet-500/20 bg-violet-500/10 px-1.5 py-0 text-[10px] whitespace-nowrap text-violet-600"
-                                    >
-                                        {stats.totalProperties} Assets
-                                    </Badge>
-                                )}
+                                {userScope !== 'employee' &&
+                                    stats.totalPpeValue !== undefined && (
+                                        <Badge
+                                            variant="outline"
+                                            className="mb-1 border-violet-500/20 bg-violet-500/10 px-1.5 py-0 text-[10px] whitespace-nowrap text-violet-600"
+                                        >
+                                            {stats.totalProperties} Assets
+                                        </Badge>
+                                    )}
                             </div>
                         </div>
                     </Card>
@@ -164,7 +186,9 @@ export default function Dashboard({
                         </div>
                         <div className="relative z-10 space-y-1">
                             <p className="text-[11px] font-medium tracking-wider text-amber-500 uppercase">
-                                Pending RIS Requests
+                                {userScope === 'employee'
+                                    ? 'My Pending RIS'
+                                    : 'Pending RIS Requests'}
                             </p>
                             <p className="truncate text-2xl font-bold text-foreground">
                                 {stats.pendingRequests} Requisitions
@@ -172,74 +196,80 @@ export default function Dashboard({
                         </div>
                     </Card>
 
-                    {/* Metrics 5: Pending Physical Counts */}
-                    <Link
-                        href="/inventory/physical-counts?status=draft"
-                        className="relative z-0 block flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-rose-500 bg-card bg-linear-to-tr from-transparent to-rose-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[4px] hover:shadow-lg focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 focus:outline-hidden"
-                    >
-                        <div className="absolute -right-4 -bottom-4 text-rose-500/5 transition-transform duration-300 hover:scale-110">
-                            <ClipboardList
-                                className={`h-28 w-28 ${stats.pendingCounts > 0 ? 'animate-pulse text-rose-500/10' : ''}`}
-                                strokeWidth={1.5}
-                            />
-                        </div>
-                        <div className="relative z-10 space-y-1">
-                            <p className="flex items-center justify-between text-[11px] font-medium tracking-wider text-rose-500 uppercase">
-                                <span>Items to Count</span>
-                                <span className="rounded-full bg-rose-500/10 px-2 py-0.5 text-[9px] font-bold text-rose-500">
-                                    Action Needed
-                                </span>
-                            </p>
-                            <p className="truncate text-2xl font-bold text-foreground transition-colors group-hover:text-rose-600">
-                                {stats.pendingCounts} Pending Counts
-                            </p>
-                        </div>
-                    </Link>
+                    {/* Metrics 5: Pending Physical Counts (Hidden for employees & department heads) */}
+                    {userScope === 'global' && (
+                        <Link
+                            href="/inventory/physical-counts?status=draft"
+                            className="relative z-0 block flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-rose-500 bg-card bg-linear-to-tr from-transparent to-rose-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[4px] hover:shadow-lg focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 focus:outline-hidden"
+                        >
+                            <div className="absolute -right-4 -bottom-4 text-rose-500/5 transition-transform duration-300 hover:scale-110">
+                                <ClipboardList
+                                    className={`h-28 w-28 ${stats.pendingCounts > 0 ? 'animate-pulse text-rose-500/10' : ''}`}
+                                    strokeWidth={1.5}
+                                />
+                            </div>
+                            <div className="relative z-10 space-y-1">
+                                <p className="flex items-center justify-between text-[11px] font-medium tracking-wider text-rose-500 uppercase">
+                                    <span>Items to Count</span>
+                                    <span className="rounded-full bg-rose-500/10 px-2 py-0.5 text-[9px] font-bold text-rose-500">
+                                        Action Needed
+                                    </span>
+                                </p>
+                                <p className="truncate text-2xl font-bold text-foreground transition-colors group-hover:text-rose-600">
+                                    {stats.pendingCounts} Pending Counts
+                                </p>
+                            </div>
+                        </Link>
+                    )}
                 </div>
 
-                {/* Stock Warning Banners if there are stock issues */}
-                {(stats.lowStocks > 0 || stats.outOfStocks > 0) && (
-                    <div className="grid gap-4 md:grid-cols-2">
-                        {stats.lowStocks > 0 && (
-                            <div className="flex items-center gap-3 rounded-lg border border-amber-500/20 bg-amber-500/5 p-4 text-amber-600 dark:text-amber-400">
-                                <AlertTriangle className="h-5 w-5 shrink-0" />
-                                <div>
-                                    <span className="font-semibold">
-                                        {stats.lowStocks} supplies are below
-                                        reorder level.
-                                    </span>{' '}
-                                    Consider starting a new Purchase Request
-                                    (PR).
+                {/* Stock Warning Banners (Hidden for employees) */}
+                {userScope !== 'employee' &&
+                    (stats.lowStocks > 0 || stats.outOfStocks > 0) && (
+                        <div className="grid gap-4 md:grid-cols-2">
+                            {stats.lowStocks > 0 && (
+                                <div className="flex items-center gap-3 rounded-lg border border-amber-500/20 bg-amber-500/5 p-4 text-amber-600 dark:text-amber-400">
+                                    <AlertTriangle className="h-5 w-5 shrink-0" />
+                                    <div>
+                                        <span className="font-semibold">
+                                            {stats.lowStocks} supplies are below
+                                            reorder level.
+                                        </span>{' '}
+                                        Consider starting a new Purchase Request
+                                        (PR).
+                                    </div>
                                 </div>
-                            </div>
-                        )}
-                        {stats.outOfStocks > 0 && (
-                            <div className="flex items-center gap-3 rounded-lg border border-rose-500/20 bg-rose-500/5 p-4 text-rose-600 dark:text-rose-400">
-                                <AlertTriangle className="h-5 w-5 shrink-0" />
-                                <div>
-                                    <span className="font-semibold">
-                                        {stats.outOfStocks} supplies are
-                                        completely out of stock.
-                                    </span>{' '}
-                                    Requisitions cannot be issued.
+                            )}
+                            {stats.outOfStocks > 0 && (
+                                <div className="flex items-center gap-3 rounded-lg border border-rose-500/20 bg-rose-500/5 p-4 text-rose-600 dark:text-rose-400">
+                                    <AlertTriangle className="h-5 w-5 shrink-0" />
+                                    <div>
+                                        <span className="font-semibold">
+                                            {stats.outOfStocks} supplies are
+                                            completely out of stock.
+                                        </span>{' '}
+                                        Requisitions cannot be issued.
+                                    </div>
                                 </div>
-                            </div>
-                        )}
-                    </div>
-                )}
+                            )}
+                        </div>
+                    )}
 
                 {/* Feed Tables */}
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                    {/* Left: Pending RIS Requests */}
+                    {/* Left Column: Requisitions List */}
                     <Card className="lg:col-span-2">
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2 text-base font-semibold">
                                 <ClipboardList className="h-4 w-4 text-amber-500" />
-                                Requisitions Dashboard (RIS)
+                                {userScope === 'employee'
+                                    ? 'My Requisition Tickets (RIS)'
+                                    : 'Requisitions Dashboard (RIS)'}
                             </CardTitle>
                             <CardDescription>
-                                Recent Requisition & Issue Slips submitted by
-                                personnel.
+                                {userScope === 'employee'
+                                    ? 'Your recently submitted Requisition & Issue Slips.'
+                                    : 'Recent Requisition & Issue Slips submitted by personnel.'}
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
@@ -343,100 +373,170 @@ export default function Dashboard({
                         </CardContent>
                     </Card>
 
-                    {/* Right: Activity logs / quick actions */}
+                    {/* Right Column: Dynamic depending on role */}
                     <div className="space-y-6">
-                        {/* Quick Issuances feed */}
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2 text-base font-semibold">
-                                    <ArrowUpRight className="h-4 w-4 text-emerald-500" />
-                                    Recent Stock Issuances
-                                </CardTitle>
-                                <CardDescription>
-                                    Latest supplies issued out of the warehouse.
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                {recentIssuances.length === 0 ? (
-                                    <div className="py-6 text-center text-sm text-muted-foreground">
-                                        No recent stock issuances.
-                                    </div>
-                                ) : (
-                                    recentIssuances.map((iss) => (
-                                        <div
-                                            key={iss.id}
-                                            className="flex items-start justify-between border-b border-border pb-3 last:border-0 last:pb-0"
-                                        >
-                                            <div>
-                                                <div className="font-mono text-xs font-semibold text-primary">
-                                                    {iss.issue_number}
-                                                </div>
-                                                <div className="text-xs text-muted-foreground">
-                                                    To: {iss.receiver?.name}
-                                                </div>
-                                            </div>
-                                            <div className="text-right">
-                                                <div className="text-xs font-medium">
-                                                    {iss.issued_date}
-                                                </div>
-                                                <div className="text-[10px] text-muted-foreground">
-                                                    by {iss.issuer?.name}
-                                                </div>
-                                            </div>
+                        {userScope === 'employee' ? (
+                            /* Personal Assigned Assets Card for regular employees */
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="flex items-center gap-2 text-base font-semibold">
+                                        <Database className="h-4 w-4 text-violet-500" />
+                                        My Assigned Assets (PPE)
+                                    </CardTitle>
+                                    <CardDescription>
+                                        Government equipment currently issued to
+                                        you.
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    {myProperties.length === 0 ? (
+                                        <div className="py-6 text-center text-sm text-muted-foreground">
+                                            No accountable assets currently
+                                            assigned to you.
                                         </div>
-                                    ))
-                                )}
-                            </CardContent>
-                        </Card>
+                                    ) : (
+                                        myProperties.map((prop) => (
+                                            <div
+                                                key={prop.id}
+                                                className="flex items-start justify-between border-b border-border pb-3 last:border-0 last:pb-0"
+                                            >
+                                                <div>
+                                                    <div className="font-mono text-xs font-semibold text-primary">
+                                                        {prop.property_number}
+                                                    </div>
+                                                    <div className="text-xs text-muted-foreground">
+                                                        {prop.brand}{' '}
+                                                        {prop.model} (
+                                                        {prop.category?.name})
+                                                    </div>
+                                                </div>
+                                                <div className="text-right">
+                                                    <div className="text-xs font-medium">
+                                                        {formatCurrency(
+                                                            prop.unit_cost,
+                                                        )}
+                                                    </div>
+                                                    <div className="text-[10px] text-muted-foreground capitalize">
+                                                        {prop.condition}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </CardContent>
+                            </Card>
+                        ) : (
+                            /* Central Supply Feeds for Global / Dept Head roles */
+                            <>
+                                {/* Quick Issuances feed */}
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle className="flex items-center gap-2 text-base font-semibold">
+                                            <ArrowUpRight className="h-4 w-4 text-emerald-500" />
+                                            {userScope === 'dept_head'
+                                                ? 'Department Issuances'
+                                                : 'Recent Stock Issuances'}
+                                        </CardTitle>
+                                        <CardDescription>
+                                            Latest supplies issued out of
+                                            storage.
+                                        </CardDescription>
+                                    </CardHeader>
+                                    <CardContent className="space-y-4">
+                                        {recentIssuances.length === 0 ? (
+                                            <div className="py-6 text-center text-sm text-muted-foreground">
+                                                No recent stock issuances.
+                                            </div>
+                                        ) : (
+                                            recentIssuances.map((iss) => (
+                                                <div
+                                                    key={iss.id}
+                                                    className="flex items-start justify-between border-b border-border pb-3 last:border-0 last:pb-0"
+                                                >
+                                                    <div>
+                                                        <div className="font-mono text-xs font-semibold text-primary">
+                                                            {iss.issue_number}
+                                                        </div>
+                                                        <div className="text-xs text-muted-foreground">
+                                                            To:{' '}
+                                                            {iss.receiver?.name}
+                                                        </div>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <div className="text-xs font-medium">
+                                                            {iss.issued_date}
+                                                        </div>
+                                                        <div className="text-[10px] text-muted-foreground">
+                                                            by{' '}
+                                                            {iss.issuer?.name}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))
+                                        )}
+                                    </CardContent>
+                                </Card>
 
-                        {/* Recent Deliveries */}
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2 text-base font-semibold">
-                                    <ArrowDownLeft className="h-4 w-4 text-sky-500" />
-                                    Recent Deliveries (IAR)
-                                </CardTitle>
-                                <CardDescription>
-                                    Latest deliveries accepted by the supply
-                                    unit.
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                {recentReceiving.length === 0 ? (
-                                    <div className="py-6 text-center text-sm text-muted-foreground">
-                                        No recent deliveries recorded.
-                                    </div>
-                                ) : (
-                                    recentReceiving.map((rec) => (
-                                        <div
-                                            key={rec.id}
-                                            className="flex items-start justify-between border-b border-border pb-3 last:border-0 last:pb-0"
-                                        >
-                                            <div>
-                                                <div className="font-mono text-xs font-semibold text-primary">
-                                                    {rec.iar_number}
+                                {/* Recent Deliveries (Only visible for global view) */}
+                                {userScope === 'global' && (
+                                    <Card>
+                                        <CardHeader>
+                                            <CardTitle className="flex items-center gap-2 text-base font-semibold">
+                                                <ArrowDownLeft className="h-4 w-4 text-sky-500" />
+                                                Recent Deliveries (IAR)
+                                            </CardTitle>
+                                            <CardDescription>
+                                                Latest deliveries accepted by
+                                                the supply unit.
+                                            </CardDescription>
+                                        </CardHeader>
+                                        <CardContent className="space-y-4">
+                                            {recentReceiving.length === 0 ? (
+                                                <div className="py-6 text-center text-sm text-muted-foreground">
+                                                    No recent deliveries
+                                                    recorded.
                                                 </div>
-                                                <div className="text-xs text-muted-foreground">
-                                                    From:{' '}
-                                                    {rec.purchase_order
-                                                        ?.supplier?.name ??
-                                                        'Supplier'}
-                                                </div>
-                                            </div>
-                                            <div className="text-right">
-                                                <div className="text-xs font-medium">
-                                                    {rec.received_date}
-                                                </div>
-                                                <div className="text-[10px] text-muted-foreground">
-                                                    Accepted by:{' '}
-                                                    {rec.receiver?.name}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))
+                                            ) : (
+                                                recentReceiving.map((rec) => (
+                                                    <div
+                                                        key={rec.id}
+                                                        className="flex items-start justify-between border-b border-border pb-3 last:border-0 last:pb-0"
+                                                    >
+                                                        <div>
+                                                            <div className="font-mono text-xs font-semibold text-primary">
+                                                                {rec.iar_number}
+                                                            </div>
+                                                            <div className="text-xs text-muted-foreground">
+                                                                From:{' '}
+                                                                {rec
+                                                                    .purchase_order
+                                                                    ?.supplier
+                                                                    ?.name ??
+                                                                    'Supplier'}
+                                                            </div>
+                                                        </div>
+                                                        <div className="text-right">
+                                                            <div className="text-xs font-medium">
+                                                                {
+                                                                    rec.received_date
+                                                                }
+                                                            </div>
+                                                            <div className="text-[10px] text-muted-foreground">
+                                                                Accepted by:{' '}
+                                                                {
+                                                                    rec.receiver
+                                                                        ?.name
+                                                                }
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))
+                                            )}
+                                        </CardContent>
+                                    </Card>
                                 )}
-                            </CardContent>
-                        </Card>
+                            </>
+                        )}
                     </div>
                 </div>
             </div>

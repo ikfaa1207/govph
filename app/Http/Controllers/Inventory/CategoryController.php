@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Inventory;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
+use App\Services\Audit\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -25,6 +26,8 @@ class CategoryController extends Controller
 
         $category = Category::create($validated);
 
+        AuditLogger::log('CREATE_CATEGORY', $category, null, $category->toArray());
+
         return back();
     }
 
@@ -43,6 +46,8 @@ class CategoryController extends Controller
 
         $category->update($validated);
 
+        AuditLogger::log('UPDATE_CATEGORY', $category, null, $category->toArray());
+
         return back();
     }
 
@@ -59,6 +64,8 @@ class CategoryController extends Controller
 
         $category->is_active = ! $category->is_active;
         $category->save();
+
+        AuditLogger::log('TOGGLE_CATEGORY_STATUS', $category, null, ['is_active' => $category->is_active]);
 
         return back();
     }

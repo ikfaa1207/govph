@@ -28,10 +28,21 @@ class DashboardController extends Controller
         $user = $request->user();
         $employee = $user?->employee;
 
-        // Check if user should see global inventory (Supply Officer/Admin)
+        // Determine user dashboard scope
         $seesGlobalInventory = Gate::allows('warehouse.issue');
+        $isDeptHead = Gate::allows('request.approve');
 
         if ($seesGlobalInventory || ! $employee) {
+            $userScope = 'global';
+        } elseif ($isDeptHead) {
+            $userScope = 'dept_head';
+        } else {
+            $userScope = 'employee';
+        }
+
+        $myProperties = [];
+
+        if ($userScope === 'global') {
             $totalItems = Item::count();
 
             // Use an aggregate query to prevent N+1 and memory exhaustion
@@ -47,7 +58,30 @@ class DashboardController extends Controller
 
             $totalProperties = Property::count();
             $totalPpeValue = (float) Property::sum('unit_cost');
-        } else {
+
+            $countQuery = Requisition::whereIn('status', ['pending_dept_head', 'pending_supply'])
+                ->visibleTo($user, $employee);
+
+            $feedQuery = Requisition::with(['requester.department'])
+                ->whereIn('status', ['pending_dept_head', 'pending_supply'])
+                ->visibleTo($user, $employee);
+
+            $recentIssuances = Issuance::with(['receiver', 'issuer'])
+                ->orderBy('id', 'desc')
+                ->limit(5)
+                ->get();
+
+            $recentReceiving = ReceivingReport::with(['receiver', 'purchaseOrder.supplier'])
+                ->orderBy('id', 'desc')
+                ->limit(5)
+                ->get();
+
+            $pendingRequests = $feedQuery
+                ->orderBy('id', 'desc')
+                ->limit(5)
+                ->get();
+
+        } elseif ($userScope === 'dept_head') {
             $totalItems = DepartmentItem::where('department_id', $employee->department_id)->count();
 
             // Aggregate from department_items joined with items
@@ -69,29 +103,14 @@ class DashboardController extends Controller
 
             $totalProperties = $deptPropertiesQuery->count();
             $totalPpeValue = (float) $deptPropertiesQuery->sum('unit_cost');
-        }
 
-        $countQuery = Requisition::whereIn('status', ['pending_dept_head', 'pending_supply'])
-            ->visibleTo($user, $employee);
+            $countQuery = Requisition::whereIn('status', ['pending_dept_head'])
+                ->where('department_id', $employee->department_id);
 
-        $feedQuery = Requisition::with(['requester.department'])
-            ->whereIn('status', ['pending_dept_head', 'pending_supply'])
-            ->visibleTo($user, $employee);
+            $feedQuery = Requisition::with(['requester.department'])
+                ->whereIn('status', ['pending_dept_head'])
+                ->where('department_id', $employee->department_id);
 
-        $pendingRequisitionsCount = $countQuery->count();
-
-        // Feeds
-        if ($seesGlobalInventory || ! $employee) {
-            $recentIssuances = Issuance::with(['receiver', 'issuer'])
-                ->orderBy('id', 'desc')
-                ->limit(5)
-                ->get();
-
-            $recentReceiving = ReceivingReport::with(['receiver', 'purchaseOrder.supplier'])
-                ->orderBy('id', 'desc')
-                ->limit(5)
-                ->get();
-        } else {
             $recentIssuances = Issuance::with(['receiver', 'issuer'])
                 ->whereHas('receiver', function ($query) use ($employee) {
                     $query->where('department_id', $employee->department_id);
@@ -101,12 +120,46 @@ class DashboardController extends Controller
                 ->get();
 
             $recentReceiving = [];
+
+            $pendingRequests = $feedQuery
+                ->orderBy('id', 'desc')
+                ->limit(5)
+                ->get();
+
+        } else {
+            // Regular requesting employee
+            $totalItems = Item::where('is_active', true)->count();
+            $lowStocksCount = 0;
+            $outOfStocksCount = 0;
+            $totalValue = 0.0;
+
+            $totalProperties = Property::whereHas('activeAssignment', function ($query) use ($employee) {
+                $query->where('assigned_to', $employee->id);
+            })->count();
+
+            $totalPpeValue = (float) Property::whereHas('activeAssignment', function ($query) use ($employee) {
+                $query->where('assigned_to', $employee->id);
+            })->sum('unit_cost');
+
+            $countQuery = Requisition::where('requesting_employee_id', $employee->id)
+                ->whereIn('status', ['pending_dept_head', 'pending_supply']);
+
+            $recentIssuances = [];
+            $recentReceiving = [];
+
+            $pendingRequests = Requisition::with(['requester.department'])
+                ->where('requesting_employee_id', $employee->id)
+                ->orderBy('id', 'desc')
+                ->limit(5)
+                ->get();
+
+            $myProperties = Property::with(['category', 'activeAssignment'])
+                ->whereHas('activeAssignment', function ($query) use ($employee) {
+                    $query->where('assigned_to', $employee->id);
+                })->get();
         }
 
-        $pendingRequests = $feedQuery
-            ->orderBy('id', 'desc')
-            ->limit(5)
-            ->get();
+        $pendingRequisitionsCount = $countQuery->count();
 
         $complianceAlerts = [];
         $currentYear = (int) date('Y');
@@ -116,7 +169,7 @@ class DashboardController extends Controller
             ->exists();
 
         $currentMonth = (int) date('n');
-        if (! $hasPrevYearCount && in_array($currentMonth, [11, 12, 1, 2], true)) {
+        if ($userScope === 'global' && ! $hasPrevYearCount && in_array($currentMonth, [11, 12, 1, 2], true)) {
             $complianceAlerts[] = [
                 'type' => 'warning',
                 'title' => 'Statutory Compliance Deadline',
@@ -124,14 +177,15 @@ class DashboardController extends Controller
             ];
         }
 
-        $pendingCountsCount = PhysicalCount::whereIn('status', [
+        $pendingCountsCount = $userScope === 'global' ? PhysicalCount::whereIn('status', [
             PhysicalCountStatus::Draft,
             PhysicalCountStatus::PendingReview,
-        ])->count();
+        ])->count() : 0;
 
         return Inertia::render('inventory/dashboard', [
+            'userScope' => $userScope,
             'stats' => [
-                'inventoryType' => $seesGlobalInventory || ! $employee ? 'Central Supply' : 'Department',
+                'inventoryType' => $userScope === 'global' ? 'Central Supply' : 'Department',
                 'totalItems' => $totalItems,
                 'lowStocks' => $lowStocksCount,
                 'outOfStocks' => $outOfStocksCount,
@@ -145,6 +199,7 @@ class DashboardController extends Controller
             'recentReceiving' => $recentReceiving,
             'pendingRequests' => $pendingRequests,
             'complianceAlerts' => $complianceAlerts,
+            'myProperties' => $myProperties,
         ]);
     }
 }

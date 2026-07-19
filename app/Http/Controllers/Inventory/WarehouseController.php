@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Inventory;
 use App\Http\Controllers\Controller;
 use App\Models\Location;
 use App\Models\Warehouse;
+use App\Services\Audit\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -25,6 +26,8 @@ class WarehouseController extends Controller
 
         $warehouse = Warehouse::create($validated);
 
+        AuditLogger::log('CREATE_WAREHOUSE', $warehouse, null, $warehouse->toArray());
+
         return back();
     }
 
@@ -41,6 +44,8 @@ class WarehouseController extends Controller
         ]);
 
         $warehouse->update($validated);
+
+        AuditLogger::log('UPDATE_WAREHOUSE', $warehouse, null, $warehouse->toArray());
 
         return back();
     }
@@ -61,6 +66,8 @@ class WarehouseController extends Controller
 
         $warehouse->is_active = ! $warehouse->is_active;
         $warehouse->save();
+
+        AuditLogger::log('TOGGLE_WAREHOUSE_STATUS', $warehouse, null, ['is_active' => $warehouse->is_active]);
 
         return back();
     }

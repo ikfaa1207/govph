@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Inventory;
 use App\Http\Controllers\Controller;
 use App\Models\Item;
 use App\Models\Location;
+use App\Services\Audit\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -27,6 +28,8 @@ class LocationController extends Controller
         $location = Location::create($validated);
         $location->load('warehouse');
 
+        AuditLogger::log('CREATE_LOCATION', $location, null, $location->toArray());
+
         return back();
     }
 
@@ -45,6 +48,8 @@ class LocationController extends Controller
 
         $location->update($validated);
         $location->load('warehouse');
+
+        AuditLogger::log('UPDATE_LOCATION', $location, null, $location->toArray());
 
         return back();
     }
@@ -65,6 +70,8 @@ class LocationController extends Controller
 
         $location->is_active = ! $location->is_active;
         $location->save();
+
+        AuditLogger::log('TOGGLE_LOCATION_STATUS', $location, null, ['is_active' => $location->is_active]);
 
         return back();
     }
