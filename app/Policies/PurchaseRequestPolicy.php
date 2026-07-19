@@ -21,7 +21,20 @@ class PurchaseRequestPolicy
      */
     public function view(User $user, PurchaseRequest $purchaseRequest): bool
     {
-        return $user->hasPermissionTo('procurement.view');
+        if (! $user->hasPermissionTo('procurement.view')) {
+            return false;
+        }
+
+        $employee = $user->employee;
+        if ($user->hasPermissionTo('admin.super') || $user->hasPermissionTo('warehouse.issue') || $user->hasPermissionTo('audit.view') || $user->hasPermissionTo('procurement.create') || $user->hasPermissionTo('property.assign')) {
+            return true;
+        }
+
+        if ($user->hasPermissionTo('request.approve') && $employee) {
+            return $purchaseRequest->department_id === $employee->department_id;
+        }
+
+        return $employee && $purchaseRequest->requested_by === $employee->id;
     }
 
     /**

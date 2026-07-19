@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -75,5 +76,24 @@ class PurchaseOrder extends Model
     public function receivingReports(): HasMany
     {
         return $this->hasMany(ReceivingReport::class);
+    }
+
+    /**
+     * Scope a query to only include purchase orders visible to the given user.
+     *
+     * @param  Builder<PurchaseOrder>  $query
+     */
+    public function scopeVisibleTo(Builder $query, User $user, ?Employee $employee = null): Builder
+    {
+        $employee ??= Employee::where('user_id', $user->id)->first();
+
+        if ($user->hasPermissionTo('admin.super') || $user->hasPermissionTo('warehouse.issue') || $user->hasPermissionTo('audit.view') || $user->hasPermissionTo('procurement.create') || $user->hasPermissionTo('property.assign')) {
+            return $query;
+        }
+
+        return $query->whereHas('purchaseRequest', function (Builder $q) use ($user, $employee) {
+            /** @var Builder<PurchaseRequest> $q */
+            $q->visibleTo($user, $employee);
+        });
     }
 }

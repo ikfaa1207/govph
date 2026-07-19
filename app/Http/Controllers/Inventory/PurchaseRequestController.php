@@ -24,7 +24,8 @@ class PurchaseRequestController extends Controller
     {
         Gate::authorize('viewAny', PurchaseRequest::class);
 
-        $query = PurchaseRequest::with(['requester.department', 'department', 'approver', 'items.item.unit']);
+        $query = PurchaseRequest::with(['requester.department', 'department', 'approver', 'items.item.unit'])
+            ->visibleTo($request->user());
 
         if ($request->filled('search')) {
             $search = $request->input('search');
@@ -43,7 +44,8 @@ class PurchaseRequestController extends Controller
 
         $purchaseRequests = $query->orderBy('id', 'desc')->paginate(15);
 
-        $counts = PurchaseRequest::select('status', DB::raw('count(*) as count'))
+        $counts = PurchaseRequest::visibleTo($request->user())
+            ->select('status', DB::raw('count(*) as count'))
             ->groupBy('status')
             ->pluck('count', 'status')
             ->toArray();

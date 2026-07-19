@@ -7,6 +7,7 @@ use App\Models\Item;
 use App\Models\Location;
 use App\Models\Office;
 use App\Models\Permission;
+use App\Models\PurchaseOrder;
 use App\Models\PurchaseRequest;
 use App\Models\Supplier;
 use App\Models\Unit;
@@ -272,4 +273,140 @@ test('can generate a PO from an approved PR', function () {
 
     // PR status should be updated to ordered
     $this->assertEquals('ordered', $pr->fresh()->status);
+});
+
+test('procurement visibility is correctly scoped by role and department', function () {
+    // Seed needed permissions
+    Permission::firstOrCreate(['name' => 'warehouse.issue', 'module' => 'warehouse', 'description' => 'Issue stocks']);
+    Permission::firstOrCreate(['name' => 'request.approve', 'module' => 'requisition', 'description' => 'Approve requests']);
+
+    // Setup another office and department
+    $otherOffice = Office::create(['code' => 'O-2', 'name' => 'Office 2']);
+    $otherDept = Department::create([
+        'office_id' => $otherOffice->id,
+        'code' => 'HRD',
+        'name' => 'HR Department',
+    ]);
+
+    // Users and Employees
+    // 1. Supply Officer (Global Access)
+    $supplyUser = User::factory()->create();
+    $supplyUser->givePermissionTo('procurement.view', 'warehouse.issue');
+    $supplyEmployee = Employee::create([
+        'user_id' => $supplyUser->id,
+        'employee_id' => 'EMP-SUP1',
+        'name' => 'Supply Officer',
+        'position' => 'Officer',
+        'office_id' => $this->office->id,
+        'department_id' => $this->department->id,
+    ]);
+
+    // 2. Department Head for IT
+    $itHeadUser = User::factory()->create();
+    $itHeadUser->givePermissionTo('procurement.view', 'request.approve');
+    $itHeadEmployee = Employee::create([
+        'user_id' => $itHeadUser->id,
+        'employee_id' => 'EMP-H1',
+        'name' => 'IT Head',
+        'position' => 'IT Head',
+        'office_id' => $this->office->id,
+        'department_id' => $this->department->id,
+    ]);
+
+    // 3. Department Head for HR
+    $hrHeadUser = User::factory()->create();
+    $hrHeadUser->givePermissionTo('procurement.view', 'request.approve');
+    $hrHeadEmployee = Employee::create([
+        'user_id' => $hrHeadUser->id,
+        'employee_id' => 'EMP-H2',
+        'name' => 'HR Head',
+        'position' => 'HR Head',
+        'office_id' => $otherOffice->id,
+        'department_id' => $otherDept->id,
+    ]);
+
+    // 4. Regular Employee in IT
+    $itStaffUser = User::factory()->create();
+    $itStaffUser->givePermissionTo('procurement.view');
+    $itStaffEmployee = Employee::create([
+        'user_id' => $itStaffUser->id,
+        'employee_id' => 'EMP-S1',
+        'name' => 'IT Staff',
+        'position' => 'Staff',
+        'office_id' => $this->office->id,
+        'department_id' => $this->department->id,
+    ]);
+
+    // Create a PR and PO in IT Department (requested by IT Staff)
+    $itPR = PurchaseRequest::create([
+        'pr_number' => 'PR-IT-1',
+        'requested_by' => $itStaffEmployee->id,
+        'department_id' => $this->department->id,
+        'purpose' => 'IT purchase',
+        'status' => 'approved',
+    ]);
+    $itPO = PurchaseOrder::create([
+        'purchase_request_id' => $itPR->id,
+        'po_number' => 'PO-IT-1',
+        'supplier_id' => $this->supplier->id,
+        'po_date' => today()->toDateString(),
+        'status' => 'draft',
+    ]);
+
+    // Create a PR and PO in HR Department (requested by HR Head)
+    $hrPR = PurchaseRequest::create([
+        'pr_number' => 'PR-HR-1',
+        'requested_by' => $hrHeadEmployee->id,
+        'department_id' => $otherDept->id,
+        'purpose' => 'HR purchase',
+        'status' => 'approved',
+    ]);
+    $hrPO = PurchaseOrder::create([
+        'purchase_request_id' => $hrPR->id,
+        'po_number' => 'PO-HR-1',
+        'supplier_id' => $this->supplier->id,
+        'po_date' => today()->toDateString(),
+        'status' => 'draft',
+    ]);
+
+    // Verification 1: Supply Officer can see both PRs and POs
+    $this->actingAs($supplyUser);
+    $response = $this->get(route('inventory.purchase-requests.index'));
+    $response->assertOk();
+    $this->assertCount(2, $response->viewData('page')['props']['purchaseRequests']['data']);
+
+    $response = $this->get(route('inventory.purchase-orders.index'));
+    $response->assertOk();
+    $this->assertCount(2, $response->viewData('page')['props']['purchaseOrders']['data']);
+
+    // Verification 2: IT Head can only see IT PRs/POs, not HR ones
+    $this->actingAs($itHeadUser);
+    $response = $this->get(route('inventory.purchase-requests.index'));
+    $response->assertOk();
+    $this->assertCount(1, $response->viewData('page')['props']['purchaseRequests']['data']);
+    $this->assertEquals('PR-IT-1', $response->viewData('page')['props']['purchaseRequests']['data'][0]['pr_number']);
+
+    $response = $this->get(route('inventory.purchase-orders.index'));
+    $response->assertOk();
+    $this->assertCount(1, $response->viewData('page')['props']['purchaseOrders']['data']);
+    $this->assertEquals('PO-IT-1', $response->viewData('page')['props']['purchaseOrders']['data'][0]['po_number']);
+
+    // Verification 3: IT Staff can only see their own PR/PO
+    $this->actingAs($itStaffUser);
+    $response = $this->get(route('inventory.purchase-requests.index'));
+    $response->assertOk();
+    $this->assertCount(1, $response->viewData('page')['props']['purchaseRequests']['data']);
+    $this->assertEquals('PR-IT-1', $response->viewData('page')['props']['purchaseRequests']['data'][0]['pr_number']);
+
+    // Verification 4: HR Head can only see HR PRs/POs
+    $this->actingAs($hrHeadUser);
+    $response = $this->get(route('inventory.purchase-requests.index'));
+    $response->assertOk();
+    $this->assertCount(1, $response->viewData('page')['props']['purchaseRequests']['data']);
+    $this->assertEquals('PR-HR-1', $response->viewData('page')['props']['purchaseRequests']['data'][0]['pr_number']);
+
+    $response = $this->get(route('inventory.purchase-orders.index'));
+    $response->assertOk();
+    $this->assertCount(1, $response->viewData('page')['props']['purchaseOrders']['data']);
+    $this->assertEquals('PO-HR-1', $response->viewData('page')['props']['purchaseOrders']['data'][0]['po_number']);
 });

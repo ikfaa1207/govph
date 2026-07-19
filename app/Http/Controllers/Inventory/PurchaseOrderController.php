@@ -25,7 +25,8 @@ class PurchaseOrderController extends Controller
     {
         Gate::authorize('viewAny', PurchaseOrder::class);
 
-        $query = PurchaseOrder::with(['purchaseRequest.requester', 'supplier', 'items.item.unit']);
+        $query = PurchaseOrder::with(['purchaseRequest.requester', 'supplier', 'items.item.unit'])
+            ->visibleTo($request->user());
 
         if ($request->filled('search')) {
             $search = $request->input('search');
@@ -50,7 +51,8 @@ class PurchaseOrderController extends Controller
 
         $purchaseOrders = $query->orderBy('id', 'desc')->paginate(15);
 
-        $counts = PurchaseOrder::select('status', DB::raw('count(*) as count'))
+        $counts = PurchaseOrder::visibleTo($request->user())
+            ->select('status', DB::raw('count(*) as count'))
             ->groupBy('status')
             ->pluck('count', 'status')
             ->toArray();
@@ -62,7 +64,8 @@ class PurchaseOrderController extends Controller
             'received' => ($counts['received'] ?? 0) + ($counts['partially_received'] ?? 0),
         ];
 
-        $approvedPRs = PurchaseRequest::where('status', 'approved')
+        $approvedPRs = PurchaseRequest::visibleTo($request->user())
+            ->where('status', 'approved')
             ->with(['items.item.unit', 'requester', 'department'])
             ->get();
 
