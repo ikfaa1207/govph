@@ -60,7 +60,8 @@ class PropertyController extends Controller
         $employee = $user?->employee;
 
         $seesGlobalInventory = Gate::allows('warehouse.issue')
-            || Gate::allows('audit.view');
+            || Gate::allows('audit.view')
+            || Gate::allows('property.assign');
 
         $query = Property::with(['category', 'activeAssignment.assignee', 'activeSubAssignment.assignee', 'receivingReportItem.receivingReport']);
 

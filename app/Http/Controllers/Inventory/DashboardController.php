@@ -30,7 +30,7 @@ class DashboardController extends Controller
         $employee = $user?->employee;
 
         // Determine user dashboard scope without triggering Gate::after logging
-        $seesGlobalInventory = $user->hasPermissionTo('warehouse.issue') || $user->hasPermissionTo('audit.view');
+        $seesGlobalInventory = $user->hasPermissionTo('warehouse.issue') || $user->hasPermissionTo('audit.view') || $user->hasPermissionTo('property.assign');
         $isDeptHead = $user->hasPermissionTo('request.approve');
 
         if ($seesGlobalInventory) {
