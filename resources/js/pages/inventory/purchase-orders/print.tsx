@@ -109,8 +109,8 @@ export default function PurchaseOrderPrint({ purchaseOrder }: PrintProps) {
         0,
     );
 
-    // Padding rows to make it look like a formal government document (12 rows)
-    const maxRows = 12;
+    // Padding rows to make it look like a formal government document (6 rows)
+    const maxRows = 6;
     const itemsCount = purchaseOrder.items.length;
     const emptyRowsCount = Math.max(0, maxRows - itemsCount);
     const emptyRows = Array.from({ length: emptyRowsCount });
@@ -123,6 +123,23 @@ export default function PurchaseOrderPrint({ purchaseOrder }: PrintProps) {
     return (
         <>
             <Head title={`Print PO - ${purchaseOrder.po_number}`} />
+            <style
+                dangerouslySetInnerHTML={{
+                    __html: `
+                @media print {
+                    @page {
+                        size: A4 portrait;
+                        margin: 8mm 12mm;
+                    }
+                    body {
+                        margin: 0;
+                        -webkit-print-color-adjust: exact;
+                        print-color-adjust: exact;
+                    }
+                }
+            `,
+                }}
+            />
 
             {/* Print Header Controls (Hidden during print) */}
             <div className="flex items-center justify-between border-b bg-slate-900 px-6 py-3 text-slate-100 shadow-md print:hidden">
@@ -131,7 +148,13 @@ export default function PurchaseOrderPrint({ purchaseOrder }: PrintProps) {
                         variant="ghost"
                         size="sm"
                         className="gap-1 text-slate-300 hover:bg-slate-800 hover:text-white"
-                        onClick={() => window.history.back()}
+                        onClick={() => {
+                            if (window.history.length > 1) {
+                                window.history.back();
+                            } else {
+                                window.close();
+                            }
+                        }}
                     >
                         <ArrowLeft className="h-4 w-4" />
                         Back to Board

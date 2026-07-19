@@ -155,16 +155,18 @@ export default function MasterDataIndex({
                                         </CardDescription>
                                     </div>
                                     <div className="flex gap-2">
-                                        <Button
-                                            variant="outline"
-                                            onClick={
-                                                handleSeedDefaultCategories
-                                            }
-                                            className="text-indigo-650 border-indigo-200 hover:bg-indigo-50/50 dark:border-indigo-900/50 dark:text-indigo-400"
-                                        >
-                                            <Sparkles className="mr-2 h-4 w-4" />{' '}
-                                            Load COA Defaults
-                                        </Button>
+                                        {categories.length === 0 && (
+                                            <Button
+                                                variant="outline"
+                                                onClick={
+                                                    handleSeedDefaultCategories
+                                                }
+                                                className="text-indigo-650 border-indigo-200 hover:bg-indigo-50/50 dark:border-indigo-900/50 dark:text-indigo-400"
+                                            >
+                                                <Sparkles className="mr-2 h-4 w-4" />{' '}
+                                                Load COA Defaults
+                                            </Button>
+                                        )}
                                         <Button
                                             onClick={() => openCategoryDialog()}
                                         >
@@ -194,14 +196,16 @@ export default function MasterDataIndex({
                                         </CardDescription>
                                     </div>
                                     <div className="flex gap-2">
-                                        <Button
-                                            variant="outline"
-                                            onClick={handleSeedDefaultUnits}
-                                            className="text-indigo-650 border-indigo-200 hover:bg-indigo-50/50 dark:border-indigo-900/50 dark:text-indigo-400"
-                                        >
-                                            <Sparkles className="mr-2 h-4 w-4" />{' '}
-                                            Load COA Defaults
-                                        </Button>
+                                        {units.length === 0 && (
+                                            <Button
+                                                variant="outline"
+                                                onClick={handleSeedDefaultUnits}
+                                                className="text-indigo-650 border-indigo-200 hover:bg-indigo-50/50 dark:border-indigo-900/50 dark:text-indigo-400"
+                                            >
+                                                <Sparkles className="mr-2 h-4 w-4" />{' '}
+                                                Load COA Defaults
+                                            </Button>
+                                        )}
                                         <Button
                                             onClick={() => openUnitDialog()}
                                         >
