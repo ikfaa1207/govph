@@ -409,4 +409,23 @@ test('procurement visibility is correctly scoped by role and department', functi
     $response->assertOk();
     $this->assertCount(1, $response->viewData('page')['props']['purchaseOrders']['data']);
     $this->assertEquals('PO-HR-1', $response->viewData('page')['props']['purchaseOrders']['data'][0]['po_number']);
+
+    // Verification 5: Property Custodian (who has property.assign) is scoped by department/personal and cannot see all
+    Permission::firstOrCreate(['name' => 'property.assign', 'module' => 'property', 'description' => 'Assign property']);
+    $custodianUser = User::factory()->create();
+    $custodianUser->givePermissionTo('procurement.view', 'property.assign');
+    $custodianEmployee = Employee::create([
+        'user_id' => $custodianUser->id,
+        'employee_id' => 'EMP-CUST1',
+        'name' => 'Property Custodian',
+        'position' => 'Custodian',
+        'office_id' => $otherOffice->id,
+        'department_id' => $otherDept->id,
+    ]);
+
+    $this->actingAs($custodianUser);
+    $response = $this->get(route('inventory.purchase-requests.index'));
+    $response->assertOk();
+    // They did not request any PRs personally, so they should see 0 (not 2 or 1 from other departments)
+    $this->assertCount(0, $response->viewData('page')['props']['purchaseRequests']['data']);
 });
