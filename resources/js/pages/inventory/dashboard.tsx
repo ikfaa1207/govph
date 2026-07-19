@@ -65,7 +65,7 @@ export default function Dashboard({
                 {/* Header Section */}
                 <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight text-foreground">
+                        <h1 className="text-xl font-bold tracking-tight">
                             Government Inventory Management System (GIMS)
                         </h1>
                         <p className="text-sm text-muted-foreground">

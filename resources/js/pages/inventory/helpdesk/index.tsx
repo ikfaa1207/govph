@@ -479,10 +479,10 @@ export default function HelpdeskIndex({ tickets, isAdmin }: Props) {
         <>
             <Head title="System Helpdesk" />
 
-            <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 p-4 md:p-6">
+            <div className="space-y-6 p-6">
                 {/* Header Summary */}
                 <div className="flex flex-col gap-2">
-                    <h1 className="text-2xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
+                    <h1 className="text-xl font-bold tracking-tight">
                         GIMS Support Centre
                     </h1>
                     <p className="text-sm text-muted-foreground">

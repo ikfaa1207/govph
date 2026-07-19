@@ -306,14 +306,14 @@ export default function PurchaseRequestsIndex({
     };
 
     return (
-        <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
+        <div className="space-y-6 p-6">
             <Head title="Purchase Requests" />
 
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                    <h2 className="text-3xl font-bold tracking-tight">
+                    <h1 className="text-xl font-bold tracking-tight">
                         Purchase Requests (PR)
-                    </h2>
+                    </h1>
                     <p className="text-sm text-muted-foreground">
                         Manage requests for procurement before generating
                         Purchase Orders.

@@ -216,7 +216,7 @@ export default function PhysicalCountsIndex({
                 </DialogContent>
             </Dialog>
 
-            <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4 md:gap-8 md:p-8">
+            <div className="space-y-6 p-6">
                 <div className="flex items-center justify-between">
                     <div>
                         <h1 className="text-xl font-bold tracking-tight">
