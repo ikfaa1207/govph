@@ -106,7 +106,7 @@ class Requisition extends Model
      */
     public function scopeVisibleTo(Builder $query, User $user, ?Employee $employee = null): Builder
     {
-        $employee ??= $employee = Employee::where('user_id', $user->id)->first();
+        $employee ??= Employee::where('user_id', $user->id)->first();
 
         if ($user->can('warehouse.issue') || $user->can('audit.view')) {
             return $query;

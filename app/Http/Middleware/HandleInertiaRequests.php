@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\PhysicalCount;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -35,16 +36,30 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $user = $request->user();
+        $hasPhysicalCounts = false;
+
+        if ($user) {
+            $employee = $user->employee;
+            if ($employee) {
+                $hasPhysicalCounts = PhysicalCount::where('created_by', $employee->id)
+                    ->orWhereHas('committees', function ($q) use ($employee) {
+                        $q->where('employee_id', $employee->id);
+                    })->exists();
+            }
+        }
+
         return [
             ...parent::share($request),
             'name' => config('app.name'),
             'auth' => [
-                'user' => $request->user() ? array_merge($request->user()->toArray(), [
-                    'roles' => $request->user()->roles->pluck('name')->toArray(),
+                'user' => $user ? array_merge($user->toArray(), [
+                    'roles' => $user->roles->pluck('name')->toArray(),
                     'permissions' => array_values(array_unique(array_merge(
-                        $request->user()->permissions->pluck('name')->toArray(),
-                        $request->user()->roles->flatMap(fn ($r) => $r->permissions->pluck('name'))->toArray()
+                        $user->permissions->pluck('name')->toArray(),
+                        $user->roles->flatMap(fn ($r) => $r->permissions->pluck('name'))->toArray()
                     ))),
+                    'has_physical_counts' => $hasPhysicalCounts,
                 ]) : null,
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',

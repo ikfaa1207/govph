@@ -27,7 +27,7 @@ import {
 import { formatCurrency, formatDateTime } from '@/lib/utils';
 
 interface DashboardProps {
-    userScope: 'global' | 'dept_head' | 'employee';
+    userScope: 'global' | 'dept_head' | 'employee' | 'unassigned';
     stats: {
         inventoryType: string;
         totalItems: number;
@@ -57,6 +57,50 @@ export default function Dashboard({
 }: DashboardProps) {
     const breadcrumbs = [{ title: 'GIMS Dashboard', href: '/dashboard' }];
     setLayoutProps({ breadcrumbs });
+
+    if (userScope === 'unassigned') {
+        return (
+            <>
+                <Head title="GIMS - Unassigned Account" />
+                <div className="flex min-h-[60vh] items-center justify-center p-6">
+                    <Card className="max-w-md border-amber-200/60 bg-amber-50/20 text-center dark:border-amber-900/30 dark:bg-amber-950/10">
+                        <CardHeader className="flex flex-col items-center">
+                            <div className="mb-2 rounded-full bg-amber-500/10 p-4 text-amber-500">
+                                <AlertTriangle className="h-10 w-10" />
+                            </div>
+                            <CardTitle className="text-xl font-bold">
+                                Employee Profile Needed
+                            </CardTitle>
+                            <CardDescription>
+                                Your user account is not associated with an
+                                Employee profile.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <p className="text-sm text-muted-foreground">
+                                To browse the supplies catalog, submit
+                                requisitions (RIS), or manage physical count
+                                tasks, your account must be linked to a valid
+                                employee profile.
+                            </p>
+                            <p className="text-xs font-medium text-amber-600 dark:text-amber-400">
+                                Please contact your System Administrator or HR
+                                Officer to complete your setup.
+                            </p>
+                            <div className="pt-2">
+                                <Link
+                                    href="/profile"
+                                    className="inline-flex h-9 items-center justify-center rounded-md border border-input bg-background px-4 text-sm font-medium shadow-xs transition-colors hover:bg-accent hover:text-accent-foreground"
+                                >
+                                    View Account Settings
+                                </Link>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+            </>
+        );
+    }
 
     return (
         <>

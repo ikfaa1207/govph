@@ -29,12 +29,14 @@ class DashboardController extends Controller
         $user = $request->user();
         $employee = $user?->employee;
 
-        // Determine user dashboard scope
-        $seesGlobalInventory = Gate::allows('warehouse.issue');
-        $isDeptHead = Gate::allows('request.approve');
+        // Determine user dashboard scope without triggering Gate::after logging
+        $seesGlobalInventory = $user->hasPermissionTo('warehouse.issue') || $user->hasPermissionTo('audit.view');
+        $isDeptHead = $user->hasPermissionTo('request.approve');
 
-        if ($seesGlobalInventory || ! $employee) {
+        if ($seesGlobalInventory) {
             $userScope = 'global';
+        } elseif (! $employee) {
+            $userScope = 'unassigned';
         } elseif ($isDeptHead) {
             $userScope = 'dept_head';
         } else {
@@ -127,7 +129,7 @@ class DashboardController extends Controller
                 ->limit(5)
                 ->get();
 
-        } else {
+        } elseif ($userScope === 'employee') {
             // Regular requesting employee
             $totalItems = Item::where('status', ItemStatus::Active)->count();
             $lowStocksCount = 0;
@@ -158,6 +160,20 @@ class DashboardController extends Controller
                 ->whereHas('activeAssignment', function ($query) use ($employee) {
                     $query->where('assigned_to', $employee->id);
                 })->get();
+        } else {
+            // Unassigned scope (no employee record)
+            $totalItems = 0;
+            $lowStocksCount = 0;
+            $outOfStocksCount = 0;
+            $totalValue = 0.0;
+            $totalProperties = 0;
+            $totalPpeValue = 0.0;
+
+            $countQuery = Requisition::whereRaw('1 = 0');
+            $recentIssuances = [];
+            $recentReceiving = [];
+            $pendingRequests = [];
+            $myProperties = [];
         }
 
         $pendingRequisitionsCount = $countQuery->count();

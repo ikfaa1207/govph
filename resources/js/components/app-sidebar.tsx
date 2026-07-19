@@ -102,6 +102,13 @@ export function AppSidebar() {
     const permissions = auth?.user?.permissions || [];
 
     const filteredNavItems = mainNavItems.filter((item) => {
+        if (item.href === '/inventory/physical-counts') {
+            return (
+                permissions.includes('reports.view') ||
+                !!auth?.user?.has_physical_counts
+            );
+        }
+
         if (!item.permission) {
             return true;
         }

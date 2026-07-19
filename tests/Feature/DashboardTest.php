@@ -17,9 +17,10 @@ test('authenticated users can visit the dashboard and see scoped content', funct
     Permission::firstOrCreate(['name' => 'warehouse.issue', 'module' => 'warehouse']);
     Permission::firstOrCreate(['name' => 'request.approve', 'module' => 'requisition']);
 
-    // 1. Global / admin user with no employee record
+    // 1. Global / admin user with no employee record but global permission
     $globalUser = User::factory()->create();
     $globalUser->givePermissionTo('dashboard.view');
+    $globalUser->givePermissionTo('warehouse.issue');
 
     $this->actingAs($globalUser);
     $response = $this->get(route('dashboard'));
@@ -27,6 +28,18 @@ test('authenticated users can visit the dashboard and see scoped content', funct
         ->assertInertia(fn (Assert $page) => $page
             ->component('inventory/dashboard')
             ->where('userScope', 'global')
+        );
+
+    // 1b. Unassigned user with no employee record and no global permission
+    $unassignedUser = User::factory()->create();
+    $unassignedUser->givePermissionTo('dashboard.view');
+
+    $this->actingAs($unassignedUser);
+    $response = $this->get(route('dashboard'));
+    $response->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('inventory/dashboard')
+            ->where('userScope', 'unassigned')
         );
 
     // 2. Department Head user

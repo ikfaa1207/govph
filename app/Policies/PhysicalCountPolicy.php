@@ -14,7 +14,19 @@ class PhysicalCountPolicy
      */
     public function viewAny(User $user): bool
     {
-        return true;
+        if ($user->hasPermissionTo('reports.view')) {
+            return true;
+        }
+
+        $employee = $user->employee;
+        if (! $employee) {
+            return false;
+        }
+
+        return PhysicalCount::where('created_by', $employee->id)
+            ->orWhereHas('committees', function ($q) use ($employee) {
+                $q->where('employee_id', $employee->id);
+            })->exists();
     }
 
     /**
