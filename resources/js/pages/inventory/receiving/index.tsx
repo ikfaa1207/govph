@@ -1295,67 +1295,82 @@ export default function ReceivingIndex({
                 {/* Statistics Overview */}
                 {stats && (
                     <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-                        <Card className="relative z-0 flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-blue-500 bg-card bg-linear-to-tr from-transparent to-blue-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
-                            <div className="absolute -right-4 -bottom-4 text-blue-500/5">
+                        <Card className="flex flex-col justify-between rounded-xl border border-border bg-card p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
+                            <div className="flex items-center justify-between">
+                                <span className="text-sm font-medium text-muted-foreground">
+                                    Total IAR Reports
+                                </span>
                                 <FileText
-                                    className="h-28 w-28"
-                                    strokeWidth={1.5}
+                                    className="h-4 w-4 text-blue-500"
+                                    strokeWidth={2}
                                 />
                             </div>
-                            <div className="relative z-10 space-y-1">
-                                <p className="text-[11px] font-medium tracking-wider text-blue-500 uppercase">
-                                    Total IAR Reports
-                                </p>
-                                <p className="truncate text-2xl font-bold text-foreground">
+                            <div className="mt-2 space-y-1">
+                                <p className="truncate text-2xl font-bold tracking-tight text-foreground">
                                     {stats.total_reports}
                                 </p>
+                                <p className="text-xs text-muted-foreground">
+                                    Inspection and acceptance logs
+                                </p>
                             </div>
                         </Card>
 
-                        <Card className="relative z-0 flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-violet-500 bg-card bg-linear-to-tr from-transparent to-violet-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
-                            <div className="absolute -right-4 -bottom-4 text-violet-500/5">
+                        <Card className="flex flex-col justify-between rounded-xl border border-border bg-card p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
+                            <div className="flex items-center justify-between">
+                                <span className="text-sm font-medium text-muted-foreground">
+                                    Recent Deliveries
+                                </span>
                                 <Calendar
-                                    className="h-28 w-28"
-                                    strokeWidth={1.5}
+                                    className="h-4 w-4 text-violet-500"
+                                    strokeWidth={2}
                                 />
                             </div>
-                            <div className="relative z-10 space-y-1">
-                                <p className="text-[11px] font-medium tracking-wider text-violet-500 uppercase">
-                                    Recent Deliveries
-                                </p>
-                                <p className="truncate text-2xl font-bold text-foreground">
+                            <div className="mt-2 space-y-1">
+                                <p className="truncate text-2xl font-bold tracking-tight text-foreground">
                                     {stats.recent_deliveries}
                                 </p>
+                                <p className="text-xs text-muted-foreground">
+                                    Delivered within the last 30 days
+                                </p>
                             </div>
                         </Card>
 
-                        <Card className="relative z-0 flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-emerald-500 bg-card bg-linear-to-tr from-transparent to-emerald-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
-                            <div className="absolute -right-4 -bottom-4 text-emerald-500/5">
+                        <Card className="flex flex-col justify-between rounded-xl border border-border bg-card p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
+                            <div className="flex items-center justify-between">
+                                <span className="text-sm font-medium text-muted-foreground">
+                                    Items Received
+                                </span>
                                 <Package2
-                                    className="h-28 w-28"
-                                    strokeWidth={1.5}
+                                    className="h-4 w-4 text-emerald-500"
+                                    strokeWidth={2}
                                 />
                             </div>
-                            <div className="relative z-10 space-y-1">
-                                <p className="text-[11px] font-medium tracking-wider text-emerald-500 uppercase">
-                                    Items Received
-                                </p>
-                                <p className="truncate text-2xl font-bold text-foreground">
+                            <div className="mt-2 space-y-1">
+                                <p className="truncate text-2xl font-bold tracking-tight text-foreground">
                                     {stats.total_items_received}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                    Quantities accepted into storage
                                 </p>
                             </div>
                         </Card>
 
-                        <Card className="relative z-0 flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-rose-500 bg-card bg-linear-to-tr from-transparent to-rose-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
-                            <div className="absolute -right-4 -bottom-4 text-rose-500/5">
-                                <X className="h-28 w-28" strokeWidth={1.5} />
-                            </div>
-                            <div className="relative z-10 space-y-1">
-                                <p className="text-[11px] font-medium tracking-wider text-rose-500 uppercase">
+                        <Card className="flex flex-col justify-between rounded-xl border border-border bg-card p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
+                            <div className="flex items-center justify-between">
+                                <span className="text-sm font-medium text-muted-foreground">
                                     Items Rejected
-                                </p>
-                                <p className="truncate text-2xl font-bold text-foreground">
+                                </span>
+                                <X
+                                    className="h-4 w-4 text-rose-500"
+                                    strokeWidth={2}
+                                />
+                            </div>
+                            <div className="mt-2 space-y-1">
+                                <p className="truncate text-2xl font-bold tracking-tight text-foreground">
                                     {stats.total_items_rejected}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                    Returned due to defect/non-compliance
                                 </p>
                             </div>
                         </Card>

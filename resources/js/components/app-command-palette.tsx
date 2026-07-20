@@ -21,12 +21,14 @@ import {
     CommandList,
     CommandSeparator,
 } from '@/components/ui/command';
+import { usePermissions } from '@/hooks/use-permissions';
 import { dashboard } from '@/routes';
 import items from '@/routes/inventory/items';
 import properties from '@/routes/inventory/properties';
 import requisitions from '@/routes/inventory/requisitions';
 
 export function AppCommandPalette() {
+    const { hasPermission } = usePermissions();
     const [open, setOpen] = React.useState(false);
     const [searchQuery, setSearchQuery] = React.useState('');
     const [results, setResults] = React.useState<{
@@ -181,91 +183,143 @@ export function AppCommandPalette() {
                     </CommandGroup>
                 )}
 
-                {hasSearchResults && <CommandSeparator />}
+                {/* Navigation Group */}
+                {(hasPermission('dashboard.view') ||
+                    hasPermission('inventory.view') ||
+                    hasPermission('property.view') ||
+                    hasPermission('request.create') ||
+                    hasPermission('request.approve') ||
+                    hasPermission('warehouse.issue')) && (
+                    <>
+                        {hasSearchResults && <CommandSeparator />}
+                        <CommandGroup heading="Navigation">
+                            {hasPermission('dashboard.view') && (
+                                <CommandItem
+                                    onSelect={() =>
+                                        runCommand(() =>
+                                            router.visit(dashboard.url()),
+                                        )
+                                    }
+                                >
+                                    <DashboardIcon className="mr-2 h-4 w-4" />
+                                    <span>Dashboard</span>
+                                </CommandItem>
+                            )}
+                            {hasPermission('inventory.view') && (
+                                <CommandItem
+                                    onSelect={() =>
+                                        runCommand(() =>
+                                            router.visit(items.index.url()),
+                                        )
+                                    }
+                                >
+                                    <Package className="mr-2 h-4 w-4" />
+                                    <span>Supplies Catalog</span>
+                                </CommandItem>
+                            )}
+                            {hasPermission('property.view') && (
+                                <CommandItem
+                                    onSelect={() =>
+                                        runCommand(() =>
+                                            router.visit(
+                                                properties.index.url(),
+                                            ),
+                                        )
+                                    }
+                                >
+                                    <Database className="mr-2 h-4 w-4" />
+                                    <span>Property Registry (PPE)</span>
+                                </CommandItem>
+                            )}
+                            {(hasPermission('request.create') ||
+                                hasPermission('request.approve') ||
+                                hasPermission('warehouse.issue')) && (
+                                <CommandItem
+                                    onSelect={() =>
+                                        runCommand(() =>
+                                            router.visit(
+                                                requisitions.index.url(),
+                                            ),
+                                        )
+                                    }
+                                >
+                                    <ClipboardList className="mr-2 h-4 w-4" />
+                                    <span>Requisitions (RIS)</span>
+                                </CommandItem>
+                            )}
+                        </CommandGroup>
+                    </>
+                )}
 
-                <CommandGroup heading="Navigation">
-                    <CommandItem
-                        onSelect={() =>
-                            runCommand(() => router.visit(dashboard.url()))
-                        }
-                    >
-                        <DashboardIcon className="mr-2 h-4 w-4" />
-                        <span>Dashboard</span>
-                    </CommandItem>
-                    <CommandItem
-                        onSelect={() =>
-                            runCommand(() => router.visit(items.index.url()))
-                        }
-                    >
-                        <Package className="mr-2 h-4 w-4" />
-                        <span>Supplies Catalog</span>
-                    </CommandItem>
-                    <CommandItem
-                        onSelect={() =>
-                            runCommand(() =>
-                                router.visit(properties.index.url()),
-                            )
-                        }
-                    >
-                        <Database className="mr-2 h-4 w-4" />
-                        <span>Property Registry (PPE)</span>
-                    </CommandItem>
-                    <CommandItem
-                        onSelect={() =>
-                            runCommand(() =>
-                                router.visit(requisitions.index.url()),
-                            )
-                        }
-                    >
-                        <ClipboardList className="mr-2 h-4 w-4" />
-                        <span>Requisitions (RIS)</span>
-                    </CommandItem>
-                </CommandGroup>
-                <CommandSeparator />
-                <CommandGroup heading="Procurement & Receiving">
-                    <CommandItem
-                        onSelect={() =>
-                            runCommand(() =>
-                                router.visit('/inventory/purchase-requests'),
-                            )
-                        }
-                    >
-                        <FileText className="mr-2 h-4 w-4" />
-                        <span>Purchase Requests</span>
-                    </CommandItem>
-                    <CommandItem
-                        onSelect={() =>
-                            runCommand(() =>
-                                router.visit('/inventory/purchase-orders'),
-                            )
-                        }
-                    >
-                        <ShoppingCart className="mr-2 h-4 w-4" />
-                        <span>Purchase Orders</span>
-                    </CommandItem>
-                    <CommandItem
-                        onSelect={() =>
-                            runCommand(() =>
-                                router.visit('/inventory/receiving-reports'),
-                            )
-                        }
-                    >
-                        <Truck className="mr-2 h-4 w-4" />
-                        <span>Receiving (Stock In)</span>
-                    </CommandItem>
-                </CommandGroup>
+                {/* Procurement Group */}
+                {(hasPermission('procurement.view') ||
+                    hasPermission('warehouse.receive')) && (
+                    <>
+                        <CommandSeparator />
+                        <CommandGroup heading="Procurement & Receiving">
+                            {hasPermission('procurement.view') && (
+                                <>
+                                    <CommandItem
+                                        onSelect={() =>
+                                            runCommand(() =>
+                                                router.visit(
+                                                    '/inventory/purchase-requests',
+                                                ),
+                                            )
+                                        }
+                                    >
+                                        <FileText className="mr-2 h-4 w-4" />
+                                        <span>Purchase Requests</span>
+                                    </CommandItem>
+                                    <CommandItem
+                                        onSelect={() =>
+                                            runCommand(() =>
+                                                router.visit(
+                                                    '/inventory/purchase-orders',
+                                                ),
+                                            )
+                                        }
+                                    >
+                                        <ShoppingCart className="mr-2 h-4 w-4" />
+                                        <span>Purchase Orders</span>
+                                    </CommandItem>
+                                </>
+                            )}
+                            {hasPermission('warehouse.receive') && (
+                                <CommandItem
+                                    onSelect={() =>
+                                        runCommand(() =>
+                                            router.visit(
+                                                '/inventory/receiving-reports',
+                                            ),
+                                        )
+                                    }
+                                >
+                                    <Truck className="mr-2 h-4 w-4" />
+                                    <span>Receiving (Stock In)</span>
+                                </CommandItem>
+                            )}
+                        </CommandGroup>
+                    </>
+                )}
+
+                {/* Quick Actions Group */}
                 <CommandSeparator />
                 <CommandGroup heading="Quick Actions">
-                    <CommandItem
-                        onSelect={() =>
-                            runCommand(() =>
-                                router.visit('/inventory/physical-counts'),
-                            )
-                        }
-                    >
-                        <Calculator className="mr-2 h-4 w-4" />
-                        <span>Physical Counts</span>
-                    </CommandItem>
+                    {(hasPermission('reports.view') ||
+                        hasPermission('inventory.view') ||
+                        hasPermission('warehouse.view')) && (
+                        <CommandItem
+                            onSelect={() =>
+                                runCommand(() =>
+                                    router.visit('/inventory/physical-counts'),
+                                )
+                            }
+                        >
+                            <Calculator className="mr-2 h-4 w-4" />
+                            <span>Physical Counts</span>
+                        </CommandItem>
+                    )}
                     <CommandItem
                         onSelect={() =>
                             runCommand(() =>

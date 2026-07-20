@@ -641,61 +641,79 @@ export default function PurchaseOrdersIndex({
 
                 {/* Stats */}
                 <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-                    <Card className="relative z-0 flex min-h-[88px] flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-blue-500 bg-card bg-linear-to-tr from-transparent to-blue-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
-                        <div className="absolute -right-4 -bottom-4 text-blue-500/5">
-                            <FileText className="h-28 w-28" strokeWidth={1.5} />
-                        </div>
-                        <div className="relative z-10 space-y-1">
-                            <p className="text-[11px] font-medium tracking-wider text-blue-500 uppercase">
+                    <Card className="flex flex-col justify-between rounded-xl border border-border bg-card p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
+                        <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium text-muted-foreground">
                                 Total Orders
-                            </p>
-                            <p className="truncate text-2xl font-bold text-foreground">
+                            </span>
+                            <FileText
+                                className="h-4 w-4 text-blue-500"
+                                strokeWidth={2}
+                            />
+                        </div>
+                        <div className="mt-2 space-y-1">
+                            <p className="truncate text-2xl font-bold tracking-tight text-foreground">
                                 {stats.total}
                             </p>
+                            <p className="text-xs text-muted-foreground">
+                                Total purchase orders created
+                            </p>
                         </div>
                     </Card>
-                    <Card className="relative z-0 flex min-h-[88px] flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-slate-500 bg-card bg-linear-to-tr from-transparent to-slate-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
-                        <div className="absolute -right-4 -bottom-4 text-slate-500/5">
+                    <Card className="flex flex-col justify-between rounded-xl border border-border bg-card p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
+                        <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium text-muted-foreground">
+                                Draft POs
+                            </span>
                             <ClipboardList
-                                className="h-28 w-28"
-                                strokeWidth={1.5}
+                                className="h-4 w-4 text-slate-500"
+                                strokeWidth={2}
                             />
                         </div>
-                        <div className="relative z-10 space-y-1">
-                            <p className="text-[11px] font-medium tracking-wider text-slate-500 uppercase">
-                                Draft POs
-                            </p>
-                            <p className="truncate text-2xl font-bold text-foreground">
+                        <div className="mt-2 space-y-1">
+                            <p className="truncate text-2xl font-bold tracking-tight text-foreground">
                                 {stats.draft}
                             </p>
+                            <p className="text-xs text-muted-foreground">
+                                Pending finalization and dispatch
+                            </p>
                         </div>
                     </Card>
-                    <Card className="relative z-0 flex min-h-[88px] flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-amber-500 bg-card bg-linear-to-tr from-transparent to-amber-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
-                        <div className="absolute -right-4 -bottom-4 text-amber-500/5">
-                            <Truck className="h-28 w-28" strokeWidth={1.5} />
-                        </div>
-                        <div className="relative z-10 space-y-1">
-                            <p className="text-[11px] font-medium tracking-wider text-amber-500 uppercase">
+                    <Card className="flex flex-col justify-between rounded-xl border border-border bg-card p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
+                        <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium text-muted-foreground">
                                 Sent to Supplier
-                            </p>
-                            <p className="truncate text-2xl font-bold text-foreground">
-                                {stats.sent}
-                            </p>
-                        </div>
-                    </Card>
-                    <Card className="relative z-0 flex min-h-[88px] flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-emerald-500 bg-card bg-linear-to-tr from-transparent to-emerald-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
-                        <div className="absolute -right-4 -bottom-4 text-emerald-500/5">
-                            <PackageCheck
-                                className="h-28 w-28"
-                                strokeWidth={1.5}
+                            </span>
+                            <Truck
+                                className="h-4 w-4 text-amber-500"
+                                strokeWidth={2}
                             />
                         </div>
-                        <div className="relative z-10 space-y-1">
-                            <p className="text-[11px] font-medium tracking-wider text-emerald-500 uppercase">
-                                Received (Deliveries)
+                        <div className="mt-2 space-y-1">
+                            <p className="truncate text-2xl font-bold tracking-tight text-foreground">
+                                {stats.sent}
                             </p>
-                            <p className="truncate text-2xl font-bold text-foreground">
+                            <p className="text-xs text-muted-foreground">
+                                Out for delivery/fulfillment
+                            </p>
+                        </div>
+                    </Card>
+                    <Card className="flex flex-col justify-between rounded-xl border border-border bg-card p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
+                        <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium text-muted-foreground">
+                                Received (Deliveries)
+                            </span>
+                            <PackageCheck
+                                className="h-4 w-4 text-emerald-500"
+                                strokeWidth={2}
+                            />
+                        </div>
+                        <div className="mt-2 space-y-1">
+                            <p className="truncate text-2xl font-bold tracking-tight text-foreground">
                                 {stats.received}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                                Fulfilled and stocked in
                             </p>
                         </div>
                     </Card>

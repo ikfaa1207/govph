@@ -177,60 +177,68 @@ export default function Dashboard({
                     >
                         {/* Metrics 1: Total Stock Value (Hidden for regular employees) */}
                         {userScope !== 'employee' && (
-                            <Card className="relative z-0 flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-emerald-500 bg-card bg-linear-to-tr from-transparent to-emerald-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
-                                <div className="absolute -right-4 -bottom-4 text-emerald-500/5">
+                            <Card className="flex flex-col justify-between rounded-xl border border-border bg-card p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-sm font-medium text-muted-foreground">
+                                        Total Supply Value
+                                    </span>
                                     <TrendingDown
-                                        className="h-28 w-28"
-                                        strokeWidth={1.5}
+                                        className="h-4 w-4 text-emerald-500"
+                                        strokeWidth={2}
                                     />
                                 </div>
-                                <div className="relative z-10 space-y-1">
-                                    <p className="text-[11px] font-medium tracking-wider text-emerald-500 uppercase">
-                                        {stats.inventoryType} Value
-                                    </p>
-                                    <p className="truncate text-2xl font-bold text-foreground">
+                                <div className="mt-2 space-y-1">
+                                    <p className="truncate text-2xl font-bold tracking-tight text-foreground">
                                         {formatCurrency(stats.totalValue)}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">
+                                        Current{' '}
+                                        {stats.inventoryType.toLowerCase()}{' '}
+                                        value
                                     </p>
                                 </div>
                             </Card>
                         )}
 
                         {/* Metrics 2: Total Items Cataloged */}
-                        <Card className="relative z-0 flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-blue-500 bg-card bg-linear-to-tr from-transparent to-blue-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
-                            <div className="absolute -right-4 -bottom-4 text-blue-500/5">
+                        <Card className="flex flex-col justify-between rounded-xl border border-border bg-card p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
+                            <div className="flex items-center justify-between">
+                                <span className="text-sm font-medium text-muted-foreground">
+                                    Supplies Catalog
+                                </span>
                                 <Package
-                                    className="h-28 w-28"
-                                    strokeWidth={1.5}
+                                    className="h-4 w-4 text-blue-500"
+                                    strokeWidth={2}
                                 />
                             </div>
-                            <div className="relative z-10 space-y-1">
-                                <p className="text-[11px] font-medium tracking-wider text-blue-500 uppercase">
-                                    {userScope === 'employee'
-                                        ? 'Supplies Catalog'
-                                        : `${stats.inventoryType} Catalog`}
-                                </p>
-                                <p className="truncate text-2xl font-bold text-foreground">
+                            <div className="mt-2 space-y-1">
+                                <p className="truncate text-2xl font-bold tracking-tight text-foreground">
                                     {stats.totalItems} Items
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                    {userScope === 'employee'
+                                        ? 'Available supplies'
+                                        : `${stats.inventoryType} catalog items`}
                                 </p>
                             </div>
                         </Card>
 
                         {/* Metrics 3: PPE Property Registry */}
-                        <Card className="relative z-0 flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-violet-500 bg-card bg-linear-to-tr from-transparent to-violet-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
-                            <div className="absolute -right-4 -bottom-4 text-violet-500/5">
+                        <Card className="flex flex-col justify-between rounded-xl border border-border bg-card p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
+                            <div className="flex items-center justify-between">
+                                <span className="text-sm font-medium text-muted-foreground">
+                                    {userScope === 'employee'
+                                        ? 'Assigned Assets'
+                                        : 'Accountable Property'}
+                                </span>
                                 <Database
-                                    className="h-28 w-28"
-                                    strokeWidth={1.5}
+                                    className="h-4 w-4 text-violet-500"
+                                    strokeWidth={2}
                                 />
                             </div>
-                            <div className="relative z-10 space-y-1">
-                                <p className="text-[11px] font-medium tracking-wider text-violet-500 uppercase">
-                                    {userScope === 'employee'
-                                        ? 'My Assigned Assets'
-                                        : 'Accountable Property'}
-                                </p>
-                                <div className="flex items-end gap-2">
-                                    <p className="truncate text-2xl font-bold text-foreground">
+                            <div className="mt-2 space-y-1">
+                                <div className="flex items-end justify-between gap-2">
+                                    <p className="truncate text-2xl font-bold tracking-tight text-foreground">
                                         {userScope === 'employee'
                                             ? `${stats.totalProperties} Assets`
                                             : stats.totalPpeValue !== undefined
@@ -249,25 +257,35 @@ export default function Dashboard({
                                             </Badge>
                                         )}
                                 </div>
+                                <p className="text-xs text-muted-foreground">
+                                    {userScope === 'employee'
+                                        ? 'Properties in your custody'
+                                        : 'Total capitalized PPE value'}
+                                </p>
                             </div>
                         </Card>
 
                         {/* Metrics 4: Pending Requisitions */}
-                        <Card className="relative z-0 flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-amber-500 bg-card bg-linear-to-tr from-transparent to-amber-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
-                            <div className="absolute -right-4 -bottom-4 text-amber-500/5">
+                        <Card className="flex flex-col justify-between rounded-xl border border-border bg-card p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
+                            <div className="flex items-center justify-between">
+                                <span className="text-sm font-medium text-muted-foreground">
+                                    {userScope === 'employee'
+                                        ? 'My Pending Requisitions'
+                                        : 'Pending Requisitions'}
+                                </span>
                                 <ClipboardList
-                                    className={`h-28 w-28 ${stats.pendingRequests > 0 ? 'animate-pulse' : ''}`}
-                                    strokeWidth={1.5}
+                                    className={`h-4 w-4 text-amber-500 ${stats.pendingRequests > 0 ? 'animate-pulse' : ''}`}
+                                    strokeWidth={2}
                                 />
                             </div>
-                            <div className="relative z-10 space-y-1">
-                                <p className="text-[11px] font-medium tracking-wider text-amber-500 uppercase">
-                                    {userScope === 'employee'
-                                        ? 'My Pending RIS'
-                                        : 'Pending RIS Requests'}
+                            <div className="mt-2 space-y-1">
+                                <p className="truncate text-2xl font-bold tracking-tight text-foreground">
+                                    {stats.pendingRequests} Requests
                                 </p>
-                                <p className="truncate text-2xl font-bold text-foreground">
-                                    {stats.pendingRequests} Requisitions
+                                <p className="text-xs text-muted-foreground">
+                                    {stats.pendingRequests > 0
+                                        ? 'Awaiting action/release'
+                                        : 'All requests processed'}
                                 </p>
                             </div>
                         </Card>
@@ -276,62 +294,84 @@ export default function Dashboard({
                         {userScope === 'global' && (
                             <Link
                                 href="/inventory/physical-counts?status=draft"
-                                className="relative z-0 block flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-rose-500 bg-card bg-linear-to-tr from-transparent to-rose-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[4px] hover:shadow-lg focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 focus:outline-hidden"
+                                className="group flex flex-col justify-between rounded-xl border border-border bg-card p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 focus:outline-none"
                             >
-                                <div className="absolute -right-4 -bottom-4 text-rose-500/5 transition-transform duration-300 hover:scale-110">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-sm font-medium text-muted-foreground transition-colors group-hover:text-foreground">
+                                        Items to Count
+                                    </span>
                                     <ClipboardList
-                                        className={`h-28 w-28 ${stats.pendingCounts > 0 ? 'animate-pulse text-rose-500/10' : ''}`}
-                                        strokeWidth={1.5}
+                                        className={`h-4 w-4 text-rose-500 ${stats.pendingCounts > 0 ? 'animate-pulse' : ''}`}
+                                        strokeWidth={2}
                                     />
                                 </div>
-                                <div className="relative z-10 space-y-1">
-                                    <p className="flex items-center justify-between text-[11px] font-medium tracking-wider text-rose-500 uppercase">
-                                        <span>Items to Count</span>
-                                        <span className="rounded-full bg-rose-500/10 px-2 py-0.5 text-[9px] font-bold text-rose-500">
-                                            Action Needed
-                                        </span>
+                                <div className="mt-2 space-y-1">
+                                    <p className="truncate text-2xl font-bold tracking-tight text-foreground transition-colors group-hover:text-rose-600">
+                                        {stats.pendingCounts} Pending
                                     </p>
-                                    <p className="truncate text-2xl font-bold text-foreground transition-colors group-hover:text-rose-600">
-                                        {stats.pendingCounts} Pending Counts
+                                    <p className="flex items-center justify-between text-xs text-muted-foreground">
+                                        <span>Physical audit due</span>
+                                        {stats.pendingCounts > 0 && (
+                                            <span className="rounded-full bg-rose-500/10 px-1.5 py-0.5 text-[9px] font-semibold text-rose-600">
+                                                Action Required
+                                            </span>
+                                        )}
                                     </p>
                                 </div>
                             </Link>
                         )}
+
+                        {/* Metrics 6: Low Stock warning card */}
+                        {userScope !== 'employee' &&
+                            stats &&
+                            stats.lowStocks > 0 && (
+                                <Card className="flex flex-col justify-between rounded-xl border border-border bg-card p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-sm font-medium text-muted-foreground">
+                                            Low Stock Warning
+                                        </span>
+                                        <AlertTriangle
+                                            className="h-4 w-4 text-amber-500"
+                                            strokeWidth={2}
+                                        />
+                                    </div>
+                                    <div className="mt-2 space-y-1">
+                                        <p className="truncate text-2xl font-bold tracking-tight text-foreground">
+                                            {stats.lowStocks} Items
+                                        </p>
+                                        <p className="text-xs font-medium text-amber-600 dark:text-amber-400">
+                                            Below reorder level
+                                        </p>
+                                    </div>
+                                </Card>
+                            )}
+
+                        {/* Metrics 7: Critical Out of Stock card */}
+                        {userScope !== 'employee' &&
+                            stats &&
+                            stats.outOfStocks > 0 && (
+                                <Card className="flex flex-col justify-between rounded-xl border border-border bg-card p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-sm font-medium text-muted-foreground">
+                                            Critical Out of Stock
+                                        </span>
+                                        <AlertTriangle
+                                            className="h-4 w-4 animate-pulse text-rose-500"
+                                            strokeWidth={2}
+                                        />
+                                    </div>
+                                    <div className="mt-2 space-y-1">
+                                        <p className="truncate text-2xl font-bold tracking-tight text-foreground text-rose-600 dark:text-rose-400">
+                                            {stats.outOfStocks} Items
+                                        </p>
+                                        <p className="text-xs font-medium text-rose-500">
+                                            Replenishment required
+                                        </p>
+                                    </div>
+                                </Card>
+                            )}
                     </div>
                 )}
-
-                {/* Stock Warning Banners (Hidden for employees) */}
-                {userScope !== 'employee' &&
-                    stats &&
-                    (stats.lowStocks > 0 || stats.outOfStocks > 0) && (
-                        <div className="grid gap-4 md:grid-cols-2">
-                            {stats.lowStocks > 0 && (
-                                <div className="flex items-center gap-3 rounded-lg border border-amber-500/20 bg-amber-500/5 p-4 text-amber-600 dark:text-amber-400">
-                                    <AlertTriangle className="h-5 w-5 shrink-0" />
-                                    <div>
-                                        <span className="font-semibold">
-                                            {stats.lowStocks} supplies are below
-                                            reorder level.
-                                        </span>{' '}
-                                        Consider starting a new Purchase Request
-                                        (PR).
-                                    </div>
-                                </div>
-                            )}
-                            {stats.outOfStocks > 0 && (
-                                <div className="flex items-center gap-3 rounded-lg border border-rose-500/20 bg-rose-500/5 p-4 text-rose-600 dark:text-rose-400">
-                                    <AlertTriangle className="h-5 w-5 shrink-0" />
-                                    <div>
-                                        <span className="font-semibold">
-                                            {stats.outOfStocks} supplies are
-                                            completely out of stock.
-                                        </span>{' '}
-                                        Requisitions cannot be issued.
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    )}
 
                 {/* Feed Tables */}
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">

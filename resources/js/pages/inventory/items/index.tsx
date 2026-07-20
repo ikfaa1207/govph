@@ -1439,87 +1439,107 @@ export default function ItemsIndex({
                 {/* Statistics Overview */}
                 {stats && (
                     <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
-                        <Card className="relative z-0 flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-blue-500 bg-card bg-linear-to-tr from-transparent to-blue-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
-                            <div className="absolute -right-4 -bottom-4 text-blue-500/5">
+                        <Card className="flex flex-col justify-between rounded-xl border border-border bg-card p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
+                            <div className="flex items-center justify-between">
+                                <span className="text-sm font-medium text-muted-foreground">
+                                    Total Items
+                                </span>
                                 <Package
-                                    className="h-28 w-28"
-                                    strokeWidth={1.5}
+                                    className="h-4 w-4 text-blue-500"
+                                    strokeWidth={2}
                                 />
                             </div>
-                            <div className="relative z-10 space-y-1">
-                                <p className="text-[11px] font-medium tracking-wider text-blue-500 uppercase">
-                                    Total Items
-                                </p>
-                                <p className="truncate text-2xl font-bold text-foreground">
+                            <div className="mt-2 space-y-1">
+                                <p className="truncate text-2xl font-bold tracking-tight text-foreground">
                                     {stats.total_items}
                                 </p>
+                                <p className="text-xs text-muted-foreground">
+                                    Total registered stock items
+                                </p>
                             </div>
                         </Card>
 
-                        <Card className="relative z-0 flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-emerald-500 bg-card bg-linear-to-tr from-transparent to-emerald-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
-                            <div className="absolute -right-4 -bottom-4 text-emerald-500/5">
+                        <Card className="flex flex-col justify-between rounded-xl border border-border bg-card p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
+                            <div className="flex items-center justify-between">
+                                <span className="text-sm font-medium text-muted-foreground">
+                                    Total Value
+                                </span>
                                 <PhilippinePeso
-                                    className="h-28 w-28"
-                                    strokeWidth={1.5}
+                                    className="h-4 w-4 text-emerald-500"
+                                    strokeWidth={2}
                                 />
                             </div>
-                            <div className="relative z-10 space-y-1">
-                                <p className="text-[11px] font-medium tracking-wider text-emerald-500 uppercase">
-                                    Total Value
-                                </p>
-                                <p className="truncate text-2xl font-bold text-foreground">
+                            <div className="mt-2 space-y-1">
+                                <p className="truncate text-2xl font-bold tracking-tight text-foreground">
                                     {formatCurrency(stats.total_value)}
                                 </p>
+                                <p className="text-xs text-muted-foreground">
+                                    Current standard cost inventory value
+                                </p>
                             </div>
                         </Card>
 
-                        <Card className="relative z-0 flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-violet-500 bg-card bg-linear-to-tr from-transparent to-violet-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
-                            <div className="absolute -right-4 -bottom-4 text-violet-500/5">
+                        <Card className="flex flex-col justify-between rounded-xl border border-border bg-card p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
+                            <div className="flex items-center justify-between">
+                                <span className="text-sm font-medium text-muted-foreground">
+                                    Recently Added
+                                </span>
                                 <Clock
-                                    className="h-28 w-28"
-                                    strokeWidth={1.5}
+                                    className="h-4 w-4 text-violet-500"
+                                    strokeWidth={2}
                                 />
                             </div>
-                            <div className="relative z-10 space-y-1">
-                                <p className="text-[11px] font-medium tracking-wider text-violet-500 uppercase">
-                                    Recently Added
-                                </p>
-                                <p className="truncate text-2xl font-bold text-foreground">
+                            <div className="mt-2 space-y-1">
+                                <p className="truncate text-2xl font-bold tracking-tight text-foreground">
                                     {stats.recently_added}
                                 </p>
+                                <p className="text-xs text-muted-foreground">
+                                    Cataloged in the last 30 days
+                                </p>
                             </div>
                         </Card>
 
-                        <Card className="relative z-0 flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-amber-500 bg-card bg-linear-to-tr from-transparent to-amber-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
-                            <div className="absolute -right-4 -bottom-4 text-amber-500/5">
+                        <Card className="flex flex-col justify-between rounded-xl border border-border bg-card p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
+                            <div className="flex items-center justify-between">
+                                <span className="text-sm font-medium text-muted-foreground">
+                                    Low Stock
+                                </span>
                                 <AlertTriangle
-                                    className="h-28 w-28"
-                                    strokeWidth={1.5}
+                                    className="h-4 w-4 text-amber-500"
+                                    strokeWidth={2}
                                 />
                             </div>
-                            <div className="relative z-10 space-y-1">
-                                <p className="text-[11px] font-medium tracking-wider text-amber-500 uppercase">
-                                    Low Stock
-                                </p>
-                                <p className="truncate text-2xl font-bold text-foreground">
+                            <div className="mt-2 space-y-1">
+                                <p className="truncate text-2xl font-bold tracking-tight text-foreground">
                                     {stats.low_stock}
                                 </p>
+                                <p className="text-xs text-muted-foreground">
+                                    Items below reorder point
+                                </p>
                             </div>
                         </Card>
 
-                        <Card className="relative z-0 flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-rose-500 bg-card bg-linear-to-tr from-transparent to-rose-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
-                            <div className="absolute -right-4 -bottom-4 text-rose-500/5">
+                        <Card className="flex flex-col justify-between rounded-xl border border-border bg-card p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
+                            <div className="flex items-center justify-between">
+                                <span className="text-sm font-medium text-muted-foreground">
+                                    Out of Stock
+                                </span>
                                 <AlertOctagon
-                                    className="h-28 w-28"
-                                    strokeWidth={1.5}
+                                    className="h-4 w-4 text-rose-500"
+                                    strokeWidth={2}
                                 />
                             </div>
-                            <div className="relative z-10 space-y-1">
-                                <p className="text-[11px] font-medium tracking-wider text-rose-500 uppercase">
-                                    Out of Stock
-                                </p>
-                                <p className="truncate text-2xl font-bold text-foreground">
+                            <div className="mt-2 space-y-1">
+                                <p className="truncate text-2xl font-bold tracking-tight text-foreground">
                                     {stats.out_of_stock}
+                                </p>
+                                <p className="flex items-center justify-between text-xs text-muted-foreground">
+                                    <span>Empty warehouse stock</span>
+                                    {stats.out_of_stock > 0 && (
+                                        <span className="rounded-full bg-rose-500/10 px-1.5 py-0.5 text-[9px] font-semibold text-rose-600">
+                                            Refill Needed
+                                        </span>
+                                    )}
                                 </p>
                             </div>
                         </Card>

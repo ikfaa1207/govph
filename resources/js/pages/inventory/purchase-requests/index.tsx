@@ -645,77 +645,98 @@ export default function PurchaseRequestsIndex({
 
                 {/* Stats Dashboard Grid */}
                 <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
-                    <Card className="relative z-0 flex min-h-[88px] flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-blue-500 bg-card bg-linear-to-tr from-transparent to-blue-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
-                        <div className="absolute -right-4 -bottom-4 text-blue-500/5">
-                            <FileText className="h-28 w-28" strokeWidth={1.5} />
-                        </div>
-                        <div className="relative z-10 space-y-1">
-                            <p className="text-[11px] font-medium tracking-wider text-blue-500 uppercase">
+                    <Card className="flex flex-col justify-between rounded-xl border border-border bg-card p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
+                        <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium text-muted-foreground">
                                 Total Requests
-                            </p>
-                            <p className="truncate text-2xl font-bold text-foreground">
+                            </span>
+                            <FileText
+                                className="h-4 w-4 text-blue-500"
+                                strokeWidth={2}
+                            />
+                        </div>
+                        <div className="mt-2 space-y-1">
+                            <p className="truncate text-2xl font-bold tracking-tight text-foreground">
                                 {stats.total}
                             </p>
+                            <p className="text-xs text-muted-foreground">
+                                All draft and submitted PRs
+                            </p>
                         </div>
                     </Card>
-                    <Card className="relative z-0 flex min-h-[88px] flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-amber-500 bg-card bg-linear-to-tr from-transparent to-amber-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
-                        <div className="absolute -right-4 -bottom-4 text-amber-500/5">
+                    <Card className="flex flex-col justify-between rounded-xl border border-border bg-card p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
+                        <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium text-muted-foreground">
+                                Pending Approval
+                            </span>
                             <ClipboardCheck
-                                className="h-28 w-28"
-                                strokeWidth={1.5}
+                                className="h-4 w-4 text-amber-500"
+                                strokeWidth={2}
                             />
                         </div>
-                        <div className="relative z-10 space-y-1">
-                            <p className="text-[11px] font-medium tracking-wider text-amber-500 uppercase">
-                                Pending Approval
-                            </p>
-                            <p className="truncate text-2xl font-bold text-foreground">
+                        <div className="mt-2 space-y-1">
+                            <p className="truncate text-2xl font-bold tracking-tight text-foreground">
                                 {stats.pending}
                             </p>
+                            <p className="text-xs text-muted-foreground">
+                                Awaiting division head signature
+                            </p>
                         </div>
                     </Card>
-                    <Card className="relative z-0 flex min-h-[88px] flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-emerald-500 bg-card bg-linear-to-tr from-transparent to-emerald-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
-                        <div className="absolute -right-4 -bottom-4 text-emerald-500/5">
+                    <Card className="flex flex-col justify-between rounded-xl border border-border bg-card p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
+                        <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium text-muted-foreground">
+                                Approved PRs
+                            </span>
                             <CheckCircle2
-                                className="h-28 w-28"
-                                strokeWidth={1.5}
+                                className="h-4 w-4 text-emerald-500"
+                                strokeWidth={2}
                             />
                         </div>
-                        <div className="relative z-10 space-y-1">
-                            <p className="text-[11px] font-medium tracking-wider text-emerald-500 uppercase">
-                                Approved PRs
-                            </p>
-                            <p className="truncate text-2xl font-bold text-foreground">
+                        <div className="mt-2 space-y-1">
+                            <p className="truncate text-2xl font-bold tracking-tight text-foreground">
                                 {stats.approved}
                             </p>
+                            <p className="text-xs text-muted-foreground">
+                                Approved and ready for ordering
+                            </p>
                         </div>
                     </Card>
-                    <Card className="relative z-0 flex min-h-[88px] flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-violet-500 bg-card bg-linear-to-tr from-transparent to-violet-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
-                        <div className="absolute -right-4 -bottom-4 text-violet-500/5">
+                    <Card className="flex flex-col justify-between rounded-xl border border-border bg-card p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
+                        <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium text-muted-foreground">
+                                PO Created
+                            </span>
                             <ShoppingCart
-                                className="h-28 w-28"
-                                strokeWidth={1.5}
+                                className="h-4 w-4 text-violet-500"
+                                strokeWidth={2}
                             />
                         </div>
-                        <div className="relative z-10 space-y-1">
-                            <p className="text-[11px] font-medium tracking-wider text-violet-500 uppercase">
-                                PO Created
-                            </p>
-                            <p className="truncate text-2xl font-bold text-foreground">
+                        <div className="mt-2 space-y-1">
+                            <p className="truncate text-2xl font-bold tracking-tight text-foreground">
                                 {stats.ordered}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                                Purchase orders generated
                             </p>
                         </div>
                     </Card>
-                    <Card className="relative z-0 flex min-h-[88px] flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-rose-500 bg-card bg-linear-to-tr from-transparent to-rose-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
-                        <div className="absolute -right-4 -bottom-4 text-rose-500/5">
-                            <X className="h-28 w-28" strokeWidth={1.5} />
-                        </div>
-                        <div className="relative z-10 space-y-1">
-                            <p className="text-[11px] font-medium tracking-wider text-rose-500 uppercase">
+                    <Card className="flex flex-col justify-between rounded-xl border border-border bg-card p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
+                        <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium text-muted-foreground">
                                 Rejected
-                            </p>
-                            <p className="truncate text-2xl font-bold text-foreground">
+                            </span>
+                            <X
+                                className="h-4 w-4 text-rose-500"
+                                strokeWidth={2}
+                            />
+                        </div>
+                        <div className="mt-2 space-y-1">
+                            <p className="truncate text-2xl font-bold tracking-tight text-foreground">
                                 {stats.rejected}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                                Returned or disapproved requests
                             </p>
                         </div>
                     </Card>

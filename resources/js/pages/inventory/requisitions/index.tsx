@@ -769,70 +769,82 @@ export default function RequisitionsIndex({
                 {/* Statistics Overview */}
                 {stats && (
                     <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-                        <Card className="relative z-0 flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-blue-500 bg-card bg-linear-to-tr from-transparent to-blue-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
-                            <div className="absolute -right-4 -bottom-4 text-blue-500/5">
+                        <Card className="flex flex-col justify-between rounded-xl border border-border bg-card p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
+                            <div className="flex items-center justify-between">
+                                <span className="text-sm font-medium text-muted-foreground">
+                                    Total RIS Filed
+                                </span>
                                 <ClipboardList
-                                    className="h-28 w-28"
-                                    strokeWidth={1.5}
+                                    className="h-4 w-4 text-blue-500"
+                                    strokeWidth={2}
                                 />
                             </div>
-                            <div className="relative z-10 space-y-1">
-                                <p className="text-[11px] font-medium tracking-wider text-blue-500 uppercase">
-                                    Total RIS filed
-                                </p>
-                                <p className="truncate text-2xl font-bold text-foreground">
+                            <div className="mt-2 space-y-1">
+                                <p className="truncate text-2xl font-bold tracking-tight text-foreground">
                                     {stats.total_ris}
                                 </p>
+                                <p className="text-xs text-muted-foreground">
+                                    Total requisitions submitted
+                                </p>
                             </div>
                         </Card>
 
-                        <Card className="relative z-0 flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-violet-500 bg-card bg-linear-to-tr from-transparent to-violet-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
-                            <div className="absolute -right-4 -bottom-4 text-violet-500/5">
+                        <Card className="flex flex-col justify-between rounded-xl border border-border bg-card p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
+                            <div className="flex items-center justify-between">
+                                <span className="text-sm font-medium text-muted-foreground">
+                                    Pending Approval
+                                </span>
                                 <ClipboardCheck
-                                    className="h-28 w-28"
-                                    strokeWidth={1.5}
+                                    className="h-4 w-4 text-violet-500"
+                                    strokeWidth={2}
                                 />
                             </div>
-                            <div className="relative z-10 space-y-1">
-                                <p className="text-[11px] font-medium tracking-wider text-violet-500 uppercase">
-                                    Pending Approval
-                                </p>
-                                <p className="truncate text-2xl font-bold text-foreground">
+                            <div className="mt-2 space-y-1">
+                                <p className="truncate text-2xl font-bold tracking-tight text-foreground">
                                     {stats.pending_approval}
                                 </p>
+                                <p className="text-xs text-muted-foreground">
+                                    Awaiting department head signature
+                                </p>
                             </div>
                         </Card>
 
-                        <Card className="relative z-0 flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-amber-500 bg-card bg-linear-to-tr from-transparent to-amber-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
-                            <div className="absolute -right-4 -bottom-4 text-amber-500/5">
+                        <Card className="flex flex-col justify-between rounded-xl border border-border bg-card p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
+                            <div className="flex items-center justify-between">
+                                <span className="text-sm font-medium text-muted-foreground">
+                                    Pending Issuance
+                                </span>
                                 <Package2
-                                    className="h-28 w-28"
-                                    strokeWidth={1.5}
+                                    className="h-4 w-4 text-amber-500"
+                                    strokeWidth={2}
                                 />
                             </div>
-                            <div className="relative z-10 space-y-1">
-                                <p className="text-[11px] font-medium tracking-wider text-amber-500 uppercase">
-                                    Pending Issuance
-                                </p>
-                                <p className="truncate text-2xl font-bold text-foreground">
+                            <div className="mt-2 space-y-1">
+                                <p className="truncate text-2xl font-bold tracking-tight text-foreground">
                                     {stats.pending_issuance}
                                 </p>
+                                <p className="text-xs text-muted-foreground">
+                                    Approved and ready for release
+                                </p>
                             </div>
                         </Card>
 
-                        <Card className="relative z-0 flex flex-col justify-center overflow-hidden rounded-xl border border-t-4 border-border border-t-emerald-500 bg-card bg-linear-to-tr from-transparent to-emerald-500/5 p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
-                            <div className="absolute -right-4 -bottom-4 text-emerald-500/5">
+                        <Card className="flex flex-col justify-between rounded-xl border border-border bg-card p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
+                            <div className="flex items-center justify-between">
+                                <span className="text-sm font-medium text-muted-foreground">
+                                    Completed
+                                </span>
                                 <ClipboardCheck
-                                    className="h-28 w-28"
-                                    strokeWidth={1.5}
+                                    className="h-4 w-4 text-emerald-500"
+                                    strokeWidth={2}
                                 />
                             </div>
-                            <div className="relative z-10 space-y-1">
-                                <p className="text-[11px] font-medium tracking-wider text-emerald-500 uppercase">
-                                    Completed
-                                </p>
-                                <p className="truncate text-2xl font-bold text-foreground">
+                            <div className="mt-2 space-y-1">
+                                <p className="truncate text-2xl font-bold tracking-tight text-foreground">
                                     {stats.completed}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                    Fully issued and signed RIS slips
                                 </p>
                             </div>
                         </Card>
