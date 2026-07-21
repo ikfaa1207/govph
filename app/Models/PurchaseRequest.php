@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\PurchaseRequestStatus;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -20,6 +21,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
     'approved_by',
     'rejection_reason',
 ])]
+/**
+ * @property PurchaseRequestStatus $status
+ */
 class PurchaseRequest extends Model
 {
     use HasFactory, SoftDeletes;
@@ -96,5 +100,17 @@ class PurchaseRequest extends Model
         }
 
         return $query->whereRaw('1 = 0');
+    }
+
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'status' => PurchaseRequestStatus::class,
+        ];
     }
 }

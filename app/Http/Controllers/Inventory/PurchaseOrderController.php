@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Inventory;
 
 use App\Actions\PurchaseOrder\CreatePurchaseOrderAction;
 use App\Actions\PurchaseOrder\UpdatePurchaseOrderAction;
+use App\Enums\PurchaseRequestStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StorePurchaseOrderRequest;
 use App\Models\PurchaseOrder;
@@ -92,7 +93,7 @@ class PurchaseOrderController extends Controller
             abort(404);
         }
 
-        if ($pr->status !== 'approved') {
+        if ($pr->status !== PurchaseRequestStatus::Approved) {
             return back()->withErrors(['purchase_request_id' => 'Purchase Request must be approved before creating a PO.']);
         }
 

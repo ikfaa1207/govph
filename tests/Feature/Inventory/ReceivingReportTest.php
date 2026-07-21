@@ -405,7 +405,7 @@ test('can finalize a draft receiving report and update stock', function () {
     expect($report->delivery_receipt_number)->toBe('DR-200');
 
     $po->refresh();
-    expect($po->status)->toBe('received');
+    expect($po->status->value)->toBe('received');
 
     $this->assertDatabaseHas('stock_transactions', [
         'item_id' => $item->id,

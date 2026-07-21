@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Enums\PurchaseOrderStatus;
+use App\Enums\PurchaseRequestStatus;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -18,6 +20,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
     'delivery_date',
     'status',
 ])]
+/**
+ * @property PurchaseOrderStatus $status
+ */
 class PurchaseOrder extends Model
 {
     use HasFactory, SoftDeletes;
@@ -29,13 +34,25 @@ class PurchaseOrder extends Model
     {
         static::saved(function (PurchaseOrder $po) {
             if ($po->wasChanged('status') && $po->purchase_request_id) {
-                if ($po->status === 'received') {
-                    $po->purchaseRequest()->update(['status' => 'completed']);
-                } elseif (in_array($po->status, ['sent', 'partially_received'])) {
-                    $po->purchaseRequest()->update(['status' => 'ordered']);
+                if ($po->status === PurchaseOrderStatus::Received) {
+                    $po->purchaseRequest()->update(['status' => PurchaseRequestStatus::Completed]);
+                } elseif (in_array($po->status, [PurchaseOrderStatus::Sent, PurchaseOrderStatus::PartiallyReceived])) {
+                    $po->purchaseRequest()->update(['status' => PurchaseRequestStatus::Ordered]);
                 }
             }
         });
+    }
+
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'status' => PurchaseOrderStatus::class,
+        ];
     }
 
     /**

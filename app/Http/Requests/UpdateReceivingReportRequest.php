@@ -96,8 +96,9 @@ class UpdateReceivingReportRequest extends FormRequest
                 }
 
                 // Check PO status
-                if (! in_array($po->status, ['sent', 'partially_received', 'received'])) {
-                    $validator->errors()->add('po_number', "Purchase Order is in '{$po->status}' status and cannot be received against.");
+                $poStatus = $po->status instanceof \BackedEnum ? $po->status->value : $po->status;
+                if (! in_array($poStatus, ['sent', 'partially_received', 'received'])) {
+                    $validator->errors()->add('po_number', "Purchase Order is in '{$poStatus}' status and cannot be received against.");
                 }
 
                 // Check item validity and quantities

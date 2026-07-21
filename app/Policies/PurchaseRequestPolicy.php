@@ -2,6 +2,7 @@
 
 namespace App\Policies;
 
+use App\Enums\PurchaseRequestStatus;
 use App\Models\PurchaseRequest;
 use App\Models\User;
 use Illuminate\Auth\Access\Response;
@@ -54,7 +55,7 @@ class PurchaseRequestPolicy
             return Response::deny('You do not have permission to approve purchase requests.');
         }
 
-        if ($purchaseRequest->status !== 'pending') {
+        if ($purchaseRequest->status !== PurchaseRequestStatus::Pending) {
             return Response::deny('Only pending purchase requests can be approved.');
         }
 
@@ -75,7 +76,7 @@ class PurchaseRequestPolicy
             return Response::deny('You do not have permission to reject purchase requests.');
         }
 
-        if ($purchaseRequest->status !== 'pending') {
+        if ($purchaseRequest->status !== PurchaseRequestStatus::Pending) {
             return Response::deny('Only pending purchase requests can be rejected.');
         }
 

@@ -186,7 +186,8 @@ class UpdateReceivingReportAction
             $newState = $report->toArray();
 
             // Recalculate PO status based on finalized reports
-            if (in_array($po->status, ['sent', 'partially_received', 'received'])) {
+            $poStatus = $po->status instanceof \BackedEnum ? $po->status->value : $po->status;
+            if (in_array($poStatus, ['sent', 'partially_received', 'received'])) {
                 $hasAnyFinalized = ReceivingReport::where('purchase_order_id', $po->id)->where('status', 'finalized')->exists();
 
                 if (! $hasAnyFinalized) {

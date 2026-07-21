@@ -272,7 +272,7 @@ test('can generate a PO from an approved PR', function () {
     ]);
 
     // PR status should be updated to ordered
-    $this->assertEquals('ordered', $pr->fresh()->status);
+    $this->assertEquals('ordered', $pr->fresh()->status->value);
 });
 
 test('procurement visibility is correctly scoped by role and department', function () {
