@@ -27,18 +27,14 @@ import {
     SidebarGroupContent,
 } from '@/components/ui/sidebar';
 import { useCurrentUrl } from '@/hooks/use-current-url';
-import { dashboard } from '@/routes';
-import items from '@/routes/inventory/items';
-import properties from '@/routes/inventory/properties';
-import reports from '@/routes/inventory/reports';
-import requisitions from '@/routes/inventory/requisitions';
+import { dashboard, helpdesk } from '@/routes';
+import inventory from '@/routes/inventory';
 
 export function AppSidebar() {
     const { auth } = usePage<any>().props;
     const permissions = auth?.user?.permissions || [];
     const { isCurrentUrl } = useCurrentUrl();
 
-    // Helper to check item permission
     const filterItem = (item: {
         href: string;
         permission?: string | string[];
@@ -47,7 +43,7 @@ export function AppSidebar() {
             return true;
         }
 
-        if (item.href === '/inventory/physical-counts') {
+        if (item.href === inventory.physicalCounts.index.url()) {
             return (
                 permissions.includes('reports.view') ||
                 !!auth?.user?.has_physical_counts
@@ -71,7 +67,7 @@ export function AppSidebar() {
         },
         {
             title: 'Supplies Catalog',
-            href: items.index.url(),
+            href: inventory.items.index.url(),
             icon: Package,
             permission: 'inventory.view',
         },
@@ -81,25 +77,25 @@ export function AppSidebar() {
     const operationsItems = [
         {
             title: 'Purchase Requests',
-            href: '/inventory/purchase-requests',
+            href: inventory.purchaseRequests.index.url(),
             icon: FileBox,
             permission: 'procurement.view',
         },
         {
             title: 'Purchase Orders',
-            href: '/inventory/purchase-orders',
+            href: inventory.purchaseOrders.index.url(),
             icon: ShoppingCart,
             permission: 'procurement.view',
         },
         {
             title: 'Receiving (Stock In)',
-            href: '/inventory/receiving-reports',
+            href: inventory.receiving.index.url(),
             icon: Truck,
             permission: 'warehouse.receive',
         },
         {
             title: 'Requisitions (RIS)',
-            href: requisitions.index.url(),
+            href: inventory.requisitions.index.url(),
             icon: ClipboardList,
             permission: [
                 'request.create',
@@ -113,19 +109,19 @@ export function AppSidebar() {
     const assetItems = [
         {
             title: 'Property Registry',
-            href: properties.index.url(),
+            href: inventory.properties.index.url(),
             icon: Database,
             permission: 'property.view',
         },
         {
             title: 'COA Reports',
-            href: reports.index.url(),
+            href: inventory.reports.index.url(),
             icon: FileText,
             permission: 'reports.view',
         },
         {
             title: 'Physical Counts',
-            href: '/inventory/physical-counts',
+            href: inventory.physicalCounts.index.url(),
             icon: ClipboardList,
             permission: ['reports.view', 'inventory.view', 'warehouse.view'],
         },
@@ -137,12 +133,12 @@ export function AppSidebar() {
     if (permissions.includes('users.manage')) {
         adminItems.push({
             title: 'System Libraries',
-            href: '/inventory/master-data',
+            href: inventory.masterData.index.url(),
             icon: Database,
         });
         adminItems.push({
             title: 'User Management',
-            href: '/inventory/admin/users',
+            href: inventory.admin.users.index.url(),
             icon: Users,
         });
     }
@@ -150,7 +146,7 @@ export function AppSidebar() {
     if (permissions.includes('roles.manage')) {
         adminItems.push({
             title: 'Roles & Permissions',
-            href: '/inventory/admin/roles',
+            href: inventory.admin.roles.index.url(),
             icon: ShieldAlert,
         });
     }
@@ -159,7 +155,7 @@ export function AppSidebar() {
     const helpItems = [
         {
             title: 'System Helpdesk',
-            href: '/inventory/helpdesk',
+            href: helpdesk.url(),
             icon: FolderGit2,
         },
     ];

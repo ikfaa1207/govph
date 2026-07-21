@@ -1,4 +1,4 @@
-import { Head, useForm, usePage, router } from '@inertiajs/react';
+import { Head, useForm, usePage, router, Link } from '@inertiajs/react';
 import {
     PlusCircle,
     FileSpreadsheet,
