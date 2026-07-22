@@ -19,6 +19,7 @@ import {
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { DicebearAvatar } from '@/components/dicebear-avatar';
+import PasswordInput from '@/components/password-input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -319,12 +320,6 @@ export default function UsersIndex({
 
     const handleResetPassword = () => {
         if (!selectedUser || !tempPassword) {
-            return;
-        }
-
-        if (tempPassword.length < 12) {
-            toast.error('Temporary password must be at least 12 characters.');
-
             return;
         }
 
@@ -752,9 +747,8 @@ export default function UsersIndex({
                                     >
                                         Temp Password{' '}
                                     </Label>
-                                    <Input
+                                    <PasswordInput
                                         id="cpassword"
-                                        type="password"
                                         value={createForm.data.password}
                                         onChange={(e) =>
                                             createForm.setData(
@@ -763,7 +757,7 @@ export default function UsersIndex({
                                             )
                                         }
                                         required
-                                        placeholder="At least 12 characters"
+                                        placeholder="Temporary password"
                                         className="h-9"
                                     />
                                     {createForm.errors.password && (
@@ -1197,9 +1191,8 @@ export default function UsersIndex({
                                     <div className="flex flex-col gap-3">
                                         {isResetSectionOpen ? (
                                             <div className="flex items-center gap-2 rounded-md border border-border bg-muted p-2">
-                                                <Input
+                                                <PasswordInput
                                                     id="temp-pw"
-                                                    type="password"
                                                     value={tempPassword}
                                                     onChange={(e) =>
                                                         setTempPassword(

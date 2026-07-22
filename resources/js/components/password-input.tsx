@@ -10,8 +10,12 @@ export default function PasswordInput({
     onChange,
     onFocus,
     onBlur,
+    showRequirements = false,
     ...props
-}: Omit<ComponentProps<'input'>, 'type'> & { ref?: Ref<HTMLInputElement> }) {
+}: Omit<ComponentProps<'input'>, 'type'> & {
+    ref?: Ref<HTMLInputElement>;
+    showRequirements?: boolean;
+}) {
     const [showPassword, setShowPassword] = useState(false);
     const [isFocused, setIsFocused] = useState(false);
     const [value, setValue] = useState(
@@ -111,7 +115,12 @@ export default function PasswordInput({
     };
 
     return (
-        <div className="w-full space-y-2">
+        <div
+            className={cn(
+                'w-full space-y-2',
+                className?.includes('flex-1') && 'flex-1',
+            )}
+        >
             <div className="relative">
                 <Input
                     type={showPassword ? 'text' : 'password'}
@@ -139,7 +148,7 @@ export default function PasswordInput({
                 </button>
             </div>
 
-            {isFocused && (
+            {showRequirements && isFocused && (
                 <div className="animate-in rounded-lg border border-border bg-muted/40 p-3 text-xs shadow-xs duration-200 fade-in">
                     <p className="mb-2 font-medium text-muted-foreground">
                         Password requirements:

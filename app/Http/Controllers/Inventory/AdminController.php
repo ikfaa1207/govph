@@ -9,7 +9,6 @@ use App\Models\Office;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
-use App\Rules\PasswordPolicyRule;
 use App\Services\Audit\AuditLogger;
 use App\Services\DocumentSequenceService;
 use Illuminate\Http\JsonResponse;
@@ -123,7 +122,7 @@ class AdminController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
-            'password' => ['required', 'string', new PasswordPolicyRule],
+            'password' => ['required', 'string'],
             'roles' => ['required', 'array'],
             'roles.*' => ['exists:roles,id'],
             'office_id' => ['required', 'exists:offices,id'],
@@ -204,7 +203,7 @@ class AdminController extends Controller
         }
 
         $validated = $request->validate([
-            'password' => ['required', 'string', new PasswordPolicyRule($user)],
+            'password' => ['required', 'string'],
         ]);
 
         $oldUser = $user->toArray();

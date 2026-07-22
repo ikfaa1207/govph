@@ -87,6 +87,7 @@ export default function Security(props: Props) {
                                     autoComplete="new-password"
                                     placeholder="New password"
                                     passwordrules={props.passwordRules}
+                                    showRequirements={true}
                                 />
 
                                 <InputError message={errors.password} />
@@ -104,6 +105,7 @@ export default function Security(props: Props) {
                                     autoComplete="new-password"
                                     placeholder="Confirm password"
                                     passwordrules={props.passwordRules}
+                                    showRequirements={true}
                                 />
 
                                 <InputError
