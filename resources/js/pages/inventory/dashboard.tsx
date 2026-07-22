@@ -148,10 +148,10 @@ export default function Dashboard({
                     <div
                         className={`grid gap-4 ${
                             userScope === 'employee'
-                                ? 'md:grid-cols-3'
+                                ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
                                 : userScope === 'dept_head'
-                                  ? 'md:grid-cols-2 lg:grid-cols-4'
-                                  : 'md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5'
+                                  ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4'
+                                  : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-5'
                         }`}
                     >
                         {Array.from({
@@ -169,10 +169,10 @@ export default function Dashboard({
                     <div
                         className={`grid gap-4 ${
                             userScope === 'employee'
-                                ? 'md:grid-cols-3'
+                                ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
                                 : userScope === 'dept_head'
-                                  ? 'md:grid-cols-2 lg:grid-cols-4'
-                                  : 'md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5'
+                                  ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4'
+                                  : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-5'
                         }`}
                     >
                         {/* Metrics 1: Total Stock Value (Hidden for regular employees) */}
@@ -188,7 +188,7 @@ export default function Dashboard({
                                     />
                                 </div>
                                 <div className="mt-2 space-y-1">
-                                    <p className="truncate text-2xl font-bold tracking-tight text-foreground">
+                                    <p className="text-2xl font-bold tracking-tight text-foreground">
                                         {formatCurrency(stats.totalValue)}
                                     </p>
                                     <p className="text-xs text-muted-foreground">
@@ -212,7 +212,7 @@ export default function Dashboard({
                                 />
                             </div>
                             <div className="mt-2 space-y-1">
-                                <p className="truncate text-2xl font-bold tracking-tight text-foreground">
+                                <p className="text-2xl font-bold tracking-tight text-foreground">
                                     {stats.totalItems} Items
                                 </p>
                                 <p className="text-xs text-muted-foreground">
@@ -231,32 +231,30 @@ export default function Dashboard({
                                         ? 'Assigned Assets'
                                         : 'Accountable Property'}
                                 </span>
-                                <Database
-                                    className="h-4 w-4 text-violet-500"
-                                    strokeWidth={2}
-                                />
-                            </div>
-                            <div className="mt-2 space-y-1">
-                                <div className="flex items-end justify-between gap-2">
-                                    <p className="truncate text-2xl font-bold tracking-tight text-foreground">
-                                        {userScope === 'employee'
-                                            ? `${stats.totalProperties} Assets`
-                                            : stats.totalPpeValue !== undefined
-                                              ? formatCurrency(
-                                                    stats.totalPpeValue,
-                                                )
-                                              : `${stats.totalProperties} Assets`}
-                                    </p>
+                                <div className="flex items-center gap-1.5">
                                     {userScope !== 'employee' &&
                                         stats.totalPpeValue !== undefined && (
                                             <Badge
                                                 variant="outline"
-                                                className="mb-1 border-violet-500/20 bg-violet-500/10 px-1.5 py-0 text-[10px] whitespace-nowrap text-violet-600"
+                                                className="border-violet-500/20 bg-violet-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-violet-600"
                                             >
                                                 {stats.totalProperties} Assets
                                             </Badge>
                                         )}
+                                    <Database
+                                        className="h-4 w-4 text-violet-500"
+                                        strokeWidth={2}
+                                    />
                                 </div>
+                            </div>
+                            <div className="mt-2 space-y-1">
+                                <p className="text-2xl font-bold tracking-tight text-foreground">
+                                    {userScope === 'employee'
+                                        ? `${stats.totalProperties} Assets`
+                                        : stats.totalPpeValue !== undefined
+                                          ? formatCurrency(stats.totalPpeValue)
+                                          : `${stats.totalProperties} Assets`}
+                                </p>
                                 <p className="text-xs text-muted-foreground">
                                     {userScope === 'employee'
                                         ? 'Properties in your custody'
@@ -279,7 +277,7 @@ export default function Dashboard({
                                 />
                             </div>
                             <div className="mt-2 space-y-1">
-                                <p className="truncate text-2xl font-bold tracking-tight text-foreground">
+                                <p className="text-2xl font-bold tracking-tight text-foreground">
                                     {stats.pendingRequests} Requests
                                 </p>
                                 <p className="text-xs text-muted-foreground">
@@ -306,7 +304,7 @@ export default function Dashboard({
                                     />
                                 </div>
                                 <div className="mt-2 space-y-1">
-                                    <p className="truncate text-2xl font-bold tracking-tight text-foreground transition-colors group-hover:text-rose-600">
+                                    <p className="text-2xl font-bold tracking-tight text-foreground transition-colors group-hover:text-rose-600">
                                         {stats.pendingCounts} Pending
                                     </p>
                                     <p className="flex items-center justify-between text-xs text-muted-foreground">
@@ -336,7 +334,7 @@ export default function Dashboard({
                                         />
                                     </div>
                                     <div className="mt-2 space-y-1">
-                                        <p className="truncate text-2xl font-bold tracking-tight text-foreground">
+                                        <p className="text-2xl font-bold tracking-tight text-foreground">
                                             {stats.lowStocks} Items
                                         </p>
                                         <p className="text-xs font-medium text-amber-600 dark:text-amber-400">
@@ -361,7 +359,7 @@ export default function Dashboard({
                                         />
                                     </div>
                                     <div className="mt-2 space-y-1">
-                                        <p className="truncate text-2xl font-bold tracking-tight text-foreground text-rose-600 dark:text-rose-400">
+                                        <p className="text-2xl font-bold tracking-tight text-foreground text-rose-600 dark:text-rose-400">
                                             {stats.outOfStocks} Items
                                         </p>
                                         <p className="text-xs font-medium text-rose-500">
