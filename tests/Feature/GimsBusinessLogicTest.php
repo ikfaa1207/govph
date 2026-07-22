@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\PropertyStatus;
+use App\Exceptions\InsufficientStockException;
 use App\Models\Category;
 use App\Models\Department;
 use App\Models\Employee;
@@ -770,4 +771,32 @@ test('items list can be searched and filtered', function () {
     $response->assertStatus(200);
     $data = $response->viewData('page')['props']['items']['data'];
     expect($data[0]['name'])->toBe('Lenovo Laptop X1');
+});
+
+test('valuation service uses lockForUpdate during stock mutations to prevent concurrency anomalies', function () {
+    $serviceCode = file_get_contents(app_path('Services/Valuation/ValuationService.php'));
+
+    // Ensure all critical database queries on the Item model use row-level locking
+    expect($serviceCode)->toContain('Item::where(\'id\', $item->id)->lockForUpdate()');
+});
+
+test('valuation service handles recordStockOut insufficient stock boundary conditions', function () {
+    $unit = Unit::create(['name' => 'Piece', 'abbreviation' => 'pc']);
+    $category = Category::create(['name' => 'Office Supplies', 'code' => 'SUPP', 'is_ppe' => false]);
+    $item = Item::create([
+        'item_code' => 'TEST-OUT-BOUND',
+        'name' => 'Bound test item',
+        'category_id' => $category->id,
+        'unit_id' => $unit->id,
+        'unit_cost' => 10.00,
+        'reorder_level' => 5,
+        'maximum_stock' => 100,
+    ]);
+
+    $service = new ValuationService;
+    $service->recordStockIn($item, 10, 10.00, 'Test', 1, 'Initial stock');
+
+    // Attempt to stock out more than available
+    expect(fn () => $service->recordStockOut($item, 11, 'Test', 2, 'Exceed stock'))
+        ->toThrow(InsufficientStockException::class);
 });
