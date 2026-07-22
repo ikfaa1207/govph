@@ -425,7 +425,9 @@ export default function RequisitionsIndex({
     return (
         <>
             <Head title="Requisitions Board - GIMS" />
-            <TourGuide tourId="requisitions-index" steps={tourSteps} />
+            {items.length > 0 && (
+                <TourGuide tourId="requisitions-index" steps={tourSteps} />
+            )}
             <div className="space-y-6 p-6">
                 {/* Header Section */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

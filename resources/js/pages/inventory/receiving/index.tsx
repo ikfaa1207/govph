@@ -507,7 +507,9 @@ export default function ReceivingIndex({
     return (
         <>
             <Head title="Receiving Reports - GIMS" />
-            <TourGuide tourId="receiving-index" steps={tourSteps} />
+            {items.length > 0 && (
+                <TourGuide tourId="receiving-index" steps={tourSteps} />
+            )}
             <div className="space-y-6 p-6">
                 {/* Header */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

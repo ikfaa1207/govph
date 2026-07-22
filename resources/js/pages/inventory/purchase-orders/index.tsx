@@ -320,7 +320,9 @@ export default function PurchaseOrdersIndex({
 
     return (
         <>
-            <TourGuide tourId="po-index" steps={tourSteps} />
+            {approvedPurchaseRequests.length > 0 && (
+                <TourGuide tourId="po-index" steps={tourSteps} />
+            )}
             <div className="space-y-6 p-6">
                 <Head title="Purchase Orders" />
 

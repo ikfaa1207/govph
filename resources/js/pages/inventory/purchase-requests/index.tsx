@@ -336,7 +336,9 @@ export default function PurchaseRequestsIndex({
 
     return (
         <>
-            <TourGuide tourId="pr-index" steps={tourSteps} />
+            {items.length > 0 && (
+                <TourGuide tourId="pr-index" steps={tourSteps} />
+            )}
             <div className="space-y-6 p-6">
                 <Head title="Purchase Requests" />
 
