@@ -5,6 +5,7 @@ import {
     setLayoutProps,
     router,
     usePage,
+    Link,
 } from '@inertiajs/react';
 import {
     PlusCircle,
@@ -565,689 +566,800 @@ export default function ReceivingIndex({
                                     onSubmit={(e) => e.preventDefault()}
                                     className="space-y-8"
                                 >
-                                    {Object.keys(errors).length > 0 && (
-                                        <AlertError
-                                            errors={
-                                                Object.values(
-                                                    errors,
-                                                ) as string[]
-                                            }
-                                            title="Please fix the following validation errors:"
-                                        />
-                                    )}
-                                    {/* Section 1: PO & Reference Details */}
-                                    <div className="space-y-4">
-                                        <div className="mb-1 flex items-center gap-2.5 text-sm font-semibold text-primary">
-                                            <Landmark className="h-4.5 w-4.5 text-primary" />
-                                            <span>Purchase Order Details</span>
-                                        </div>
-                                        <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
-                                            <div className="space-y-2">
-                                                <Label
-                                                    htmlFor="po_number"
-                                                    className="text-xs font-semibold"
-                                                    required
-                                                >
-                                                    Purchase Order No.
-                                                </Label>
-                                                <SmartSelect
-                                                    options={poOptions}
-                                                    value={
-                                                        data.po_number ||
-                                                        undefined
-                                                    }
-                                                    onValueChange={(val) => {
-                                                        const selectedPO =
-                                                            poOptions.find(
-                                                                (o) =>
-                                                                    o.value ===
-                                                                    val,
-                                                            )?.po_data;
-
-                                                        if (selectedPO) {
-                                                            setData((prev) => ({
-                                                                ...prev,
-                                                                po_number: val,
-                                                                supplier_id:
-                                                                    String(
-                                                                        selectedPO.supplier_id,
-                                                                    ),
-                                                                po_date:
-                                                                    selectedPO.po_date,
-                                                                items: selectedPO.items.map(
-                                                                    (
-                                                                        item: any,
-                                                                    ) => ({
-                                                                        id:
-                                                                            Date.now() +
-                                                                            Math.random(),
-                                                                        item_id:
-                                                                            String(
-                                                                                item.item_id,
-                                                                            ),
-                                                                        quantity_received:
-                                                                            item.quantity_remaining,
-                                                                        quantity_accepted:
-                                                                            item.quantity_remaining,
-                                                                        quantity_rejected: 0,
-                                                                        unit_cost:
-                                                                            item.unit_cost,
-                                                                        batch_number:
-                                                                            '',
-                                                                        expiration_date:
-                                                                            '',
-                                                                        rejection_reason:
-                                                                            '',
-                                                                    }),
-                                                                ),
-                                                            }));
-                                                        } else {
-                                                            setData(
-                                                                'po_number',
-                                                                val,
-                                                            );
-                                                        }
-                                                    }}
-                                                    placeholder="Select Purchase Order"
-                                                    className="w-full"
-                                                />
-                                                {errors.po_number && (
-                                                    <p className="text-xs text-rose-500">
-                                                        {errors.po_number}
-                                                    </p>
-                                                )}
+                                    {pending_purchase_orders.length === 0 &&
+                                    !editMode ? (
+                                        <div className="flex flex-col items-center justify-center space-y-4 py-8 text-center">
+                                            <div className="rounded-full bg-amber-50 p-4 text-amber-500 dark:bg-amber-950/20">
+                                                <Package2 className="h-10 w-10 animate-pulse" />
                                             </div>
-                                            <div className="space-y-2">
-                                                <Label
-                                                    htmlFor="supplier"
-                                                    className="text-xs font-semibold"
-                                                    required
+                                            <div className="max-w-md space-y-2">
+                                                <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                                    No Pending Purchase Orders
+                                                    Found
+                                                </h4>
+                                                <p className="text-xs text-slate-500 dark:text-slate-400">
+                                                    Receiving reports are
+                                                    recorded by pulling items
+                                                    from active, pending, or
+                                                    sent Purchase Orders (PO)
+                                                    that have arrived.
+                                                    Currently, there are no
+                                                    pending POs.
+                                                </p>
+                                            </div>
+                                            <div className="flex gap-3 pt-2">
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    onClick={() =>
+                                                        setIsOpen(false)
+                                                    }
+                                                    className="text-xs"
                                                 >
-                                                    Supplier
-                                                </Label>
-                                                <div className="flex gap-1.5">
-                                                    <SmartSelect
-                                                        options={suppliers.map(
-                                                            (s) => ({
-                                                                value: String(
-                                                                    s.id,
-                                                                ),
-                                                                label: s.name,
-                                                            }),
-                                                        )}
-                                                        value={
-                                                            data.supplier_id
-                                                                ? String(
-                                                                      data.supplier_id,
-                                                                  )
-                                                                : undefined
-                                                        }
-                                                        onValueChange={(val) =>
-                                                            setData(
-                                                                'supplier_id',
-                                                                val,
-                                                            )
-                                                        }
-                                                        placeholder="Select Supplier"
-                                                        className="flex-1"
-                                                    />
-                                                    <Button
-                                                        type="button"
-                                                        variant="outline"
-                                                        size="icon"
-                                                        className="h-9 w-9 shrink-0"
+                                                    Cancel
+                                                </Button>
+                                                <Button
+                                                    type="button"
+                                                    asChild
+                                                    className="bg-indigo-600 text-xs font-semibold hover:bg-indigo-700"
+                                                >
+                                                    <Link
+                                                        href="/inventory/purchase-orders"
                                                         onClick={() =>
-                                                            setIsAddSupplierOpen(
-                                                                true,
-                                                            )
+                                                            setIsOpen(false)
                                                         }
-                                                        title="Add New Supplier"
                                                     >
-                                                        <Plus className="h-4 w-4" />
-                                                    </Button>
-                                                </div>
-                                                {errors.supplier_id && (
-                                                    <p className="text-xs text-rose-500">
-                                                        {errors.supplier_id}
-                                                    </p>
-                                                )}
-                                            </div>
-                                            <div className="space-y-2">
-                                                <Label
-                                                    htmlFor="po_date"
-                                                    className="text-xs font-semibold"
-                                                    required
-                                                >
-                                                    Purchase Order Date
-                                                </Label>
-                                                <DatePicker
-                                                    value={data.po_date}
-                                                    onChange={(val) =>
-                                                        setData('po_date', val)
-                                                    }
-                                                    required
-                                                />
-                                                {errors.po_date && (
-                                                    <p className="text-xs text-rose-500">
-                                                        {errors.po_date}
-                                                    </p>
-                                                )}
+                                                        Go to Purchase Orders
+                                                    </Link>
+                                                </Button>
                                             </div>
                                         </div>
-                                    </div>
-
-                                    <hr className="my-6 border-border/50" />
-
-                                    {/* Section 2: Delivery & Inspection Details */}
-                                    <div className="space-y-6">
-                                        <div className="mb-1 flex items-center gap-2.5 text-sm font-semibold text-primary">
-                                            <Calendar className="h-4.5 w-4.5 text-primary" />
-                                            <span>
-                                                Logistics Reference & Crew
-                                            </span>
-                                        </div>
-                                        <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
-                                            <div className="space-y-2">
-                                                <Label
-                                                    htmlFor="iar_number"
-                                                    className="text-xs font-semibold"
-                                                    required
-                                                >
-                                                    IAR Number
-                                                </Label>
-                                                <Input
-                                                    id="iar_number"
-                                                    value={data.iar_number}
-                                                    onChange={(e) =>
-                                                        setData(
-                                                            'iar_number',
-                                                            e.target.value,
-                                                        )
+                                    ) : (
+                                        <>
+                                            {Object.keys(errors).length > 0 && (
+                                                <AlertError
+                                                    errors={
+                                                        Object.values(
+                                                            errors,
+                                                        ) as string[]
                                                     }
-                                                    required
+                                                    title="Please fix the following validation errors:"
                                                 />
-                                                {errors.iar_number && (
-                                                    <p className="text-xs text-rose-500">
-                                                        {errors.iar_number}
-                                                    </p>
-                                                )}
-                                            </div>
-                                            <div className="space-y-2">
-                                                <Label
-                                                    htmlFor="delivery_receipt"
-                                                    className="text-xs font-semibold"
-                                                    required
-                                                >
-                                                    Delivery Receipt No.
-                                                </Label>
-                                                <Input
-                                                    id="delivery_receipt"
-                                                    placeholder="e.g. DR-88219"
-                                                    value={
-                                                        data.delivery_receipt_number
-                                                    }
-                                                    onChange={(e) =>
-                                                        setData(
-                                                            'delivery_receipt_number',
-                                                            e.target.value,
-                                                        )
-                                                    }
-                                                    required
-                                                />
-                                                {errors.delivery_receipt_number && (
-                                                    <p className="text-xs text-rose-500">
-                                                        {
-                                                            errors.delivery_receipt_number
-                                                        }
-                                                    </p>
-                                                )}
-                                            </div>
-                                            <div className="space-y-2">
-                                                <Label
-                                                    htmlFor="invoice_number"
-                                                    className="text-xs font-semibold"
-                                                    required
-                                                >
-                                                    Invoice Number
-                                                </Label>
-                                                <Input
-                                                    id="invoice_number"
-                                                    placeholder="e.g. INV-9902"
-                                                    value={data.invoice_number}
-                                                    onChange={(e) =>
-                                                        setData(
-                                                            'invoice_number',
-                                                            e.target.value,
-                                                        )
-                                                    }
-                                                />
-                                                {errors.invoice_number && (
-                                                    <p className="text-xs text-rose-500">
-                                                        {errors.invoice_number}
-                                                    </p>
-                                                )}
-                                            </div>
-                                        </div>
-                                        <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
-                                            <div className="space-y-2">
-                                                <Label
-                                                    htmlFor="received_date"
-                                                    className="text-xs font-semibold"
-                                                >
-                                                    Received Date
-                                                </Label>
-                                                <DatePicker
-                                                    value={data.received_date}
-                                                    onChange={(val) =>
-                                                        setData(
-                                                            'received_date',
-                                                            val,
-                                                        )
-                                                    }
-                                                    required
-                                                />
-                                                {errors.received_date && (
-                                                    <p className="text-xs text-rose-500">
-                                                        {errors.received_date}
-                                                    </p>
-                                                )}
-                                            </div>
-                                            <div className="space-y-2">
-                                                <Label
-                                                    htmlFor="received_by"
-                                                    className="text-xs font-semibold"
-                                                    required
-                                                >
-                                                    Received By (Supply Unit)
-                                                </Label>
-                                                <SmartSelect
-                                                    options={receivers.map(
-                                                        (e) => ({
-                                                            value: String(e.id),
-                                                            label: `${e.name} (${e.position})`,
-                                                        }),
-                                                    )}
-                                                    value={
-                                                        data.received_by
-                                                            ? String(
-                                                                  data.received_by,
-                                                              )
-                                                            : undefined
-                                                    }
-                                                    onValueChange={(val) =>
-                                                        setData(
-                                                            'received_by',
-                                                            val,
-                                                        )
-                                                    }
-                                                    placeholder="Select Receiver"
-                                                />
-                                                {errors.received_by && (
-                                                    <p className="text-xs text-rose-500">
-                                                        {errors.received_by}
-                                                    </p>
-                                                )}
-                                            </div>
-                                            <div className="space-y-2">
-                                                <Label
-                                                    htmlFor="inspected_by"
-                                                    className="text-xs font-semibold"
-                                                    required
-                                                >
-                                                    Inspected By
-                                                </Label>
-                                                <SmartSelect
-                                                    options={inspectors.map(
-                                                        (e) => ({
-                                                            value: String(e.id),
-                                                            label: `${e.name} (${e.position})`,
-                                                        }),
-                                                    )}
-                                                    value={
-                                                        data.inspected_by
-                                                            ? String(
-                                                                  data.inspected_by,
-                                                              )
-                                                            : undefined
-                                                    }
-                                                    onValueChange={(val) =>
-                                                        setData(
-                                                            'inspected_by',
-                                                            val,
-                                                        )
-                                                    }
-                                                    placeholder="Select Inspector"
-                                                />
-                                                {errors.inspected_by && (
-                                                    <p className="text-xs text-rose-500">
-                                                        {errors.inspected_by}
-                                                    </p>
-                                                )}
-                                                {data.received_by &&
-                                                    data.inspected_by &&
-                                                    data.received_by ===
-                                                        data.inspected_by && (
-                                                        <p className="text-xs font-medium text-rose-500">
-                                                            Receiver and
-                                                            Inspector must be
-                                                            different.
-                                                        </p>
-                                                    )}
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <hr className="my-6 border-border/50" />
-
-                                    {/* Section 3: Supplies List */}
-                                    <div className="space-y-4">
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-2.5 text-sm font-semibold text-primary">
-                                                <Package2 className="h-4.5 w-4.5 text-primary" />
-                                                <span>
-                                                    Delivered Supplies List
-                                                </span>
-                                            </div>
-                                        </div>
-
-                                        <div className="max-h-[30vh] overflow-y-auto rounded-md border border-border">
-                                            <table className="w-full text-left text-xs">
-                                                <thead>
-                                                    <tr className="border-b border-border bg-muted/50 font-medium text-muted-foreground">
-                                                        <th className="p-3">
-                                                            Item *
-                                                        </th>
-                                                        <th className="w-20 p-3">
-                                                            Qty Recv *
-                                                        </th>
-                                                        <th className="w-20 p-3">
-                                                            Qty Acpt *
-                                                        </th>
-                                                        <th className="w-32 p-3">
-                                                            Unit Cost (₱) *
-                                                        </th>
-                                                        <th className="w-32 p-3">
-                                                            Batch No.
-                                                        </th>
-                                                        <th className="w-36 p-3">
-                                                            Expiration
-                                                        </th>
-                                                        <th className="w-10 p-3 text-center"></th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody className="divide-y divide-border">
-                                                    {data.items.map(
-                                                        (row, idx) => (
-                                                            <tr
-                                                                key={idx}
-                                                                className="hover:bg-muted/30"
-                                                            >
-                                                                <td className="p-2.5">
-                                                                    <SmartSelect
-                                                                        options={items.map(
-                                                                            (
-                                                                                it,
-                                                                            ) => ({
-                                                                                value: String(
-                                                                                    it.id,
-                                                                                ),
-                                                                                label: `${it.name} (${it.unit?.abbreviation || 'unit'})`,
-                                                                            }),
-                                                                        )}
-                                                                        value={
-                                                                            row.item_id
-                                                                                ? String(
-                                                                                      row.item_id,
-                                                                                  )
-                                                                                : undefined
-                                                                        }
-                                                                        onValueChange={(
-                                                                            val,
-                                                                        ) =>
-                                                                            handleItemChange(
-                                                                                idx,
-                                                                                'item_id',
-                                                                                val,
-                                                                            )
-                                                                        }
-                                                                        placeholder="Select Item"
-                                                                        className="h-8 bg-background text-xs"
-                                                                        defaultOpen={
-                                                                            row.isNew
-                                                                        }
-                                                                    />
-                                                                </td>
-                                                                <td className="p-2.5">
-                                                                    <Input
-                                                                        type="number"
-                                                                        min="1"
-                                                                        value={
-                                                                            row.quantity_received
-                                                                        }
-                                                                        onChange={(
-                                                                            e,
-                                                                        ) =>
-                                                                            handleItemChange(
-                                                                                idx,
-                                                                                'quantity_received',
-                                                                                parseInt(
-                                                                                    e
-                                                                                        .target
-                                                                                        .value,
-                                                                                ) ||
-                                                                                    0,
-                                                                            )
-                                                                        }
-                                                                        className="h-8 p-1.5 text-xs"
-                                                                        required
-                                                                    />
-                                                                </td>
-                                                                <td className="p-2.5">
-                                                                    <Input
-                                                                        type="number"
-                                                                        min="0"
-                                                                        max={
-                                                                            row.quantity_received
-                                                                        }
-                                                                        value={
-                                                                            row.quantity_accepted
-                                                                        }
-                                                                        onChange={(
-                                                                            e,
-                                                                        ) =>
-                                                                            handleItemChange(
-                                                                                idx,
-                                                                                'quantity_accepted',
-                                                                                parseInt(
-                                                                                    e
-                                                                                        .target
-                                                                                        .value,
-                                                                                ) ||
-                                                                                    0,
-                                                                            )
-                                                                        }
-                                                                        className="h-8 p-1.5 text-xs"
-                                                                        required
-                                                                    />
-                                                                </td>
-                                                                <td className="p-2.5">
-                                                                    <Input
-                                                                        type="number"
-                                                                        step="0.01"
-                                                                        min="0"
-                                                                        value={
-                                                                            row.unit_cost
-                                                                        }
-                                                                        onChange={(
-                                                                            e,
-                                                                        ) =>
-                                                                            handleItemChange(
-                                                                                idx,
-                                                                                'unit_cost',
-                                                                                parseFloat(
-                                                                                    e
-                                                                                        .target
-                                                                                        .value,
-                                                                                ) ||
-                                                                                    0.0,
-                                                                            )
-                                                                        }
-                                                                        className="h-8 p-1.5 text-xs"
-                                                                        required
-                                                                    />
-                                                                </td>
-                                                                <td className="p-2.5">
-                                                                    <Input
-                                                                        placeholder="e.g. B-012"
-                                                                        value={
-                                                                            row.batch_number
-                                                                        }
-                                                                        onChange={(
-                                                                            e,
-                                                                        ) =>
-                                                                            handleItemChange(
-                                                                                idx,
-                                                                                'batch_number',
-                                                                                e
-                                                                                    .target
-                                                                                    .value,
-                                                                            )
-                                                                        }
-                                                                        className="h-8 p-1.5 text-xs"
-                                                                    />
-                                                                </td>
-                                                                <td className="p-2.5">
-                                                                    <DatePicker
-                                                                        value={
-                                                                            row.expiration_date
-                                                                        }
-                                                                        onChange={(
-                                                                            val,
-                                                                        ) =>
-                                                                            handleItemChange(
-                                                                                idx,
-                                                                                'expiration_date',
-                                                                                val,
-                                                                            )
-                                                                        }
-                                                                        className="h-8 text-xs font-medium"
-                                                                    />
-                                                                </td>
-                                                                <td className="p-2.5 text-center">
-                                                                    <Button
-                                                                        type="button"
-                                                                        variant="ghost"
-                                                                        size="icon"
-                                                                        className="h-7 w-7 text-rose-500 hover:bg-rose-50 hover:text-rose-600"
-                                                                        onClick={() =>
-                                                                            handleRemoveItemRow(
-                                                                                idx,
-                                                                            )
-                                                                        }
-                                                                    >
-                                                                        <X className="h-4 w-4" />
-                                                                    </Button>
-                                                                </td>
-                                                            </tr>
-                                                        ),
-                                                    )}
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                        <div className="mt-2 flex flex-col gap-4 border-t pt-3 sm:flex-row sm:items-center sm:justify-between">
-                                            <Button
-                                                type="button"
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={handleAddItemRow}
-                                                className="-ml-2 gap-1.5 text-primary hover:bg-primary/10 hover:text-primary"
-                                            >
-                                                <PlusCircle className="h-4 w-4" />
-                                                Add Item
-                                            </Button>
-                                            <div className="flex flex-wrap gap-4 text-xs font-semibold">
-                                                <div className="rounded-md border border-muted-foreground/10 bg-muted/30 px-3 py-1.5 text-muted-foreground">
-                                                    Total Received:{' '}
-                                                    <span className="font-bold text-foreground">
-                                                        {formatCurrency(
-                                                            totalReceivedValue,
-                                                        )}
+                                            )}
+                                            {/* Section 1: PO & Reference Details */}
+                                            <div className="space-y-4">
+                                                <div className="mb-1 flex items-center gap-2.5 text-sm font-semibold text-primary">
+                                                    <Landmark className="h-4.5 w-4.5 text-primary" />
+                                                    <span>
+                                                        Purchase Order Details
                                                     </span>
                                                 </div>
-                                                {data.status ===
-                                                    'finalized' && (
-                                                    <div className="rounded-md border border-emerald-500/10 bg-emerald-500/5 px-3 py-1.5 text-muted-foreground">
-                                                        Total Accepted:{' '}
-                                                        <span className="font-bold text-emerald-600">
-                                                            {formatCurrency(
-                                                                totalAcceptedValue,
+                                                <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+                                                    <div className="space-y-2">
+                                                        <Label
+                                                            htmlFor="po_number"
+                                                            className="text-xs font-semibold"
+                                                            required
+                                                        >
+                                                            Purchase Order No.
+                                                        </Label>
+                                                        <SmartSelect
+                                                            options={poOptions}
+                                                            value={
+                                                                data.po_number ||
+                                                                undefined
+                                                            }
+                                                            onValueChange={(
+                                                                val,
+                                                            ) => {
+                                                                const selectedPO =
+                                                                    poOptions.find(
+                                                                        (o) =>
+                                                                            o.value ===
+                                                                            val,
+                                                                    )?.po_data;
+
+                                                                if (
+                                                                    selectedPO
+                                                                ) {
+                                                                    setData(
+                                                                        (
+                                                                            prev,
+                                                                        ) => ({
+                                                                            ...prev,
+                                                                            po_number:
+                                                                                val,
+                                                                            supplier_id:
+                                                                                String(
+                                                                                    selectedPO.supplier_id,
+                                                                                ),
+                                                                            po_date:
+                                                                                selectedPO.po_date,
+                                                                            items: selectedPO.items.map(
+                                                                                (
+                                                                                    item: any,
+                                                                                ) => ({
+                                                                                    id:
+                                                                                        Date.now() +
+                                                                                        Math.random(),
+                                                                                    item_id:
+                                                                                        String(
+                                                                                            item.item_id,
+                                                                                        ),
+                                                                                    quantity_received:
+                                                                                        item.quantity_remaining,
+                                                                                    quantity_accepted:
+                                                                                        item.quantity_remaining,
+                                                                                    quantity_rejected: 0,
+                                                                                    unit_cost:
+                                                                                        item.unit_cost,
+                                                                                    batch_number:
+                                                                                        '',
+                                                                                    expiration_date:
+                                                                                        '',
+                                                                                    rejection_reason:
+                                                                                        '',
+                                                                                }),
+                                                                            ),
+                                                                        }),
+                                                                    );
+                                                                } else {
+                                                                    setData(
+                                                                        'po_number',
+                                                                        val,
+                                                                    );
+                                                                }
+                                                            }}
+                                                            placeholder="Select Purchase Order"
+                                                            className="w-full"
+                                                        />
+                                                        {errors.po_number && (
+                                                            <p className="text-xs text-rose-500">
+                                                                {
+                                                                    errors.po_number
+                                                                }
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <Label
+                                                            htmlFor="supplier"
+                                                            className="text-xs font-semibold"
+                                                            required
+                                                        >
+                                                            Supplier
+                                                        </Label>
+                                                        <div className="flex gap-1.5">
+                                                            <SmartSelect
+                                                                options={suppliers.map(
+                                                                    (s) => ({
+                                                                        value: String(
+                                                                            s.id,
+                                                                        ),
+                                                                        label: s.name,
+                                                                    }),
+                                                                )}
+                                                                value={
+                                                                    data.supplier_id
+                                                                        ? String(
+                                                                              data.supplier_id,
+                                                                          )
+                                                                        : undefined
+                                                                }
+                                                                onValueChange={(
+                                                                    val,
+                                                                ) =>
+                                                                    setData(
+                                                                        'supplier_id',
+                                                                        val,
+                                                                    )
+                                                                }
+                                                                placeholder="Select Supplier"
+                                                                className="flex-1"
+                                                            />
+                                                            <Button
+                                                                type="button"
+                                                                variant="outline"
+                                                                size="icon"
+                                                                className="h-9 w-9 shrink-0"
+                                                                onClick={() =>
+                                                                    setIsAddSupplierOpen(
+                                                                        true,
+                                                                    )
+                                                                }
+                                                                title="Add New Supplier"
+                                                            >
+                                                                <Plus className="h-4 w-4" />
+                                                            </Button>
+                                                        </div>
+                                                        {errors.supplier_id && (
+                                                            <p className="text-xs text-rose-500">
+                                                                {
+                                                                    errors.supplier_id
+                                                                }
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <Label
+                                                            htmlFor="po_date"
+                                                            className="text-xs font-semibold"
+                                                            required
+                                                        >
+                                                            Purchase Order Date
+                                                        </Label>
+                                                        <DatePicker
+                                                            value={data.po_date}
+                                                            onChange={(val) =>
+                                                                setData(
+                                                                    'po_date',
+                                                                    val,
+                                                                )
+                                                            }
+                                                            required
+                                                        />
+                                                        {errors.po_date && (
+                                                            <p className="text-xs text-rose-500">
+                                                                {errors.po_date}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <hr className="my-6 border-border/50" />
+
+                                            {/* Section 2: Delivery & Inspection Details */}
+                                            <div className="space-y-6">
+                                                <div className="mb-1 flex items-center gap-2.5 text-sm font-semibold text-primary">
+                                                    <Calendar className="h-4.5 w-4.5 text-primary" />
+                                                    <span>
+                                                        Logistics Reference &
+                                                        Crew
+                                                    </span>
+                                                </div>
+                                                <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+                                                    <div className="space-y-2">
+                                                        <Label
+                                                            htmlFor="iar_number"
+                                                            className="text-xs font-semibold"
+                                                            required
+                                                        >
+                                                            IAR Number
+                                                        </Label>
+                                                        <Input
+                                                            id="iar_number"
+                                                            value={
+                                                                data.iar_number
+                                                            }
+                                                            onChange={(e) =>
+                                                                setData(
+                                                                    'iar_number',
+                                                                    e.target
+                                                                        .value,
+                                                                )
+                                                            }
+                                                            required
+                                                        />
+                                                        {errors.iar_number && (
+                                                            <p className="text-xs text-rose-500">
+                                                                {
+                                                                    errors.iar_number
+                                                                }
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <Label
+                                                            htmlFor="delivery_receipt"
+                                                            className="text-xs font-semibold"
+                                                            required
+                                                        >
+                                                            Delivery Receipt No.
+                                                        </Label>
+                                                        <Input
+                                                            id="delivery_receipt"
+                                                            placeholder="e.g. DR-88219"
+                                                            value={
+                                                                data.delivery_receipt_number
+                                                            }
+                                                            onChange={(e) =>
+                                                                setData(
+                                                                    'delivery_receipt_number',
+                                                                    e.target
+                                                                        .value,
+                                                                )
+                                                            }
+                                                            required
+                                                        />
+                                                        {errors.delivery_receipt_number && (
+                                                            <p className="text-xs text-rose-500">
+                                                                {
+                                                                    errors.delivery_receipt_number
+                                                                }
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <Label
+                                                            htmlFor="invoice_number"
+                                                            className="text-xs font-semibold"
+                                                            required
+                                                        >
+                                                            Invoice Number
+                                                        </Label>
+                                                        <Input
+                                                            id="invoice_number"
+                                                            placeholder="e.g. INV-9902"
+                                                            value={
+                                                                data.invoice_number
+                                                            }
+                                                            onChange={(e) =>
+                                                                setData(
+                                                                    'invoice_number',
+                                                                    e.target
+                                                                        .value,
+                                                                )
+                                                            }
+                                                        />
+                                                        {errors.invoice_number && (
+                                                            <p className="text-xs text-rose-500">
+                                                                {
+                                                                    errors.invoice_number
+                                                                }
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+                                                    <div className="space-y-2">
+                                                        <Label
+                                                            htmlFor="received_date"
+                                                            className="text-xs font-semibold"
+                                                        >
+                                                            Received Date
+                                                        </Label>
+                                                        <DatePicker
+                                                            value={
+                                                                data.received_date
+                                                            }
+                                                            onChange={(val) =>
+                                                                setData(
+                                                                    'received_date',
+                                                                    val,
+                                                                )
+                                                            }
+                                                            required
+                                                        />
+                                                        {errors.received_date && (
+                                                            <p className="text-xs text-rose-500">
+                                                                {
+                                                                    errors.received_date
+                                                                }
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <Label
+                                                            htmlFor="received_by"
+                                                            className="text-xs font-semibold"
+                                                            required
+                                                        >
+                                                            Received By (Supply
+                                                            Unit)
+                                                        </Label>
+                                                        <SmartSelect
+                                                            options={receivers.map(
+                                                                (e) => ({
+                                                                    value: String(
+                                                                        e.id,
+                                                                    ),
+                                                                    label: `${e.name} (${e.position})`,
+                                                                }),
                                                             )}
+                                                            value={
+                                                                data.received_by
+                                                                    ? String(
+                                                                          data.received_by,
+                                                                      )
+                                                                    : undefined
+                                                            }
+                                                            onValueChange={(
+                                                                val,
+                                                            ) =>
+                                                                setData(
+                                                                    'received_by',
+                                                                    val,
+                                                                )
+                                                            }
+                                                            placeholder="Select Receiver"
+                                                        />
+                                                        {errors.received_by && (
+                                                            <p className="text-xs text-rose-500">
+                                                                {
+                                                                    errors.received_by
+                                                                }
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <Label
+                                                            htmlFor="inspected_by"
+                                                            className="text-xs font-semibold"
+                                                            required
+                                                        >
+                                                            Inspected By
+                                                        </Label>
+                                                        <SmartSelect
+                                                            options={inspectors.map(
+                                                                (e) => ({
+                                                                    value: String(
+                                                                        e.id,
+                                                                    ),
+                                                                    label: `${e.name} (${e.position})`,
+                                                                }),
+                                                            )}
+                                                            value={
+                                                                data.inspected_by
+                                                                    ? String(
+                                                                          data.inspected_by,
+                                                                      )
+                                                                    : undefined
+                                                            }
+                                                            onValueChange={(
+                                                                val,
+                                                            ) =>
+                                                                setData(
+                                                                    'inspected_by',
+                                                                    val,
+                                                                )
+                                                            }
+                                                            placeholder="Select Inspector"
+                                                        />
+                                                        {errors.inspected_by && (
+                                                            <p className="text-xs text-rose-500">
+                                                                {
+                                                                    errors.inspected_by
+                                                                }
+                                                            </p>
+                                                        )}
+                                                        {data.received_by &&
+                                                            data.inspected_by &&
+                                                            data.received_by ===
+                                                                data.inspected_by && (
+                                                                <p className="text-xs font-medium text-rose-500">
+                                                                    Receiver and
+                                                                    Inspector
+                                                                    must be
+                                                                    different.
+                                                                </p>
+                                                            )}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <hr className="my-6 border-border/50" />
+
+                                            {/* Section 3: Supplies List */}
+                                            <div className="space-y-4">
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center gap-2.5 text-sm font-semibold text-primary">
+                                                        <Package2 className="h-4.5 w-4.5 text-primary" />
+                                                        <span>
+                                                            Delivered Supplies
+                                                            List
                                                         </span>
                                                     </div>
-                                                )}
+                                                </div>
+
+                                                <div className="max-h-[30vh] overflow-y-auto rounded-md border border-border">
+                                                    <table className="w-full text-left text-xs">
+                                                        <thead>
+                                                            <tr className="border-b border-border bg-muted/50 font-medium text-muted-foreground">
+                                                                <th className="p-3">
+                                                                    Item *
+                                                                </th>
+                                                                <th className="w-20 p-3">
+                                                                    Qty Recv *
+                                                                </th>
+                                                                <th className="w-20 p-3">
+                                                                    Qty Acpt *
+                                                                </th>
+                                                                <th className="w-32 p-3">
+                                                                    Unit Cost
+                                                                    (₱) *
+                                                                </th>
+                                                                <th className="w-32 p-3">
+                                                                    Batch No.
+                                                                </th>
+                                                                <th className="w-36 p-3">
+                                                                    Expiration
+                                                                </th>
+                                                                <th className="w-10 p-3 text-center"></th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody className="divide-y divide-border">
+                                                            {data.items.map(
+                                                                (row, idx) => (
+                                                                    <tr
+                                                                        key={
+                                                                            idx
+                                                                        }
+                                                                        className="hover:bg-muted/30"
+                                                                    >
+                                                                        <td className="p-2.5">
+                                                                            <SmartSelect
+                                                                                options={items.map(
+                                                                                    (
+                                                                                        it,
+                                                                                    ) => ({
+                                                                                        value: String(
+                                                                                            it.id,
+                                                                                        ),
+                                                                                        label: `${it.name} (${it.unit?.abbreviation || 'unit'})`,
+                                                                                    }),
+                                                                                )}
+                                                                                value={
+                                                                                    row.item_id
+                                                                                        ? String(
+                                                                                              row.item_id,
+                                                                                          )
+                                                                                        : undefined
+                                                                                }
+                                                                                onValueChange={(
+                                                                                    val,
+                                                                                ) =>
+                                                                                    handleItemChange(
+                                                                                        idx,
+                                                                                        'item_id',
+                                                                                        val,
+                                                                                    )
+                                                                                }
+                                                                                placeholder="Select Item"
+                                                                                className="h-8 bg-background text-xs"
+                                                                                defaultOpen={
+                                                                                    row.isNew
+                                                                                }
+                                                                            />
+                                                                        </td>
+                                                                        <td className="p-2.5">
+                                                                            <Input
+                                                                                type="number"
+                                                                                min="1"
+                                                                                value={
+                                                                                    row.quantity_received
+                                                                                }
+                                                                                onChange={(
+                                                                                    e,
+                                                                                ) =>
+                                                                                    handleItemChange(
+                                                                                        idx,
+                                                                                        'quantity_received',
+                                                                                        parseInt(
+                                                                                            e
+                                                                                                .target
+                                                                                                .value,
+                                                                                        ) ||
+                                                                                            0,
+                                                                                    )
+                                                                                }
+                                                                                className="h-8 p-1.5 text-xs"
+                                                                                required
+                                                                            />
+                                                                        </td>
+                                                                        <td className="p-2.5">
+                                                                            <Input
+                                                                                type="number"
+                                                                                min="0"
+                                                                                max={
+                                                                                    row.quantity_received
+                                                                                }
+                                                                                value={
+                                                                                    row.quantity_accepted
+                                                                                }
+                                                                                onChange={(
+                                                                                    e,
+                                                                                ) =>
+                                                                                    handleItemChange(
+                                                                                        idx,
+                                                                                        'quantity_accepted',
+                                                                                        parseInt(
+                                                                                            e
+                                                                                                .target
+                                                                                                .value,
+                                                                                        ) ||
+                                                                                            0,
+                                                                                    )
+                                                                                }
+                                                                                className="h-8 p-1.5 text-xs"
+                                                                                required
+                                                                            />
+                                                                        </td>
+                                                                        <td className="p-2.5">
+                                                                            <Input
+                                                                                type="number"
+                                                                                step="0.01"
+                                                                                min="0"
+                                                                                value={
+                                                                                    row.unit_cost
+                                                                                }
+                                                                                onChange={(
+                                                                                    e,
+                                                                                ) =>
+                                                                                    handleItemChange(
+                                                                                        idx,
+                                                                                        'unit_cost',
+                                                                                        parseFloat(
+                                                                                            e
+                                                                                                .target
+                                                                                                .value,
+                                                                                        ) ||
+                                                                                            0.0,
+                                                                                    )
+                                                                                }
+                                                                                className="h-8 p-1.5 text-xs"
+                                                                                required
+                                                                            />
+                                                                        </td>
+                                                                        <td className="p-2.5">
+                                                                            <Input
+                                                                                placeholder="e.g. B-012"
+                                                                                value={
+                                                                                    row.batch_number
+                                                                                }
+                                                                                onChange={(
+                                                                                    e,
+                                                                                ) =>
+                                                                                    handleItemChange(
+                                                                                        idx,
+                                                                                        'batch_number',
+                                                                                        e
+                                                                                            .target
+                                                                                            .value,
+                                                                                    )
+                                                                                }
+                                                                                className="h-8 p-1.5 text-xs"
+                                                                            />
+                                                                        </td>
+                                                                        <td className="p-2.5">
+                                                                            <DatePicker
+                                                                                value={
+                                                                                    row.expiration_date
+                                                                                }
+                                                                                onChange={(
+                                                                                    val,
+                                                                                ) =>
+                                                                                    handleItemChange(
+                                                                                        idx,
+                                                                                        'expiration_date',
+                                                                                        val,
+                                                                                    )
+                                                                                }
+                                                                                className="h-8 text-xs font-medium"
+                                                                            />
+                                                                        </td>
+                                                                        <td className="p-2.5 text-center">
+                                                                            <Button
+                                                                                type="button"
+                                                                                variant="ghost"
+                                                                                size="icon"
+                                                                                className="h-7 w-7 text-rose-500 hover:bg-rose-50 hover:text-rose-600"
+                                                                                onClick={() =>
+                                                                                    handleRemoveItemRow(
+                                                                                        idx,
+                                                                                    )
+                                                                                }
+                                                                            >
+                                                                                <X className="h-4 w-4" />
+                                                                            </Button>
+                                                                        </td>
+                                                                    </tr>
+                                                                ),
+                                                            )}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                                <div className="mt-2 flex flex-col gap-4 border-t pt-3 sm:flex-row sm:items-center sm:justify-between">
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={
+                                                            handleAddItemRow
+                                                        }
+                                                        className="-ml-2 gap-1.5 text-primary hover:bg-primary/10 hover:text-primary"
+                                                    >
+                                                        <PlusCircle className="h-4 w-4" />
+                                                        Add Item
+                                                    </Button>
+                                                    <div className="flex flex-wrap gap-4 text-xs font-semibold">
+                                                        <div className="rounded-md border border-muted-foreground/10 bg-muted/30 px-3 py-1.5 text-muted-foreground">
+                                                            Total Received:{' '}
+                                                            <span className="font-bold text-foreground">
+                                                                {formatCurrency(
+                                                                    totalReceivedValue,
+                                                                )}
+                                                            </span>
+                                                        </div>
+                                                        {data.status ===
+                                                            'finalized' && (
+                                                            <div className="rounded-md border border-emerald-500/10 bg-emerald-500/5 px-3 py-1.5 text-muted-foreground">
+                                                                Total Accepted:{' '}
+                                                                <span className="font-bold text-emerald-600">
+                                                                    {formatCurrency(
+                                                                        totalAcceptedValue,
+                                                                    )}
+                                                                </span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
                                             </div>
-                                        </div>
-                                    </div>
 
-                                    {/* Remarks */}
-                                    <div className="space-y-2">
-                                        <Label
-                                            htmlFor="remarks"
-                                            className="text-xs font-semibold"
-                                            required
-                                        >
-                                            Remarks / Delivery Notes
-                                        </Label>
-                                        <textarea
-                                            id="remarks"
-                                            className="min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-hidden"
-                                            placeholder="e.g. Items delivered complete and in good condition."
-                                            value={data.remarks}
-                                            onChange={(e) =>
-                                                setData(
-                                                    'remarks',
-                                                    e.target.value,
-                                                )
-                                            }
-                                        />
-                                    </div>
+                                            {/* Remarks */}
+                                            <div className="space-y-2">
+                                                <Label
+                                                    htmlFor="remarks"
+                                                    className="text-xs font-semibold"
+                                                    required
+                                                >
+                                                    Remarks / Delivery Notes
+                                                </Label>
+                                                <textarea
+                                                    id="remarks"
+                                                    className="min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-hidden"
+                                                    placeholder="e.g. Items delivered complete and in good condition."
+                                                    value={data.remarks}
+                                                    onChange={(e) =>
+                                                        setData(
+                                                            'remarks',
+                                                            e.target.value,
+                                                        )
+                                                    }
+                                                />
+                                            </div>
 
-                                    {/* Actions */}
-                                    <div className="mt-6 flex justify-end gap-2 border-t border-border pt-4">
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            onClick={() => setIsOpen(false)}
-                                        >
-                                            Cancel
-                                        </Button>
-                                        {(!editMode ||
-                                            data.status === 'draft') && (
-                                            <Button
-                                                type="button"
-                                                variant="secondary"
-                                                disabled={processing}
-                                                onClick={() =>
-                                                    submitForm('draft')
-                                                }
-                                                className="border border-amber-500/20 bg-amber-500/10 px-5 text-amber-600 hover:bg-amber-500/20 hover:text-amber-700"
-                                            >
-                                                Save Draft
-                                            </Button>
-                                        )}
-                                        <Button
-                                            type="button"
-                                            disabled={processing}
-                                            onClick={() =>
-                                                submitForm('finalized')
-                                            }
-                                            className="px-5"
-                                        >
-                                            {data.status === 'finalized'
-                                                ? 'Save Updates'
-                                                : 'Finalize & Stock In'}
-                                        </Button>
-                                    </div>
+                                            {/* Actions */}
+                                            <div className="mt-6 flex justify-end gap-2 border-t border-border pt-4">
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    onClick={() =>
+                                                        setIsOpen(false)
+                                                    }
+                                                >
+                                                    Cancel
+                                                </Button>
+                                                {(!editMode ||
+                                                    data.status ===
+                                                        'draft') && (
+                                                    <Button
+                                                        type="button"
+                                                        variant="secondary"
+                                                        disabled={processing}
+                                                        onClick={() =>
+                                                            submitForm('draft')
+                                                        }
+                                                        className="border border-amber-500/20 bg-amber-500/10 px-5 text-amber-600 hover:bg-amber-500/20 hover:text-amber-700"
+                                                    >
+                                                        Save Draft
+                                                    </Button>
+                                                )}
+                                                <Button
+                                                    type="button"
+                                                    disabled={processing}
+                                                    onClick={() =>
+                                                        submitForm('finalized')
+                                                    }
+                                                    className="px-5"
+                                                >
+                                                    {data.status === 'finalized'
+                                                        ? 'Save Updates'
+                                                        : 'Finalize & Stock In'}
+                                                </Button>
+                                            </div>
+                                        </>
+                                    )}
                                 </form>
                             </DialogContent>
                         </Dialog>

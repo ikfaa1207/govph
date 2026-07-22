@@ -14,8 +14,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { BreadcrumbItem } from '@/types';
 import { CategoryDialog } from './components/CategoryDialog';
 import CategoryTab from './components/CategoryTab';
+import { DepartmentDialog } from './components/DepartmentDialog';
+import DepartmentTab from './components/DepartmentTab';
 import { LocationDialog } from './components/LocationDialog';
 import LocationTab from './components/LocationTab';
+import { OfficeDialog } from './components/OfficeDialog';
+import OfficeTab from './components/OfficeTab';
 import { SupplierDialog } from './components/SupplierDialog';
 import SupplierTab from './components/SupplierTab';
 import { UnitDialog } from './components/UnitDialog';
@@ -29,6 +33,8 @@ interface MasterDataProps {
     locations: any[];
     warehouses: any[];
     suppliers: any[];
+    departments: any[];
+    offices: any[];
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -42,6 +48,8 @@ export default function MasterDataIndex({
     locations,
     warehouses,
     suppliers,
+    departments,
+    offices,
 }: MasterDataProps) {
     setLayoutProps({ breadcrumbs });
 
@@ -64,6 +72,14 @@ export default function MasterDataIndex({
     // State for Suppliers
     const [isSupplierDialogOpen, setIsSupplierDialogOpen] = useState(false);
     const [selectedSupplier, setSelectedSupplier] = useState<any>(null);
+
+    // State for Departments
+    const [isDepartmentDialogOpen, setIsDepartmentDialogOpen] = useState(false);
+    const [selectedDepartment, setSelectedDepartment] = useState<any>(null);
+
+    // State for Offices
+    const [isOfficeDialogOpen, setIsOfficeDialogOpen] = useState(false);
+    const [selectedOffice, setSelectedOffice] = useState<any>(null);
 
     // Handlers
     const openCategoryDialog = (category = null) => {
@@ -89,6 +105,16 @@ export default function MasterDataIndex({
     const openSupplierDialog = (supplier = null) => {
         setSelectedSupplier(supplier);
         setIsSupplierDialogOpen(true);
+    };
+
+    const openDepartmentDialog = (department = null) => {
+        setSelectedDepartment(department);
+        setIsDepartmentDialogOpen(true);
+    };
+
+    const openOfficeDialog = (office = null) => {
+        setSelectedOffice(office);
+        setIsOfficeDialogOpen(true);
     };
 
     const handleSeedDefaultCategories = () => {
@@ -122,6 +148,37 @@ export default function MasterDataIndex({
         );
     };
 
+    const handleSeedDefaultDepartments = () => {
+        router.post(
+            '/inventory/master-data/departments/seed-defaults',
+            {},
+            {
+                preserveScroll: true,
+                onSuccess: () =>
+                    toast.success(
+                        'Standard agency departments loaded successfully.',
+                    ),
+                onError: () =>
+                    toast.error('Failed to load default departments.'),
+            },
+        );
+    };
+
+    const handleSeedDefaultOffices = () => {
+        router.post(
+            '/inventory/master-data/offices/seed-defaults',
+            {},
+            {
+                preserveScroll: true,
+                onSuccess: () =>
+                    toast.success(
+                        'Standard agency offices loaded successfully.',
+                    ),
+                onError: () => toast.error('Failed to load default offices.'),
+            },
+        );
+    };
+
     return (
         <>
             <Head title="System Libraries" />
@@ -135,16 +192,152 @@ export default function MasterDataIndex({
                     </p>
                 </div>
 
-                <Tabs defaultValue="categories" className="w-full">
-                    <TabsList className="grid h-auto w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-5">
+                <Tabs defaultValue="offices" className="w-full">
+                    <TabsList className="grid h-auto w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-7">
+                        <TabsTrigger value="offices">Offices</TabsTrigger>
+                        <TabsTrigger value="departments">
+                            Departments
+                        </TabsTrigger>
+                        <TabsTrigger value="warehouses">Warehouses</TabsTrigger>
+                        <TabsTrigger value="locations">Locations</TabsTrigger>
                         <TabsTrigger value="categories">Categories</TabsTrigger>
                         <TabsTrigger value="units">Units</TabsTrigger>
-                        <TabsTrigger value="locations">Locations</TabsTrigger>
-                        <TabsTrigger value="warehouses">Warehouses</TabsTrigger>
                         <TabsTrigger value="suppliers">Suppliers</TabsTrigger>
                     </TabsList>
 
                     <div className="mt-4">
+                        <TabsContent value="offices">
+                            <Card>
+                                <CardHeader className="flex flex-row items-center justify-between">
+                                    <div>
+                                        <CardTitle>Offices</CardTitle>
+                                        <CardDescription>
+                                            Manage agency offices and campuses.
+                                        </CardDescription>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        {offices.length === 0 && (
+                                            <Button
+                                                variant="outline"
+                                                onClick={
+                                                    handleSeedDefaultOffices
+                                                }
+                                                className="text-indigo-650 border-indigo-200 hover:bg-indigo-50/50 dark:border-indigo-900/50 dark:text-indigo-400"
+                                            >
+                                                <Sparkles className="mr-2 h-4 w-4" />{' '}
+                                                Load Defaults
+                                            </Button>
+                                        )}
+                                        <Button
+                                            onClick={() => openOfficeDialog()}
+                                        >
+                                            <Plus className="mr-2 h-4 w-4" />{' '}
+                                            Add Office
+                                        </Button>
+                                    </div>
+                                </CardHeader>
+                                <CardContent>
+                                    <OfficeTab
+                                        offices={offices}
+                                        onEdit={openOfficeDialog}
+                                        onAdd={() => openOfficeDialog()}
+                                    />
+                                </CardContent>
+                            </Card>
+                        </TabsContent>
+                        <TabsContent value="departments">
+                            <Card>
+                                <CardHeader className="flex flex-row items-center justify-between">
+                                    <div>
+                                        <CardTitle>Departments</CardTitle>
+                                        <CardDescription>
+                                            Manage agency departments and
+                                            sections.
+                                        </CardDescription>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        {departments.length === 0 && (
+                                            <Button
+                                                variant="outline"
+                                                onClick={
+                                                    handleSeedDefaultDepartments
+                                                }
+                                                className="text-indigo-650 border-indigo-200 hover:bg-indigo-50/50 dark:border-indigo-900/50 dark:text-indigo-400"
+                                            >
+                                                <Sparkles className="mr-2 h-4 w-4" />{' '}
+                                                Load Defaults
+                                            </Button>
+                                        )}
+                                        <Button
+                                            onClick={() =>
+                                                openDepartmentDialog()
+                                            }
+                                        >
+                                            <Plus className="mr-2 h-4 w-4" />{' '}
+                                            Add Department
+                                        </Button>
+                                    </div>
+                                </CardHeader>
+                                <CardContent>
+                                    <DepartmentTab
+                                        departments={departments}
+                                        onEdit={openDepartmentDialog}
+                                        onAdd={() => openDepartmentDialog()}
+                                    />
+                                </CardContent>
+                            </Card>
+                        </TabsContent>
+                        <TabsContent value="warehouses">
+                            <Card>
+                                <CardHeader className="flex flex-row items-center justify-between">
+                                    <div>
+                                        <CardTitle>Warehouses</CardTitle>
+                                        <CardDescription>
+                                            Manage warehouses and offices.
+                                        </CardDescription>
+                                    </div>
+                                    <Button
+                                        onClick={() => openWarehouseDialog()}
+                                    >
+                                        <Plus className="mr-2 h-4 w-4" /> Add
+                                        Warehouse
+                                    </Button>
+                                </CardHeader>
+                                <CardContent>
+                                    <WarehouseTab
+                                        warehouses={warehouses}
+                                        onEdit={openWarehouseDialog}
+                                        onAdd={() => openWarehouseDialog()}
+                                    />
+                                </CardContent>
+                            </Card>
+                        </TabsContent>
+                        <TabsContent value="locations">
+                            <Card>
+                                <CardHeader className="flex flex-row items-center justify-between">
+                                    <div>
+                                        <CardTitle>Locations</CardTitle>
+                                        <CardDescription>
+                                            Manage physical locations within
+                                            warehouses.
+                                        </CardDescription>
+                                    </div>
+                                    <Button
+                                        onClick={() => openLocationDialog()}
+                                    >
+                                        <Plus className="mr-2 h-4 w-4" /> Add
+                                        Location
+                                    </Button>
+                                </CardHeader>
+                                <CardContent>
+                                    <LocationTab
+                                        locations={locations}
+                                        onEdit={openLocationDialog}
+                                        onAdd={() => openLocationDialog()}
+                                    />
+                                </CardContent>
+                            </Card>
+                        </TabsContent>
                         <TabsContent value="categories">
                             <Card>
                                 <CardHeader className="flex flex-row items-center justify-between">
@@ -223,57 +416,6 @@ export default function MasterDataIndex({
                                 </CardContent>
                             </Card>
                         </TabsContent>
-                        <TabsContent value="locations">
-                            <Card>
-                                <CardHeader className="flex flex-row items-center justify-between">
-                                    <div>
-                                        <CardTitle>Locations</CardTitle>
-                                        <CardDescription>
-                                            Manage physical locations within
-                                            warehouses.
-                                        </CardDescription>
-                                    </div>
-                                    <Button
-                                        onClick={() => openLocationDialog()}
-                                    >
-                                        <Plus className="mr-2 h-4 w-4" /> Add
-                                        Location
-                                    </Button>
-                                </CardHeader>
-                                <CardContent>
-                                    <LocationTab
-                                        locations={locations}
-                                        onEdit={openLocationDialog}
-                                        onAdd={() => openLocationDialog()}
-                                    />
-                                </CardContent>
-                            </Card>
-                        </TabsContent>
-                        <TabsContent value="warehouses">
-                            <Card>
-                                <CardHeader className="flex flex-row items-center justify-between">
-                                    <div>
-                                        <CardTitle>Warehouses</CardTitle>
-                                        <CardDescription>
-                                            Manage warehouses and offices.
-                                        </CardDescription>
-                                    </div>
-                                    <Button
-                                        onClick={() => openWarehouseDialog()}
-                                    >
-                                        <Plus className="mr-2 h-4 w-4" /> Add
-                                        Warehouse
-                                    </Button>
-                                </CardHeader>
-                                <CardContent>
-                                    <WarehouseTab
-                                        warehouses={warehouses}
-                                        onEdit={openWarehouseDialog}
-                                        onAdd={() => openWarehouseDialog()}
-                                    />
-                                </CardContent>
-                            </Card>
-                        </TabsContent>
                         <TabsContent value="suppliers">
                             <Card>
                                 <CardHeader className="flex flex-row items-center justify-between">
@@ -332,6 +474,19 @@ export default function MasterDataIndex({
                 isOpen={isSupplierDialogOpen}
                 onClose={() => setIsSupplierDialogOpen(false)}
                 supplier={selectedSupplier}
+            />
+
+            <DepartmentDialog
+                isOpen={isDepartmentDialogOpen}
+                onClose={() => setIsDepartmentDialogOpen(false)}
+                department={selectedDepartment}
+                offices={offices}
+            />
+
+            <OfficeDialog
+                isOpen={isOfficeDialogOpen}
+                onClose={() => setIsOfficeDialogOpen(false)}
+                office={selectedOffice}
             />
         </>
     );

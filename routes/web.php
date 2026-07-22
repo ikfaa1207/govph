@@ -5,10 +5,12 @@ use App\Http\Controllers\Inventory\AcknowledgeTransferController;
 use App\Http\Controllers\Inventory\AdminController;
 use App\Http\Controllers\Inventory\CategoryController;
 use App\Http\Controllers\Inventory\DashboardController;
+use App\Http\Controllers\Inventory\DepartmentController;
 use App\Http\Controllers\Inventory\HelpdeskController;
 use App\Http\Controllers\Inventory\ItemController;
 use App\Http\Controllers\Inventory\LocationController;
 use App\Http\Controllers\Inventory\MasterDataController;
+use App\Http\Controllers\Inventory\OfficeController;
 use App\Http\Controllers\Inventory\PhysicalCountController;
 use App\Http\Controllers\Inventory\PropertyController;
 use App\Http\Controllers\Inventory\PurchaseOrderController;
@@ -79,6 +81,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('inventory/warehouses/{warehouse}', [WarehouseController::class, 'update'])->name('inventory.warehouses.update');
     Route::post('inventory/warehouses/{warehouse}/toggle', [WarehouseController::class, 'toggleStatus'])->name('inventory.warehouses.toggle');
 
+    Route::post('inventory/master-data/departments/seed-defaults', [DepartmentController::class, 'seedDefaults'])->name('inventory.master-data.departments.seed-defaults');
+    Route::post('inventory/master-data/departments', [DepartmentController::class, 'store'])->name('inventory.master-data.departments.store');
+    Route::put('inventory/master-data/departments/{department}', [DepartmentController::class, 'update'])->name('inventory.master-data.departments.update');
+
+    Route::post('inventory/master-data/offices/seed-defaults', [OfficeController::class, 'seedDefaults'])->name('inventory.master-data.offices.seed-defaults');
+    Route::post('inventory/master-data/offices', [OfficeController::class, 'store'])->name('inventory.master-data.offices.store');
+    Route::put('inventory/master-data/offices/{office}', [OfficeController::class, 'update'])->name('inventory.master-data.offices.update');
+
     // Requisition/RIS
     Route::get('inventory/requisitions', [RequisitionController::class, 'index'])->name('inventory.requisitions.index');
     Route::post('inventory/requisitions', [RequisitionController::class, 'store'])->name('inventory.requisitions.store');
@@ -88,6 +98,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('inventory/requisitions/{requisition}/print', [RequisitionController::class, 'print'])->name('inventory.requisitions.print');
 
     // Properties/Assets
+    Route::get('inventory/properties/print-stickers', [PropertyController::class, 'printStickers'])->name('inventory.properties.print-stickers');
     Route::get('inventory/properties', [PropertyController::class, 'index'])->name('inventory.properties.index');
     Route::post('inventory/properties', [PropertyController::class, 'store'])->name('inventory.properties.store');
     Route::post('inventory/properties/batch-assign', [PropertyController::class, 'batchAssign'])->name('inventory.properties.batch-assign');

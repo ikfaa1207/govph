@@ -1,4 +1,4 @@
-import { Head, useForm, setLayoutProps, router } from '@inertiajs/react';
+import { Head, useForm, setLayoutProps, router, Link } from '@inertiajs/react';
 import {
     PlusCircle,
     Eye,
@@ -363,276 +363,360 @@ export default function PurchaseOrdersIndex({
                                     onSubmit={handleCreateSubmit}
                                     className="space-y-4"
                                 >
-                                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                                        <div className="space-y-1">
-                                            <Label>
-                                                Select Approved Purchase Request
-                                            </Label>
-                                            <SmartSelect
-                                                options={approvedPurchaseRequests.map(
-                                                    (p) => ({
-                                                        value: String(p.id),
-                                                        label: `${p.pr_number} - ${p.purpose} (${p.department?.name})`,
-                                                    }),
-                                                )}
-                                                value={
-                                                    createForm.data
-                                                        .purchase_request_id
-                                                }
-                                                onValueChange={handleSelectPR}
-                                                placeholder="Select approved PR..."
-                                                searchThreshold={0}
-                                            />
-                                            {createForm.errors
-                                                .purchase_request_id && (
-                                                <span className="text-xs text-rose-500">
-                                                    {
-                                                        createForm.errors
-                                                            .purchase_request_id
+                                    {approvedPurchaseRequests.length === 0 ? (
+                                        <div className="flex flex-col items-center justify-center space-y-4 py-8 text-center">
+                                            <div className="rounded-full bg-amber-50 p-4 text-amber-500 dark:bg-amber-950/20">
+                                                <ClipboardList className="h-10 w-10 animate-pulse" />
+                                            </div>
+                                            <div className="max-w-md space-y-2">
+                                                <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                                    No Approved Purchase
+                                                    Requests Found
+                                                </h4>
+                                                <p className="text-xs text-slate-500 dark:text-slate-400">
+                                                    Purchase Orders require an
+                                                    authorized, approved
+                                                    Purchase Request (PR) to
+                                                    pull items from. Currently,
+                                                    there are no approved PRs in
+                                                    the system.
+                                                </p>
+                                            </div>
+                                            <div className="flex gap-3 pt-2">
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    onClick={() =>
+                                                        setIsCreateOpen(false)
                                                     }
-                                                </span>
-                                            )}
-                                        </div>
-
-                                        <div className="space-y-1">
-                                            <Label>Supplier</Label>
-                                            <SmartSelect
-                                                options={suppliers.map((s) => ({
-                                                    value: String(s.id),
-                                                    label: s.name,
-                                                }))}
-                                                value={
-                                                    createForm.data.supplier_id
-                                                }
-                                                onValueChange={(val) =>
-                                                    createForm.setData(
-                                                        'supplier_id',
-                                                        val,
-                                                    )
-                                                }
-                                                placeholder="Select supplier..."
-                                                searchThreshold={0}
-                                            />
-                                            {createForm.errors.supplier_id && (
-                                                <span className="text-xs text-rose-500">
-                                                    {
-                                                        createForm.errors
-                                                            .supplier_id
-                                                    }
-                                                </span>
-                                            )}
-                                        </div>
-
-                                        <div className="space-y-1">
-                                            <Label>PO Date</Label>
-                                            <DatePicker
-                                                value={createForm.data.po_date}
-                                                onChange={(val) =>
-                                                    createForm.setData(
-                                                        'po_date',
-                                                        val || '',
-                                                    )
-                                                }
-                                            />
-                                            {createForm.errors.po_date && (
-                                                <span className="text-xs text-rose-500">
-                                                    {createForm.errors.po_date}
-                                                </span>
-                                            )}
-                                        </div>
-
-                                        <div className="space-y-1">
-                                            <Label>
-                                                Expected Delivery Date
-                                            </Label>
-                                            <DatePicker
-                                                value={
-                                                    createForm.data
-                                                        .delivery_date
-                                                }
-                                                onChange={(val) =>
-                                                    createForm.setData(
-                                                        'delivery_date',
-                                                        val || '',
-                                                    )
-                                                }
-                                            />
-                                            {createForm.errors
-                                                .delivery_date && (
-                                                <span className="text-xs text-rose-500">
-                                                    {
-                                                        createForm.errors
-                                                            .delivery_date
-                                                    }
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    {createForm.data.items.length > 0 && (
-                                        <div className="space-y-2">
-                                            <Label className="text-sm font-semibold">
-                                                Line Items (Populated from PR)
-                                            </Label>
-                                            <div className="overflow-hidden rounded-md border">
-                                                <Table>
-                                                    <TableHeader>
-                                                        <TableRow>
-                                                            <TableHead>
-                                                                Item
-                                                            </TableHead>
-                                                            <TableHead className="w-[80px]">
-                                                                Quantity
-                                                            </TableHead>
-                                                            <TableHead className="w-[150px]">
-                                                                Unit Cost
-                                                            </TableHead>
-                                                            <TableHead>
-                                                                Remarks
-                                                            </TableHead>
-                                                        </TableRow>
-                                                    </TableHeader>
-                                                    <TableBody>
-                                                        {createForm.data.items.map(
-                                                            (row, idx) => {
-                                                                const pr =
-                                                                    approvedPurchaseRequests.find(
-                                                                        (p) =>
-                                                                            String(
-                                                                                p.id,
-                                                                            ) ===
-                                                                            String(
-                                                                                createForm
-                                                                                    .data
-                                                                                    .purchase_request_id,
-                                                                            ),
-                                                                    );
-                                                                const prItem =
-                                                                    pr?.items.find(
-                                                                        (i) =>
-                                                                            String(
-                                                                                i.item_id,
-                                                                            ) ===
-                                                                            String(
-                                                                                row.item_id,
-                                                                            ),
-                                                                    );
-
-                                                                return (
-                                                                    <TableRow
-                                                                        key={
-                                                                            idx
-                                                                        }
-                                                                    >
-                                                                        <TableCell className="py-2">
-                                                                            <div className="text-sm font-medium">
-                                                                                {prItem
-                                                                                    ?.item
-                                                                                    ?.name ||
-                                                                                    'Loading item...'}
-                                                                            </div>
-                                                                        </TableCell>
-                                                                        <TableCell className="py-2">
-                                                                            <Input
-                                                                                type="number"
-                                                                                min={
-                                                                                    1
-                                                                                }
-                                                                                value={
-                                                                                    row.quantity
-                                                                                }
-                                                                                onChange={(
-                                                                                    e,
-                                                                                ) =>
-                                                                                    handleItemChange(
-                                                                                        idx,
-                                                                                        'quantity',
-                                                                                        parseInt(
-                                                                                            e
-                                                                                                .target
-                                                                                                .value,
-                                                                                        ) ||
-                                                                                            0,
-                                                                                    )
-                                                                                }
-                                                                            />
-                                                                        </TableCell>
-                                                                        <TableCell className="py-2">
-                                                                            <Input
-                                                                                type="number"
-                                                                                step="0.01"
-                                                                                min={
-                                                                                    0
-                                                                                }
-                                                                                value={
-                                                                                    row.unit_cost
-                                                                                }
-                                                                                onChange={(
-                                                                                    e,
-                                                                                ) =>
-                                                                                    handleItemChange(
-                                                                                        idx,
-                                                                                        'unit_cost',
-                                                                                        parseFloat(
-                                                                                            e
-                                                                                                .target
-                                                                                                .value,
-                                                                                        ) ||
-                                                                                            0,
-                                                                                    )
-                                                                                }
-                                                                            />
-                                                                        </TableCell>
-                                                                        <TableCell className="py-2">
-                                                                            <Input
-                                                                                placeholder="Remarks"
-                                                                                value={
-                                                                                    row.remarks
-                                                                                }
-                                                                                onChange={(
-                                                                                    e,
-                                                                                ) =>
-                                                                                    handleItemChange(
-                                                                                        idx,
-                                                                                        'remarks',
-                                                                                        e
-                                                                                            .target
-                                                                                            .value,
-                                                                                    )
-                                                                                }
-                                                                            />
-                                                                        </TableCell>
-                                                                    </TableRow>
-                                                                );
-                                                            },
-                                                        )}
-                                                    </TableBody>
-                                                </Table>
+                                                    className="text-xs"
+                                                >
+                                                    Cancel
+                                                </Button>
+                                                <Button
+                                                    type="button"
+                                                    asChild
+                                                    className="bg-indigo-600 text-xs font-semibold hover:bg-indigo-700"
+                                                >
+                                                    <Link
+                                                        href="/inventory/purchase-requests"
+                                                        onClick={() =>
+                                                            setIsCreateOpen(
+                                                                false,
+                                                            )
+                                                        }
+                                                    >
+                                                        Go to Purchase Requests
+                                                    </Link>
+                                                </Button>
                                             </div>
                                         </div>
-                                    )}
+                                    ) : (
+                                        <>
+                                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                                <div className="space-y-1">
+                                                    <Label>
+                                                        Select Approved Purchase
+                                                        Request
+                                                    </Label>
+                                                    <SmartSelect
+                                                        options={approvedPurchaseRequests.map(
+                                                            (p) => ({
+                                                                value: String(
+                                                                    p.id,
+                                                                ),
+                                                                label: `${p.pr_number} - ${p.purpose} (${p.department?.name})`,
+                                                            }),
+                                                        )}
+                                                        value={
+                                                            createForm.data
+                                                                .purchase_request_id
+                                                        }
+                                                        onValueChange={
+                                                            handleSelectPR
+                                                        }
+                                                        placeholder="Select approved PR..."
+                                                        searchThreshold={0}
+                                                    />
+                                                    {createForm.errors
+                                                        .purchase_request_id && (
+                                                        <span className="text-xs text-rose-500">
+                                                            {
+                                                                createForm
+                                                                    .errors
+                                                                    .purchase_request_id
+                                                            }
+                                                        </span>
+                                                    )}
+                                                </div>
 
-                                    <div className="flex justify-end gap-2 border-t pt-4">
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            onClick={() =>
-                                                setIsCreateOpen(false)
-                                            }
-                                        >
-                                            Cancel
-                                        </Button>
-                                        <Button
-                                            type="submit"
-                                            disabled={
-                                                createForm.processing ||
-                                                createForm.data.items.length ===
-                                                    0
-                                            }
-                                        >
-                                            Generate PO
-                                        </Button>
-                                    </div>
+                                                <div className="space-y-1">
+                                                    <Label>Supplier</Label>
+                                                    <SmartSelect
+                                                        options={suppliers.map(
+                                                            (s) => ({
+                                                                value: String(
+                                                                    s.id,
+                                                                ),
+                                                                label: s.name,
+                                                            }),
+                                                        )}
+                                                        value={
+                                                            createForm.data
+                                                                .supplier_id
+                                                        }
+                                                        onValueChange={(val) =>
+                                                            createForm.setData(
+                                                                'supplier_id',
+                                                                val,
+                                                            )
+                                                        }
+                                                        placeholder="Select supplier..."
+                                                        searchThreshold={0}
+                                                    />
+                                                    {createForm.errors
+                                                        .supplier_id && (
+                                                        <span className="text-xs text-rose-500">
+                                                            {
+                                                                createForm
+                                                                    .errors
+                                                                    .supplier_id
+                                                            }
+                                                        </span>
+                                                    )}
+                                                </div>
+
+                                                <div className="space-y-1">
+                                                    <Label>PO Date</Label>
+                                                    <DatePicker
+                                                        value={
+                                                            createForm.data
+                                                                .po_date
+                                                        }
+                                                        onChange={(val) =>
+                                                            createForm.setData(
+                                                                'po_date',
+                                                                val || '',
+                                                            )
+                                                        }
+                                                    />
+                                                    {createForm.errors
+                                                        .po_date && (
+                                                        <span className="text-xs text-rose-500">
+                                                            {
+                                                                createForm
+                                                                    .errors
+                                                                    .po_date
+                                                            }
+                                                        </span>
+                                                    )}
+                                                </div>
+
+                                                <div className="space-y-1">
+                                                    <Label>
+                                                        Expected Delivery Date
+                                                    </Label>
+                                                    <DatePicker
+                                                        value={
+                                                            createForm.data
+                                                                .delivery_date
+                                                        }
+                                                        onChange={(val) =>
+                                                            createForm.setData(
+                                                                'delivery_date',
+                                                                val || '',
+                                                            )
+                                                        }
+                                                    />
+                                                    {createForm.errors
+                                                        .delivery_date && (
+                                                        <span className="text-xs text-rose-500">
+                                                            {
+                                                                createForm
+                                                                    .errors
+                                                                    .delivery_date
+                                                            }
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            {createForm.data.items.length >
+                                                0 && (
+                                                <div className="space-y-2">
+                                                    <Label className="text-sm font-semibold">
+                                                        Line Items (Populated
+                                                        from PR)
+                                                    </Label>
+                                                    <div className="overflow-hidden rounded-md border">
+                                                        <Table>
+                                                            <TableHeader>
+                                                                <TableRow>
+                                                                    <TableHead>
+                                                                        Item
+                                                                    </TableHead>
+                                                                    <TableHead className="w-[80px]">
+                                                                        Quantity
+                                                                    </TableHead>
+                                                                    <TableHead className="w-[150px]">
+                                                                        Unit
+                                                                        Cost
+                                                                    </TableHead>
+                                                                    <TableHead>
+                                                                        Remarks
+                                                                    </TableHead>
+                                                                </TableRow>
+                                                            </TableHeader>
+                                                            <TableBody>
+                                                                {createForm.data.items.map(
+                                                                    (
+                                                                        row,
+                                                                        idx,
+                                                                    ) => {
+                                                                        const pr =
+                                                                            approvedPurchaseRequests.find(
+                                                                                (
+                                                                                    p,
+                                                                                ) =>
+                                                                                    String(
+                                                                                        p.id,
+                                                                                    ) ===
+                                                                                    String(
+                                                                                        createForm
+                                                                                            .data
+                                                                                            .purchase_request_id,
+                                                                                    ),
+                                                                            );
+                                                                        const prItem =
+                                                                            pr?.items.find(
+                                                                                (
+                                                                                    i,
+                                                                                ) =>
+                                                                                    String(
+                                                                                        i.item_id,
+                                                                                    ) ===
+                                                                                    String(
+                                                                                        row.item_id,
+                                                                                    ),
+                                                                            );
+
+                                                                        return (
+                                                                            <TableRow
+                                                                                key={
+                                                                                    idx
+                                                                                }
+                                                                            >
+                                                                                <TableCell className="py-2">
+                                                                                    <div className="text-sm font-medium">
+                                                                                        {prItem
+                                                                                            ?.item
+                                                                                            ?.name ||
+                                                                                            'Loading item...'}
+                                                                                    </div>
+                                                                                </TableCell>
+                                                                                <TableCell className="py-2">
+                                                                                    <Input
+                                                                                        type="number"
+                                                                                        min={
+                                                                                            1
+                                                                                        }
+                                                                                        value={
+                                                                                            row.quantity
+                                                                                        }
+                                                                                        onChange={(
+                                                                                            e,
+                                                                                        ) =>
+                                                                                            handleItemChange(
+                                                                                                idx,
+                                                                                                'quantity',
+                                                                                                parseInt(
+                                                                                                    e
+                                                                                                        .target
+                                                                                                        .value,
+                                                                                                ) ||
+                                                                                                    0,
+                                                                                            )
+                                                                                        }
+                                                                                    />
+                                                                                </TableCell>
+                                                                                <TableCell className="py-2">
+                                                                                    <Input
+                                                                                        type="number"
+                                                                                        step="0.01"
+                                                                                        min={
+                                                                                            0
+                                                                                        }
+                                                                                        value={
+                                                                                            row.unit_cost
+                                                                                        }
+                                                                                        onChange={(
+                                                                                            e,
+                                                                                        ) =>
+                                                                                            handleItemChange(
+                                                                                                idx,
+                                                                                                'unit_cost',
+                                                                                                parseFloat(
+                                                                                                    e
+                                                                                                        .target
+                                                                                                        .value,
+                                                                                                ) ||
+                                                                                                    0,
+                                                                                            )
+                                                                                        }
+                                                                                    />
+                                                                                </TableCell>
+                                                                                <TableCell className="py-2">
+                                                                                    <Input
+                                                                                        placeholder="Remarks"
+                                                                                        value={
+                                                                                            row.remarks
+                                                                                        }
+                                                                                        onChange={(
+                                                                                            e,
+                                                                                        ) =>
+                                                                                            handleItemChange(
+                                                                                                idx,
+                                                                                                'remarks',
+                                                                                                e
+                                                                                                    .target
+                                                                                                    .value,
+                                                                                            )
+                                                                                        }
+                                                                                    />
+                                                                                </TableCell>
+                                                                            </TableRow>
+                                                                        );
+                                                                    },
+                                                                )}
+                                                            </TableBody>
+                                                        </Table>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            <div className="flex justify-end gap-2 border-t pt-4">
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    onClick={() =>
+                                                        setIsCreateOpen(false)
+                                                    }
+                                                >
+                                                    Cancel
+                                                </Button>
+                                                <Button
+                                                    type="submit"
+                                                    disabled={
+                                                        createForm.processing ||
+                                                        createForm.data.items
+                                                            .length === 0
+                                                    }
+                                                >
+                                                    Generate PO
+                                                </Button>
+                                            </div>
+                                        </>
+                                    )}
                                 </form>
                             </DialogContent>
                         </Dialog>

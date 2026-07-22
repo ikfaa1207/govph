@@ -8,6 +8,7 @@ import {
     CheckCircle,
     PackageOpen,
     Pencil,
+    Printer,
 } from 'lucide-react';
 import { useState } from 'react';
 import { Can } from '@/components/can';
@@ -134,6 +135,17 @@ export default function PropertyIndex({
     const [selectedProp, setSelectedProp] = useState<Property | null>(null);
     const [selectedPropIds, setSelectedPropIds] = useState<number[]>([]);
     const [isAssignOpen, setIsAssignOpen] = useState(false);
+
+    const hasNonAvailableSelected = properties.data
+        .filter((p) => selectedPropIds.includes(p.id))
+        .some((p) => p.status !== 'available');
+
+    const handlePrintStickers = () => {
+        window.open(
+            `/inventory/properties/print-stickers?ids=${selectedPropIds.join(',')}`,
+            '_blank',
+        );
+    };
 
     // Search and Filter States
     const [search, setSearch] = useState(filters.search || '');
@@ -293,6 +305,15 @@ export default function PropertyIndex({
                                 <>
                                     <Button
                                         variant="outline"
+                                        className="gap-2 border-emerald-200 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-900/30 dark:text-emerald-400 dark:hover:bg-emerald-950/20"
+                                        onClick={handlePrintStickers}
+                                    >
+                                        <Printer className="h-4 w-4" />
+                                        Print Stickers ({selectedPropIds.length}
+                                        )
+                                    </Button>
+                                    <Button
+                                        variant="outline"
                                         className="gap-2 border-indigo-200 text-indigo-700 hover:bg-indigo-50 dark:border-indigo-900 dark:text-indigo-400 dark:hover:bg-indigo-950/20"
                                         onClick={() => setIsBatchEditOpen(true)}
                                     >
@@ -302,8 +323,14 @@ export default function PropertyIndex({
                                     <Button
                                         variant="secondary"
                                         className="gap-2"
+                                        disabled={hasNonAvailableSelected}
                                         onClick={() =>
                                             setIsBatchAssignOpen(true)
+                                        }
+                                        title={
+                                            hasNonAvailableSelected
+                                                ? 'Only available equipment can be batch assigned.'
+                                                : undefined
                                         }
                                     >
                                         <UserCheck className="h-4 w-4" />

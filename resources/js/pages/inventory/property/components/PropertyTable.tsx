@@ -9,6 +9,7 @@ import {
     Pencil,
     ShieldAlert,
     ShieldCheck,
+    Printer,
 } from 'lucide-react';
 import { RowActionsMenu } from '@/components/row-actions-menu';
 import { SimplePagination } from '@/components/simple-pagination';
@@ -165,24 +166,20 @@ export function PropertyTable({
                                 className="rounded border-gray-300"
                                 checked={
                                     properties.data.length > 0 &&
-                                    properties.data.every(
-                                        (p) =>
-                                            selectedPropIds.includes(p.id) ||
-                                            p.status !== 'available',
+                                    properties.data.every((p) =>
+                                        selectedPropIds.includes(p.id),
                                     )
                                 }
                                 onChange={(e) => {
                                     if (e.target.checked) {
-                                        const availableIds = properties.data
-                                            .filter(
-                                                (p) => p.status === 'available',
-                                            )
-                                            .map((p) => p.id);
+                                        const allPageIds = properties.data.map(
+                                            (p) => p.id,
+                                        );
                                         setSelectedPropIds((prev) =>
                                             Array.from(
                                                 new Set([
                                                     ...prev,
-                                                    ...availableIds,
+                                                    ...allPageIds,
                                                 ]),
                                             ),
                                         );
@@ -233,30 +230,26 @@ export function PropertyTable({
                     {properties.data.map((prop) => (
                         <TableRow key={prop.id}>
                             <TableCell className="text-center">
-                                {prop.status === 'available' && (
-                                    <input
-                                        type="checkbox"
-                                        aria-label={`Select property ${prop.property_number}`}
-                                        className="rounded border-gray-300"
-                                        checked={selectedPropIds.includes(
-                                            prop.id,
-                                        )}
-                                        onChange={(e) => {
-                                            if (e.target.checked) {
-                                                setSelectedPropIds((prev) => [
-                                                    ...prev,
-                                                    prop.id,
-                                                ]);
-                                            } else {
-                                                setSelectedPropIds((prev) =>
-                                                    prev.filter(
-                                                        (id) => id !== prop.id,
-                                                    ),
-                                                );
-                                            }
-                                        }}
-                                    />
-                                )}
+                                <input
+                                    type="checkbox"
+                                    aria-label={`Select property ${prop.property_number}`}
+                                    className="rounded border-gray-300"
+                                    checked={selectedPropIds.includes(prop.id)}
+                                    onChange={(e) => {
+                                        if (e.target.checked) {
+                                            setSelectedPropIds((prev) => [
+                                                ...prev,
+                                                prop.id,
+                                            ]);
+                                        } else {
+                                            setSelectedPropIds((prev) =>
+                                                prev.filter(
+                                                    (id) => id !== prop.id,
+                                                ),
+                                            );
+                                        }
+                                    }}
+                                />
                             </TableCell>
                             <TableCell className="font-mono text-[11px] whitespace-nowrap">
                                 {prop.property_number}
@@ -476,6 +469,16 @@ export function PropertyTable({
                                             permission: 'property.dispose',
                                             show: prop.status !== 'disposed',
                                             destructive: true,
+                                        },
+                                        {
+                                            label: 'Print Property Sticker',
+                                            icon: Printer,
+                                            onClick: () =>
+                                                window.open(
+                                                    `/inventory/properties/print-stickers?ids=${prop.id}`,
+                                                    '_blank',
+                                                ),
+                                            show: true,
                                         },
                                     ]}
                                 />

@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Inventory;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
+use App\Models\Department;
 use App\Models\Location;
+use App\Models\Office;
 use App\Models\Supplier;
 use App\Models\Unit;
 use App\Models\Warehouse;
@@ -24,6 +26,8 @@ class MasterDataController extends Controller
             'locations' => Location::with('warehouse')->orderBy('code')->get(),
             'warehouses' => Warehouse::orderBy('name')->get(),
             'suppliers' => Supplier::orderBy('name')->get(),
+            'departments' => Department::with('office')->orderBy('name')->get(),
+            'offices' => Office::orderBy('name')->get(),
         ]);
     }
 }

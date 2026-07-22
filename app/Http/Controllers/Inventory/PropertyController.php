@@ -321,4 +321,26 @@ class PropertyController extends Controller
 
         return redirect()->back()->with('success', 'Properties updated successfully.');
     }
+
+    /**
+     * Print property stickers.
+     */
+    public function printStickers(Request $request): Response
+    {
+        Gate::authorize('property.view');
+
+        $ids = array_filter(explode(',', $request->query('ids', '')));
+
+        $properties = Property::with([
+            'category',
+            'activeAssignment.assignee',
+            'activeSubAssignment.assignee',
+        ])
+            ->whereIn('id', $ids)
+            ->get();
+
+        return Inertia::render('inventory/property/print-stickers', [
+            'properties' => $properties,
+        ]);
+    }
 }

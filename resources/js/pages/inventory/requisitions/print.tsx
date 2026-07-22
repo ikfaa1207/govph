@@ -1,4 +1,4 @@
-import { Head } from '@inertiajs/react';
+import { Head, usePage } from '@inertiajs/react';
 import { ArrowLeft, Printer } from 'lucide-react';
 import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
@@ -75,6 +75,8 @@ interface PrintProps {
 }
 
 export default function RequisitionPrint({ requisition }: PrintProps) {
+    const { agency } = usePage<any>().props;
+    const agencyName = agency?.name || 'Government Agency';
     useEffect(() => {
         // Trigger browser print dialog shortly after component mount
         const timer = setTimeout(() => {
@@ -195,7 +197,7 @@ export default function RequisitionPrint({ requisition }: PrintProps) {
                         <div className="flex border-b border-black p-2">
                             <span className="w-24 font-bold">Entity Name:</span>
                             <span className="flex-1 border-b border-slate-300 px-1 font-sans">
-                                Government Agency
+                                {agencyName}
                             </span>
                         </div>
                         <div className="flex border-b border-black p-2">

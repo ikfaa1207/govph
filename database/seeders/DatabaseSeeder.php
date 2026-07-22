@@ -11,9 +11,17 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        // Baseline roles & permissions are always seeded
         $this->call([
-            AgencySeeder::class,
-            UserEmployeeSeeder::class,
+            SystemRolePermissionSeeder::class,
         ]);
+
+        // Demo data is only seeded in local or testing environments
+        if (app()->environment('local', 'testing')) {
+            $this->call([
+                AgencySeeder::class,
+                UserEmployeeSeeder::class,
+            ]);
+        }
     }
 }

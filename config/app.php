@@ -15,6 +15,9 @@ return [
 
     'name' => env('APP_NAME', 'GIMS (GovPH)'),
 
+    'agency_name' => env('AGENCY_NAME', 'Department of Interior and Local Government'),
+    'agency_province' => env('AGENCY_PROVINCE', 'Provincial Government of Romblon'),
+
     /*
     |--------------------------------------------------------------------------
     | Application Environment

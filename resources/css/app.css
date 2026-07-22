@@ -68,7 +68,7 @@
     --foreground: #0f172a;
     --card: rgba(255, 255, 255, 0.7);
     --card-foreground: #0f172a;
-    --popover: rgba(255, 255, 255, 0.85);
+    --popover: #ffffff;
     --popover-foreground: #0f172a;
 
     /* GovPH Blue */
@@ -120,7 +120,7 @@
     --foreground: #f8fafc;
     --card: rgba(15, 23, 42, 0.6);
     --card-foreground: #f8fafc;
-    --popover: rgba(15, 23, 42, 0.85);
+    --popover: #0f172a;
     --popover-foreground: #f8fafc;
 
     /* GovPH Blue (Slightly lighter for dark mode visibility) */

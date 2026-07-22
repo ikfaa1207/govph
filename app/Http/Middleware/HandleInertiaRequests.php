@@ -52,6 +52,10 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'name' => config('app.name'),
+            'agency' => [
+                'name' => config('app.agency_name'),
+                'province' => config('app.agency_province'),
+            ],
             'auth' => [
                 'user' => $user ? array_merge($user->toArray(), [
                     'roles' => $user->roles->pluck('name')->toArray(),

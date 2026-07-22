@@ -1,4 +1,4 @@
-import { Head, useForm, setLayoutProps, router } from '@inertiajs/react';
+import { Head, useForm, setLayoutProps, router, Link } from '@inertiajs/react';
 import {
     PlusCircle,
     X,
@@ -10,6 +10,7 @@ import {
     CheckCircle2,
     ShoppingCart,
     Printer,
+    Package2,
 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -379,264 +380,334 @@ export default function PurchaseRequestsIndex({
                                     onSubmit={handleCreateSubmit}
                                     className="space-y-4"
                                 >
-                                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                                        <div className="space-y-1">
-                                            <Label htmlFor="department_id">
-                                                Target Department
-                                            </Label>
-                                            <SmartSelect
-                                                options={departments.map(
-                                                    (d) => ({
-                                                        value: String(d.id),
-                                                        label: d.name,
-                                                    }),
-                                                )}
-                                                value={
-                                                    createForm.data
-                                                        .department_id
-                                                }
-                                                onValueChange={(val) =>
-                                                    createForm.setData(
-                                                        'department_id',
-                                                        val,
-                                                    )
-                                                }
-                                                placeholder="Select department..."
-                                                searchThreshold={0}
-                                            />
-                                            {createForm.errors
-                                                .department_id && (
-                                                <span className="text-xs text-rose-500">
-                                                    {
-                                                        createForm.errors
-                                                            .department_id
+                                    {items.length === 0 ? (
+                                        <div className="flex flex-col items-center justify-center space-y-4 py-8 text-center">
+                                            <div className="rounded-full bg-amber-50 p-4 text-amber-500 dark:bg-amber-950/20">
+                                                <Package2 className="h-10 w-10 animate-pulse" />
+                                            </div>
+                                            <div className="max-w-md space-y-2">
+                                                <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                                    No Catalog Items Available
+                                                </h4>
+                                                <p className="text-xs text-slate-500 dark:text-slate-400">
+                                                    Purchase Requests require
+                                                    choosing items from the
+                                                    system's item catalog.
+                                                    Currently, there are no
+                                                    items in the catalog.
+                                                </p>
+                                            </div>
+                                            <div className="flex gap-3 pt-2">
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    onClick={() =>
+                                                        setIsCreateOpen(false)
                                                     }
-                                                </span>
-                                            )}
+                                                    className="text-xs"
+                                                >
+                                                    Cancel
+                                                </Button>
+                                                <Button
+                                                    type="button"
+                                                    asChild
+                                                    className="bg-indigo-600 text-xs font-semibold hover:bg-indigo-700"
+                                                >
+                                                    <Link
+                                                        href="/inventory/items"
+                                                        onClick={() =>
+                                                            setIsCreateOpen(
+                                                                false,
+                                                            )
+                                                        }
+                                                    >
+                                                        Go to Item Catalog
+                                                    </Link>
+                                                </Button>
+                                            </div>
                                         </div>
-                                    </div>
-
-                                    <div className="space-y-1">
-                                        <Label htmlFor="purpose">
-                                            Purpose / Justification
-                                        </Label>
-                                        <Input
-                                            id="purpose"
-                                            placeholder="e.g. Procurement of IT Equipment for new hires..."
-                                            value={createForm.data.purpose}
-                                            onChange={(e) =>
-                                                createForm.setData(
-                                                    'purpose',
-                                                    e.target.value,
-                                                )
-                                            }
-                                        />
-                                        {createForm.errors.purpose && (
-                                            <span className="text-xs text-rose-500">
-                                                {createForm.errors.purpose}
-                                            </span>
-                                        )}
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <div className="flex items-center justify-between">
-                                            <Label className="text-sm font-semibold">
-                                                Line Items
-                                            </Label>
-                                            <Button
-                                                type="button"
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={handleAddItemRow}
-                                                className="gap-1"
-                                            >
-                                                <Plus className="h-3 w-3" /> Add
-                                                Item
-                                            </Button>
-                                        </div>
-
-                                        <div className="overflow-hidden rounded-md border">
-                                            <Table>
-                                                <TableHeader>
-                                                    <TableRow>
-                                                        <TableHead className="w-[45%]">
-                                                            Item
-                                                        </TableHead>
-                                                        <TableHead className="w-[15%]">
-                                                            Quantity
-                                                        </TableHead>
-                                                        <TableHead className="w-[20%]">
-                                                            Est. Unit Cost
-                                                        </TableHead>
-                                                        <TableHead className="w-[20%]">
-                                                            Remarks
-                                                        </TableHead>
-                                                        <TableHead className="w-[50px]"></TableHead>
-                                                    </TableRow>
-                                                </TableHeader>
-                                                <TableBody>
-                                                    {createForm.data.items.map(
-                                                        (row, idx) => {
-                                                            return (
-                                                                <TableRow
-                                                                    key={idx}
-                                                                >
-                                                                    <TableCell className="p-2">
-                                                                        <SmartSelect
-                                                                            options={items.map(
-                                                                                (
-                                                                                    i,
-                                                                                ) => ({
-                                                                                    value: String(
-                                                                                        i.id,
-                                                                                    ),
-                                                                                    label: `${i.name} (${i.unit})`,
-                                                                                }),
-                                                                            )}
-                                                                            value={
-                                                                                row.item_id
-                                                                            }
-                                                                            onValueChange={(
-                                                                                val,
-                                                                            ) =>
-                                                                                handleItemChange(
-                                                                                    idx,
-                                                                                    'item_id',
-                                                                                    val,
-                                                                                )
-                                                                            }
-                                                                            placeholder="Choose item..."
-                                                                            searchThreshold={
-                                                                                0
-                                                                            }
-                                                                        />
-                                                                    </TableCell>
-                                                                    <TableCell className="p-2">
-                                                                        <Input
-                                                                            type="number"
-                                                                            min={
-                                                                                1
-                                                                            }
-                                                                            value={
-                                                                                row.quantity
-                                                                            }
-                                                                            onChange={(
-                                                                                e,
-                                                                            ) =>
-                                                                                handleItemChange(
-                                                                                    idx,
-                                                                                    'quantity',
-                                                                                    parseInt(
-                                                                                        e
-                                                                                            .target
-                                                                                            .value,
-                                                                                    ) ||
-                                                                                        0,
-                                                                                )
-                                                                            }
-                                                                        />
-                                                                    </TableCell>
-                                                                    <TableCell className="p-2">
-                                                                        <Input
-                                                                            type="number"
-                                                                            step="0.01"
-                                                                            min={
-                                                                                0
-                                                                            }
-                                                                            value={
-                                                                                row.estimated_unit_cost
-                                                                            }
-                                                                            onChange={(
-                                                                                e,
-                                                                            ) =>
-                                                                                handleItemChange(
-                                                                                    idx,
-                                                                                    'estimated_unit_cost',
-                                                                                    parseFloat(
-                                                                                        e
-                                                                                            .target
-                                                                                            .value,
-                                                                                    ) ||
-                                                                                        0,
-                                                                                )
-                                                                            }
-                                                                        />
-                                                                    </TableCell>
-                                                                    <TableCell className="p-2">
-                                                                        <Input
-                                                                            placeholder="Optional remarks"
-                                                                            value={
-                                                                                row.remarks
-                                                                            }
-                                                                            onChange={(
-                                                                                e,
-                                                                            ) =>
-                                                                                handleItemChange(
-                                                                                    idx,
-                                                                                    'remarks',
-                                                                                    e
-                                                                                        .target
-                                                                                        .value,
-                                                                                )
-                                                                            }
-                                                                        />
-                                                                    </TableCell>
-                                                                    <TableCell className="p-2 text-center">
-                                                                        <Button
-                                                                            type="button"
-                                                                            variant="ghost"
-                                                                            size="icon"
-                                                                            onClick={() =>
-                                                                                handleRemoveItemRow(
-                                                                                    idx,
-                                                                                )
-                                                                            }
-                                                                            className="text-rose-500 hover:text-rose-700"
-                                                                        >
-                                                                            <X className="h-4 w-4" />
-                                                                        </Button>
-                                                                    </TableCell>
-                                                                </TableRow>
-                                                            );
-                                                        },
+                                    ) : (
+                                        <>
+                                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                                <div className="space-y-1">
+                                                    <Label htmlFor="department_id">
+                                                        Target Department
+                                                    </Label>
+                                                    <SmartSelect
+                                                        options={departments.map(
+                                                            (d) => ({
+                                                                value: String(
+                                                                    d.id,
+                                                                ),
+                                                                label: d.name,
+                                                            }),
+                                                        )}
+                                                        value={
+                                                            createForm.data
+                                                                .department_id
+                                                        }
+                                                        onValueChange={(val) =>
+                                                            createForm.setData(
+                                                                'department_id',
+                                                                val,
+                                                            )
+                                                        }
+                                                        placeholder="Select department..."
+                                                        searchThreshold={0}
+                                                    />
+                                                    {createForm.errors
+                                                        .department_id && (
+                                                        <span className="text-xs text-rose-500">
+                                                            {
+                                                                createForm
+                                                                    .errors
+                                                                    .department_id
+                                                            }
+                                                        </span>
                                                     )}
-                                                </TableBody>
-                                            </Table>
-                                        </div>
-                                        {createForm.errors.items && (
-                                            <p className="text-xs text-rose-500">
-                                                {createForm.errors.items}
-                                            </p>
-                                        )}
-                                    </div>
+                                                </div>
+                                            </div>
 
-                                    <div className="flex items-center justify-between border-t pt-4">
-                                        <div className="text-sm font-semibold">
-                                            Total Estimate:{' '}
-                                            <span className="text-base text-primary">
-                                                {formatCurrency(
-                                                    totalEstimatedCost,
+                                            <div className="space-y-1">
+                                                <Label htmlFor="purpose">
+                                                    Purpose / Justification
+                                                </Label>
+                                                <Input
+                                                    id="purpose"
+                                                    placeholder="e.g. Procurement of IT Equipment for new hires..."
+                                                    value={
+                                                        createForm.data.purpose
+                                                    }
+                                                    onChange={(e) =>
+                                                        createForm.setData(
+                                                            'purpose',
+                                                            e.target.value,
+                                                        )
+                                                    }
+                                                />
+                                                {createForm.errors.purpose && (
+                                                    <span className="text-xs text-rose-500">
+                                                        {
+                                                            createForm.errors
+                                                                .purpose
+                                                        }
+                                                    </span>
                                                 )}
-                                            </span>
-                                        </div>
-                                        <div className="flex gap-2">
-                                            <Button
-                                                type="button"
-                                                variant="outline"
-                                                onClick={() =>
-                                                    setIsCreateOpen(false)
-                                                }
-                                            >
-                                                Cancel
-                                            </Button>
-                                            <Button
-                                                type="submit"
-                                                disabled={createForm.processing}
-                                            >
-                                                Submit PR
-                                            </Button>
-                                        </div>
-                                    </div>
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <div className="flex items-center justify-between">
+                                                    <Label className="text-sm font-semibold">
+                                                        Line Items
+                                                    </Label>
+                                                    <Button
+                                                        type="button"
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={
+                                                            handleAddItemRow
+                                                        }
+                                                        className="gap-1"
+                                                    >
+                                                        <Plus className="h-3 w-3" />{' '}
+                                                        Add Item
+                                                    </Button>
+                                                </div>
+
+                                                <div className="overflow-hidden rounded-md border">
+                                                    <Table>
+                                                        <TableHeader>
+                                                            <TableRow>
+                                                                <TableHead className="w-[45%]">
+                                                                    Item
+                                                                </TableHead>
+                                                                <TableHead className="w-[15%]">
+                                                                    Quantity
+                                                                </TableHead>
+                                                                <TableHead className="w-[20%]">
+                                                                    Est. Unit
+                                                                    Cost
+                                                                </TableHead>
+                                                                <TableHead className="w-[20%]">
+                                                                    Remarks
+                                                                </TableHead>
+                                                                <TableHead className="w-[50px]"></TableHead>
+                                                            </TableRow>
+                                                        </TableHeader>
+                                                        <TableBody>
+                                                            {createForm.data.items.map(
+                                                                (row, idx) => {
+                                                                    return (
+                                                                        <TableRow
+                                                                            key={
+                                                                                idx
+                                                                            }
+                                                                        >
+                                                                            <TableCell className="p-2">
+                                                                                <SmartSelect
+                                                                                    options={items.map(
+                                                                                        (
+                                                                                            i,
+                                                                                        ) => ({
+                                                                                            value: String(
+                                                                                                i.id,
+                                                                                            ),
+                                                                                            label: `${i.name} (${i.unit})`,
+                                                                                        }),
+                                                                                    )}
+                                                                                    value={
+                                                                                        row.item_id
+                                                                                    }
+                                                                                    onValueChange={(
+                                                                                        val,
+                                                                                    ) =>
+                                                                                        handleItemChange(
+                                                                                            idx,
+                                                                                            'item_id',
+                                                                                            val,
+                                                                                        )
+                                                                                    }
+                                                                                    placeholder="Choose item..."
+                                                                                    searchThreshold={
+                                                                                        0
+                                                                                    }
+                                                                                />
+                                                                            </TableCell>
+                                                                            <TableCell className="p-2">
+                                                                                <Input
+                                                                                    type="number"
+                                                                                    min={
+                                                                                        1
+                                                                                    }
+                                                                                    value={
+                                                                                        row.quantity
+                                                                                    }
+                                                                                    onChange={(
+                                                                                        e,
+                                                                                    ) =>
+                                                                                        handleItemChange(
+                                                                                            idx,
+                                                                                            'quantity',
+                                                                                            parseInt(
+                                                                                                e
+                                                                                                    .target
+                                                                                                    .value,
+                                                                                            ) ||
+                                                                                                0,
+                                                                                        )
+                                                                                    }
+                                                                                />
+                                                                            </TableCell>
+                                                                            <TableCell className="p-2">
+                                                                                <Input
+                                                                                    type="number"
+                                                                                    step="0.01"
+                                                                                    min={
+                                                                                        0
+                                                                                    }
+                                                                                    value={
+                                                                                        row.estimated_unit_cost
+                                                                                    }
+                                                                                    onChange={(
+                                                                                        e,
+                                                                                    ) =>
+                                                                                        handleItemChange(
+                                                                                            idx,
+                                                                                            'estimated_unit_cost',
+                                                                                            parseFloat(
+                                                                                                e
+                                                                                                    .target
+                                                                                                    .value,
+                                                                                            ) ||
+                                                                                                0,
+                                                                                        )
+                                                                                    }
+                                                                                />
+                                                                            </TableCell>
+                                                                            <TableCell className="p-2">
+                                                                                <Input
+                                                                                    placeholder="Optional remarks"
+                                                                                    value={
+                                                                                        row.remarks
+                                                                                    }
+                                                                                    onChange={(
+                                                                                        e,
+                                                                                    ) =>
+                                                                                        handleItemChange(
+                                                                                            idx,
+                                                                                            'remarks',
+                                                                                            e
+                                                                                                .target
+                                                                                                .value,
+                                                                                        )
+                                                                                    }
+                                                                                />
+                                                                            </TableCell>
+                                                                            <TableCell className="p-2 text-center">
+                                                                                <Button
+                                                                                    type="button"
+                                                                                    variant="ghost"
+                                                                                    size="icon"
+                                                                                    onClick={() =>
+                                                                                        handleRemoveItemRow(
+                                                                                            idx,
+                                                                                        )
+                                                                                    }
+                                                                                    className="text-rose-500 hover:text-rose-700"
+                                                                                >
+                                                                                    <X className="h-4 w-4" />
+                                                                                </Button>
+                                                                            </TableCell>
+                                                                        </TableRow>
+                                                                    );
+                                                                },
+                                                            )}
+                                                        </TableBody>
+                                                    </Table>
+                                                </div>
+                                                {createForm.errors.items && (
+                                                    <p className="text-xs text-rose-500">
+                                                        {
+                                                            createForm.errors
+                                                                .items
+                                                        }
+                                                    </p>
+                                                )}
+                                            </div>
+
+                                            <div className="flex items-center justify-between border-t pt-4">
+                                                <div className="text-sm font-semibold">
+                                                    Total Estimate:{' '}
+                                                    <span className="text-base text-primary">
+                                                        {formatCurrency(
+                                                            totalEstimatedCost,
+                                                        )}
+                                                    </span>
+                                                </div>
+                                                <div className="flex gap-2">
+                                                    <Button
+                                                        type="button"
+                                                        variant="outline"
+                                                        onClick={() =>
+                                                            setIsCreateOpen(
+                                                                false,
+                                                            )
+                                                        }
+                                                    >
+                                                        Cancel
+                                                    </Button>
+                                                    <Button
+                                                        type="submit"
+                                                        disabled={
+                                                            createForm.processing
+                                                        }
+                                                    >
+                                                        Submit PR
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        </>
+                                    )}
                                 </form>
                             </DialogContent>
                         </Dialog>
