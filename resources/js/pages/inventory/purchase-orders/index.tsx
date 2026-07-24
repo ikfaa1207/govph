@@ -1,5 +1,13 @@
-import { Head, useForm, setLayoutProps, router, Link } from '@inertiajs/react';
 import {
+    Head,
+    useForm,
+    setLayoutProps,
+    router,
+    Link,
+    useHttp,
+} from '@inertiajs/react';
+import {
+    Plus,
     PlusCircle,
     Eye,
     FileText,
@@ -151,6 +159,37 @@ export default function PurchaseOrdersIndex({
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [selectedPO, setSelectedPO] = useState<PurchaseOrder | null>(null);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
+
+    const [localSuppliers, setLocalSuppliers] = useState(suppliers);
+    const [isAddSupplierOpen, setIsAddSupplierOpen] = useState(false);
+
+    const supplierHttp = useHttp({
+        name: '',
+        tin: '',
+        contact_person: '',
+        contact_number: '',
+        address: '',
+    });
+
+    const handleSupplierSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        supplierHttp.post('/inventory/suppliers', {
+            onSuccess: (newSupplier: any) => {
+                setLocalSuppliers([...localSuppliers, newSupplier]);
+                createForm.setData('supplier_id', String(newSupplier.id));
+                setIsAddSupplierOpen(false);
+                supplierHttp.reset();
+                toast.success('Supplier registered successfully.');
+            },
+            onError: (errs) => {
+                const firstError = Object.values(errs)[0];
+                toast.error(
+                    firstError ||
+                        'Failed to add supplier. Ensure TIN is unique.',
+                );
+            },
+        });
+    };
 
     const handleFilterChange = (
         newSearch: string,
@@ -345,390 +384,576 @@ export default function PurchaseOrdersIndex({
                     </div>
 
                     {canCreate && (
-                        <Dialog
-                            open={isCreateOpen}
-                            onOpenChange={setIsCreateOpen}
-                        >
-                            <DialogTrigger asChild>
-                                <Button
-                                    id="po-tour-create"
-                                    className="w-full gap-2 sm:w-auto"
-                                >
-                                    <PlusCircle className="h-4 w-4" />
-                                    Generate Purchase Order
-                                </Button>
-                            </DialogTrigger>
-                            <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl">
-                                <DialogHeader>
-                                    <DialogTitle>
-                                        New Purchase Order
-                                    </DialogTitle>
-                                    <DialogDescription>
-                                        Create a PO by pulling items from an
-                                        approved Purchase Request.
-                                    </DialogDescription>
-                                </DialogHeader>
-                                <form
-                                    onSubmit={handleCreateSubmit}
-                                    className="space-y-4"
-                                >
-                                    {approvedPurchaseRequests.length === 0 ? (
-                                        <div className="flex flex-col items-center justify-center space-y-4 py-8 text-center">
-                                            <div className="rounded-full bg-amber-50 p-4 text-amber-500 dark:bg-amber-950/20">
-                                                <ClipboardList className="h-10 w-10 animate-pulse" />
+                        <>
+                            <Dialog
+                                open={isCreateOpen}
+                                onOpenChange={setIsCreateOpen}
+                            >
+                                <DialogTrigger asChild>
+                                    <Button
+                                        id="po-tour-create"
+                                        className="w-full gap-2 sm:w-auto"
+                                    >
+                                        <PlusCircle className="h-4 w-4" />
+                                        Generate Purchase Order
+                                    </Button>
+                                </DialogTrigger>
+                                <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl">
+                                    <DialogHeader>
+                                        <DialogTitle>
+                                            New Purchase Order
+                                        </DialogTitle>
+                                        <DialogDescription>
+                                            Create a PO by pulling items from an
+                                            approved Purchase Request.
+                                        </DialogDescription>
+                                    </DialogHeader>
+                                    <form
+                                        onSubmit={handleCreateSubmit}
+                                        className="space-y-4"
+                                    >
+                                        {approvedPurchaseRequests.length ===
+                                        0 ? (
+                                            <div className="flex flex-col items-center justify-center space-y-4 py-8 text-center">
+                                                <div className="rounded-full bg-amber-50 p-4 text-amber-500 dark:bg-amber-950/20">
+                                                    <ClipboardList className="h-10 w-10 animate-pulse" />
+                                                </div>
+                                                <div className="max-w-md space-y-2">
+                                                    <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                                        No Approved Purchase
+                                                        Requests Found
+                                                    </h4>
+                                                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                                                        Purchase Orders require
+                                                        an authorized, approved
+                                                        Purchase Request (PR) to
+                                                        pull items from.
+                                                        Currently, there are no
+                                                        approved PRs in the
+                                                        system.
+                                                    </p>
+                                                </div>
+                                                <div className="flex gap-3 pt-2">
+                                                    <Button
+                                                        type="button"
+                                                        variant="outline"
+                                                        onClick={() =>
+                                                            setIsCreateOpen(
+                                                                false,
+                                                            )
+                                                        }
+                                                        className="text-xs"
+                                                    >
+                                                        Cancel
+                                                    </Button>
+                                                    <Button
+                                                        type="button"
+                                                        asChild
+                                                        className="bg-indigo-600 text-xs font-semibold hover:bg-indigo-700"
+                                                    >
+                                                        <Link
+                                                            href="/inventory/purchase-requests"
+                                                            onClick={() =>
+                                                                setIsCreateOpen(
+                                                                    false,
+                                                                )
+                                                            }
+                                                        >
+                                                            Go to Purchase
+                                                            Requests
+                                                        </Link>
+                                                    </Button>
+                                                </div>
                                             </div>
-                                            <div className="max-w-md space-y-2">
-                                                <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                                                    No Approved Purchase
-                                                    Requests Found
-                                                </h4>
-                                                <p className="text-xs text-slate-500 dark:text-slate-400">
-                                                    Purchase Orders require an
-                                                    authorized, approved
-                                                    Purchase Request (PR) to
-                                                    pull items from. Currently,
-                                                    there are no approved PRs in
-                                                    the system.
-                                                </p>
-                                            </div>
-                                            <div className="flex gap-3 pt-2">
-                                                <Button
-                                                    type="button"
-                                                    variant="outline"
-                                                    onClick={() =>
-                                                        setIsCreateOpen(false)
-                                                    }
-                                                    className="text-xs"
-                                                >
-                                                    Cancel
-                                                </Button>
-                                                <Button
-                                                    type="button"
-                                                    asChild
-                                                    className="bg-indigo-600 text-xs font-semibold hover:bg-indigo-700"
-                                                >
-                                                    <Link
-                                                        href="/inventory/purchase-requests"
+                                        ) : (
+                                            <>
+                                                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                                    <div className="space-y-1">
+                                                        <Label>
+                                                            Select Approved
+                                                            Purchase Request
+                                                        </Label>
+                                                        <SmartSelect
+                                                            options={approvedPurchaseRequests.map(
+                                                                (p) => ({
+                                                                    value: String(
+                                                                        p.id,
+                                                                    ),
+                                                                    label: `${p.pr_number} - ${p.purpose} (${p.department?.name})`,
+                                                                }),
+                                                            )}
+                                                            value={
+                                                                createForm.data
+                                                                    .purchase_request_id
+                                                            }
+                                                            onValueChange={
+                                                                handleSelectPR
+                                                            }
+                                                            placeholder="Select approved PR..."
+                                                            searchThreshold={0}
+                                                        />
+                                                        {createForm.errors
+                                                            .purchase_request_id && (
+                                                            <span className="text-xs text-rose-500">
+                                                                {
+                                                                    createForm
+                                                                        .errors
+                                                                        .purchase_request_id
+                                                                }
+                                                            </span>
+                                                        )}
+                                                    </div>
+
+                                                    <div className="space-y-1">
+                                                        <Label>Supplier</Label>
+                                                        <div className="flex gap-1.5">
+                                                            <div className="flex-1">
+                                                                <SmartSelect
+                                                                    options={localSuppliers.map(
+                                                                        (
+                                                                            s,
+                                                                        ) => ({
+                                                                            value: String(
+                                                                                s.id,
+                                                                            ),
+                                                                            label: s.name,
+                                                                        }),
+                                                                    )}
+                                                                    value={
+                                                                        createForm
+                                                                            .data
+                                                                            .supplier_id
+                                                                    }
+                                                                    onValueChange={(
+                                                                        val,
+                                                                    ) =>
+                                                                        createForm.setData(
+                                                                            'supplier_id',
+                                                                            val,
+                                                                        )
+                                                                    }
+                                                                    placeholder="Select supplier..."
+                                                                    searchThreshold={
+                                                                        0
+                                                                    }
+                                                                />
+                                                            </div>
+                                                            <Button
+                                                                type="button"
+                                                                variant="outline"
+                                                                size="icon"
+                                                                className="h-9 w-9 shrink-0"
+                                                                onClick={() =>
+                                                                    setIsAddSupplierOpen(
+                                                                        true,
+                                                                    )
+                                                                }
+                                                                title="Add New Supplier"
+                                                            >
+                                                                <Plus className="h-4 w-4" />
+                                                            </Button>
+                                                        </div>
+                                                        {createForm.errors
+                                                            .supplier_id && (
+                                                            <span className="text-xs text-rose-500">
+                                                                {
+                                                                    createForm
+                                                                        .errors
+                                                                        .supplier_id
+                                                                }
+                                                            </span>
+                                                        )}
+                                                    </div>
+
+                                                    <div className="space-y-1">
+                                                        <Label>PO Date</Label>
+                                                        <DatePicker
+                                                            value={
+                                                                createForm.data
+                                                                    .po_date
+                                                            }
+                                                            onChange={(val) =>
+                                                                createForm.setData(
+                                                                    'po_date',
+                                                                    val || '',
+                                                                )
+                                                            }
+                                                        />
+                                                        {createForm.errors
+                                                            .po_date && (
+                                                            <span className="text-xs text-rose-500">
+                                                                {
+                                                                    createForm
+                                                                        .errors
+                                                                        .po_date
+                                                                }
+                                                            </span>
+                                                        )}
+                                                    </div>
+
+                                                    <div className="space-y-1">
+                                                        <Label>
+                                                            Expected Delivery
+                                                            Date
+                                                        </Label>
+                                                        <DatePicker
+                                                            value={
+                                                                createForm.data
+                                                                    .delivery_date
+                                                            }
+                                                            onChange={(val) =>
+                                                                createForm.setData(
+                                                                    'delivery_date',
+                                                                    val || '',
+                                                                )
+                                                            }
+                                                        />
+                                                        {createForm.errors
+                                                            .delivery_date && (
+                                                            <span className="text-xs text-rose-500">
+                                                                {
+                                                                    createForm
+                                                                        .errors
+                                                                        .delivery_date
+                                                                }
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                {createForm.data.items.length >
+                                                    0 && (
+                                                    <div className="space-y-2">
+                                                        <Label className="text-sm font-semibold">
+                                                            Line Items
+                                                            (Populated from PR)
+                                                        </Label>
+                                                        <div className="overflow-hidden rounded-md border">
+                                                            <Table>
+                                                                <TableHeader>
+                                                                    <TableRow>
+                                                                        <TableHead>
+                                                                            Item
+                                                                        </TableHead>
+                                                                        <TableHead className="w-[80px]">
+                                                                            Quantity
+                                                                        </TableHead>
+                                                                        <TableHead className="w-[150px]">
+                                                                            Unit
+                                                                            Cost
+                                                                        </TableHead>
+                                                                        <TableHead>
+                                                                            Remarks
+                                                                        </TableHead>
+                                                                    </TableRow>
+                                                                </TableHeader>
+                                                                <TableBody>
+                                                                    {createForm.data.items.map(
+                                                                        (
+                                                                            row,
+                                                                            idx,
+                                                                        ) => {
+                                                                            const pr =
+                                                                                approvedPurchaseRequests.find(
+                                                                                    (
+                                                                                        p,
+                                                                                    ) =>
+                                                                                        String(
+                                                                                            p.id,
+                                                                                        ) ===
+                                                                                        String(
+                                                                                            createForm
+                                                                                                .data
+                                                                                                .purchase_request_id,
+                                                                                        ),
+                                                                                );
+                                                                            const prItem =
+                                                                                pr?.items.find(
+                                                                                    (
+                                                                                        i,
+                                                                                    ) =>
+                                                                                        String(
+                                                                                            i.item_id,
+                                                                                        ) ===
+                                                                                        String(
+                                                                                            row.item_id,
+                                                                                        ),
+                                                                                );
+
+                                                                            return (
+                                                                                <TableRow
+                                                                                    key={
+                                                                                        idx
+                                                                                    }
+                                                                                >
+                                                                                    <TableCell className="py-2">
+                                                                                        <div className="text-sm font-medium">
+                                                                                            {prItem
+                                                                                                ?.item
+                                                                                                ?.name ||
+                                                                                                'Loading item...'}
+                                                                                        </div>
+                                                                                    </TableCell>
+                                                                                    <TableCell className="py-2">
+                                                                                        <Input
+                                                                                            type="number"
+                                                                                            min={
+                                                                                                1
+                                                                                            }
+                                                                                            value={
+                                                                                                row.quantity
+                                                                                            }
+                                                                                            onChange={(
+                                                                                                e,
+                                                                                            ) =>
+                                                                                                handleItemChange(
+                                                                                                    idx,
+                                                                                                    'quantity',
+                                                                                                    parseInt(
+                                                                                                        e
+                                                                                                            .target
+                                                                                                            .value,
+                                                                                                    ) ||
+                                                                                                        0,
+                                                                                                )
+                                                                                            }
+                                                                                        />
+                                                                                    </TableCell>
+                                                                                    <TableCell className="py-2">
+                                                                                        <Input
+                                                                                            type="number"
+                                                                                            step="0.01"
+                                                                                            min={
+                                                                                                0
+                                                                                            }
+                                                                                            value={
+                                                                                                row.unit_cost
+                                                                                            }
+                                                                                            onChange={(
+                                                                                                e,
+                                                                                            ) =>
+                                                                                                handleItemChange(
+                                                                                                    idx,
+                                                                                                    'unit_cost',
+                                                                                                    parseFloat(
+                                                                                                        e
+                                                                                                            .target
+                                                                                                            .value,
+                                                                                                    ) ||
+                                                                                                        0,
+                                                                                                )
+                                                                                            }
+                                                                                        />
+                                                                                    </TableCell>
+                                                                                    <TableCell className="py-2">
+                                                                                        <Input
+                                                                                            placeholder="Remarks"
+                                                                                            value={
+                                                                                                row.remarks
+                                                                                            }
+                                                                                            onChange={(
+                                                                                                e,
+                                                                                            ) =>
+                                                                                                handleItemChange(
+                                                                                                    idx,
+                                                                                                    'remarks',
+                                                                                                    e
+                                                                                                        .target
+                                                                                                        .value,
+                                                                                                )
+                                                                                            }
+                                                                                        />
+                                                                                    </TableCell>
+                                                                                </TableRow>
+                                                                            );
+                                                                        },
+                                                                    )}
+                                                                </TableBody>
+                                                            </Table>
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                <div className="flex justify-end gap-2 border-t pt-4">
+                                                    <Button
+                                                        type="button"
+                                                        variant="outline"
                                                         onClick={() =>
                                                             setIsCreateOpen(
                                                                 false,
                                                             )
                                                         }
                                                     >
-                                                        Go to Purchase Requests
-                                                    </Link>
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <>
-                                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                                                <div className="space-y-1">
-                                                    <Label>
-                                                        Select Approved Purchase
-                                                        Request
-                                                    </Label>
-                                                    <SmartSelect
-                                                        options={approvedPurchaseRequests.map(
-                                                            (p) => ({
-                                                                value: String(
-                                                                    p.id,
-                                                                ),
-                                                                label: `${p.pr_number} - ${p.purpose} (${p.department?.name})`,
-                                                            }),
-                                                        )}
-                                                        value={
+                                                        Cancel
+                                                    </Button>
+                                                    <Button
+                                                        type="submit"
+                                                        disabled={
+                                                            createForm.processing ||
                                                             createForm.data
-                                                                .purchase_request_id
+                                                                .items
+                                                                .length === 0
                                                         }
-                                                        onValueChange={
-                                                            handleSelectPR
-                                                        }
-                                                        placeholder="Select approved PR..."
-                                                        searchThreshold={0}
-                                                    />
-                                                    {createForm.errors
-                                                        .purchase_request_id && (
-                                                        <span className="text-xs text-rose-500">
-                                                            {
-                                                                createForm
-                                                                    .errors
-                                                                    .purchase_request_id
-                                                            }
-                                                        </span>
-                                                    )}
+                                                    >
+                                                        Generate PO
+                                                    </Button>
                                                 </div>
+                                            </>
+                                        )}
+                                    </form>
+                                </DialogContent>
+                            </Dialog>
 
-                                                <div className="space-y-1">
-                                                    <Label>Supplier</Label>
-                                                    <SmartSelect
-                                                        options={suppliers.map(
-                                                            (s) => ({
-                                                                value: String(
-                                                                    s.id,
-                                                                ),
-                                                                label: s.name,
-                                                            }),
-                                                        )}
-                                                        value={
-                                                            createForm.data
-                                                                .supplier_id
-                                                        }
-                                                        onValueChange={(val) =>
-                                                            createForm.setData(
-                                                                'supplier_id',
-                                                                val,
-                                                            )
-                                                        }
-                                                        placeholder="Select supplier..."
-                                                        searchThreshold={0}
-                                                    />
-                                                    {createForm.errors
-                                                        .supplier_id && (
-                                                        <span className="text-xs text-rose-500">
-                                                            {
-                                                                createForm
-                                                                    .errors
-                                                                    .supplier_id
-                                                            }
-                                                        </span>
-                                                    )}
-                                                </div>
-
-                                                <div className="space-y-1">
-                                                    <Label>PO Date</Label>
-                                                    <DatePicker
-                                                        value={
-                                                            createForm.data
-                                                                .po_date
-                                                        }
-                                                        onChange={(val) =>
-                                                            createForm.setData(
-                                                                'po_date',
-                                                                val || '',
-                                                            )
-                                                        }
-                                                    />
-                                                    {createForm.errors
-                                                        .po_date && (
-                                                        <span className="text-xs text-rose-500">
-                                                            {
-                                                                createForm
-                                                                    .errors
-                                                                    .po_date
-                                                            }
-                                                        </span>
-                                                    )}
-                                                </div>
-
-                                                <div className="space-y-1">
-                                                    <Label>
-                                                        Expected Delivery Date
-                                                    </Label>
-                                                    <DatePicker
-                                                        value={
-                                                            createForm.data
-                                                                .delivery_date
-                                                        }
-                                                        onChange={(val) =>
-                                                            createForm.setData(
-                                                                'delivery_date',
-                                                                val || '',
-                                                            )
-                                                        }
-                                                    />
-                                                    {createForm.errors
-                                                        .delivery_date && (
-                                                        <span className="text-xs text-rose-500">
-                                                            {
-                                                                createForm
-                                                                    .errors
-                                                                    .delivery_date
-                                                            }
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            </div>
-
-                                            {createForm.data.items.length >
-                                                0 && (
-                                                <div className="space-y-2">
-                                                    <Label className="text-sm font-semibold">
-                                                        Line Items (Populated
-                                                        from PR)
-                                                    </Label>
-                                                    <div className="overflow-hidden rounded-md border">
-                                                        <Table>
-                                                            <TableHeader>
-                                                                <TableRow>
-                                                                    <TableHead>
-                                                                        Item
-                                                                    </TableHead>
-                                                                    <TableHead className="w-[80px]">
-                                                                        Quantity
-                                                                    </TableHead>
-                                                                    <TableHead className="w-[150px]">
-                                                                        Unit
-                                                                        Cost
-                                                                    </TableHead>
-                                                                    <TableHead>
-                                                                        Remarks
-                                                                    </TableHead>
-                                                                </TableRow>
-                                                            </TableHeader>
-                                                            <TableBody>
-                                                                {createForm.data.items.map(
-                                                                    (
-                                                                        row,
-                                                                        idx,
-                                                                    ) => {
-                                                                        const pr =
-                                                                            approvedPurchaseRequests.find(
-                                                                                (
-                                                                                    p,
-                                                                                ) =>
-                                                                                    String(
-                                                                                        p.id,
-                                                                                    ) ===
-                                                                                    String(
-                                                                                        createForm
-                                                                                            .data
-                                                                                            .purchase_request_id,
-                                                                                    ),
-                                                                            );
-                                                                        const prItem =
-                                                                            pr?.items.find(
-                                                                                (
-                                                                                    i,
-                                                                                ) =>
-                                                                                    String(
-                                                                                        i.item_id,
-                                                                                    ) ===
-                                                                                    String(
-                                                                                        row.item_id,
-                                                                                    ),
-                                                                            );
-
-                                                                        return (
-                                                                            <TableRow
-                                                                                key={
-                                                                                    idx
-                                                                                }
-                                                                            >
-                                                                                <TableCell className="py-2">
-                                                                                    <div className="text-sm font-medium">
-                                                                                        {prItem
-                                                                                            ?.item
-                                                                                            ?.name ||
-                                                                                            'Loading item...'}
-                                                                                    </div>
-                                                                                </TableCell>
-                                                                                <TableCell className="py-2">
-                                                                                    <Input
-                                                                                        type="number"
-                                                                                        min={
-                                                                                            1
-                                                                                        }
-                                                                                        value={
-                                                                                            row.quantity
-                                                                                        }
-                                                                                        onChange={(
-                                                                                            e,
-                                                                                        ) =>
-                                                                                            handleItemChange(
-                                                                                                idx,
-                                                                                                'quantity',
-                                                                                                parseInt(
-                                                                                                    e
-                                                                                                        .target
-                                                                                                        .value,
-                                                                                                ) ||
-                                                                                                    0,
-                                                                                            )
-                                                                                        }
-                                                                                    />
-                                                                                </TableCell>
-                                                                                <TableCell className="py-2">
-                                                                                    <Input
-                                                                                        type="number"
-                                                                                        step="0.01"
-                                                                                        min={
-                                                                                            0
-                                                                                        }
-                                                                                        value={
-                                                                                            row.unit_cost
-                                                                                        }
-                                                                                        onChange={(
-                                                                                            e,
-                                                                                        ) =>
-                                                                                            handleItemChange(
-                                                                                                idx,
-                                                                                                'unit_cost',
-                                                                                                parseFloat(
-                                                                                                    e
-                                                                                                        .target
-                                                                                                        .value,
-                                                                                                ) ||
-                                                                                                    0,
-                                                                                            )
-                                                                                        }
-                                                                                    />
-                                                                                </TableCell>
-                                                                                <TableCell className="py-2">
-                                                                                    <Input
-                                                                                        placeholder="Remarks"
-                                                                                        value={
-                                                                                            row.remarks
-                                                                                        }
-                                                                                        onChange={(
-                                                                                            e,
-                                                                                        ) =>
-                                                                                            handleItemChange(
-                                                                                                idx,
-                                                                                                'remarks',
-                                                                                                e
-                                                                                                    .target
-                                                                                                    .value,
-                                                                                            )
-                                                                                        }
-                                                                                    />
-                                                                                </TableCell>
-                                                                            </TableRow>
-                                                                        );
-                                                                    },
-                                                                )}
-                                                            </TableBody>
-                                                        </Table>
-                                                    </div>
-                                                </div>
+                            {/* Inline Supplier Creation Dialog */}
+                            <Dialog
+                                open={isAddSupplierOpen}
+                                onOpenChange={setIsAddSupplierOpen}
+                            >
+                                <DialogContent
+                                    className="max-w-sm"
+                                    onPointerDownOutside={(e) =>
+                                        e.preventDefault()
+                                    }
+                                    onInteractOutside={(e) =>
+                                        e.preventDefault()
+                                    }
+                                >
+                                    <DialogHeader>
+                                        <DialogTitle>
+                                            Add New Supplier
+                                        </DialogTitle>
+                                        <DialogDescription>
+                                            Register a new vendor/supplier in
+                                            the database.
+                                        </DialogDescription>
+                                    </DialogHeader>
+                                    <form
+                                        onSubmit={handleSupplierSubmit}
+                                        className="space-y-4"
+                                    >
+                                        <div className="space-y-1">
+                                            <Label htmlFor="sup_name">
+                                                Supplier Name
+                                            </Label>
+                                            <Input
+                                                id="sup_name"
+                                                value={supplierHttp.data.name}
+                                                onChange={(e) =>
+                                                    supplierHttp.setData(
+                                                        'name',
+                                                        e.target.value,
+                                                    )
+                                                }
+                                                required
+                                            />
+                                            {supplierHttp.errors.name && (
+                                                <p className="text-xs text-rose-500">
+                                                    {supplierHttp.errors.name}
+                                                </p>
                                             )}
-
-                                            <div className="flex justify-end gap-2 border-t pt-4">
-                                                <Button
-                                                    type="button"
-                                                    variant="outline"
-                                                    onClick={() =>
-                                                        setIsCreateOpen(false)
-                                                    }
-                                                >
-                                                    Cancel
-                                                </Button>
-                                                <Button
-                                                    type="submit"
-                                                    disabled={
-                                                        createForm.processing ||
-                                                        createForm.data.items
-                                                            .length === 0
-                                                    }
-                                                >
-                                                    Generate PO
-                                                </Button>
-                                            </div>
-                                        </>
-                                    )}
-                                </form>
-                            </DialogContent>
-                        </Dialog>
+                                        </div>
+                                        <div className="space-y-1">
+                                            <Label htmlFor="sup_tin">
+                                                TIN (Taxpayer Identification
+                                                No.)
+                                            </Label>
+                                            <Input
+                                                id="sup_tin"
+                                                placeholder="e.g. 123-456-789-000"
+                                                value={supplierHttp.data.tin}
+                                                onChange={(e) =>
+                                                    supplierHttp.setData(
+                                                        'tin',
+                                                        e.target.value,
+                                                    )
+                                                }
+                                                required
+                                            />
+                                            {supplierHttp.errors.tin && (
+                                                <p className="text-xs text-rose-500">
+                                                    {supplierHttp.errors.tin}
+                                                </p>
+                                            )}
+                                        </div>
+                                        <div className="space-y-1">
+                                            <Label htmlFor="sup_contact_person">
+                                                Contact Person
+                                            </Label>
+                                            <Input
+                                                id="sup_contact_person"
+                                                value={
+                                                    supplierHttp.data
+                                                        .contact_person
+                                                }
+                                                onChange={(e) =>
+                                                    supplierHttp.setData(
+                                                        'contact_person',
+                                                        e.target.value,
+                                                    )
+                                                }
+                                                required
+                                            />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <Label htmlFor="sup_contact_number">
+                                                Contact Number
+                                            </Label>
+                                            <Input
+                                                id="sup_contact_number"
+                                                value={
+                                                    supplierHttp.data
+                                                        .contact_number
+                                                }
+                                                onChange={(e) =>
+                                                    supplierHttp.setData(
+                                                        'contact_number',
+                                                        e.target.value,
+                                                    )
+                                                }
+                                            />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <Label htmlFor="sup_address">
+                                                Office Address
+                                            </Label>
+                                            <textarea
+                                                id="sup_address"
+                                                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-hidden"
+                                                value={
+                                                    supplierHttp.data.address
+                                                }
+                                                onChange={(e) =>
+                                                    supplierHttp.setData(
+                                                        'address',
+                                                        e.target.value,
+                                                    )
+                                                }
+                                                required
+                                            />
+                                        </div>
+                                        <div className="flex justify-end gap-2 pt-2">
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                onClick={() =>
+                                                    setIsAddSupplierOpen(false)
+                                                }
+                                            >
+                                                Cancel
+                                            </Button>
+                                            <Button
+                                                type="submit"
+                                                disabled={
+                                                    supplierHttp.processing
+                                                }
+                                            >
+                                                Save Supplier
+                                            </Button>
+                                        </div>
+                                    </form>
+                                </DialogContent>
+                            </Dialog>
+                        </>
                     )}
                 </div>
 
