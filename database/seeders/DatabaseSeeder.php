@@ -15,13 +15,5 @@ class DatabaseSeeder extends Seeder
         $this->call([
             SystemRolePermissionSeeder::class,
         ]);
-
-        // Demo data is only seeded in local or testing environments
-        if (app()->environment('local', 'testing')) {
-            $this->call([
-                AgencySeeder::class,
-                UserEmployeeSeeder::class,
-            ]);
-        }
     }
 }

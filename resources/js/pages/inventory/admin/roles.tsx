@@ -1,4 +1,4 @@
-import { Head, useForm, router, setLayoutProps } from '@inertiajs/react';
+import { Head, useForm, router, setLayoutProps, Link } from '@inertiajs/react';
 import { Plus, Edit2, Copy, Trash2, Users, Shield } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -464,13 +464,15 @@ export default function RolesIndex({ roles, permissions }: RolesIndexProps) {
                                             </div>
                                         </TableCell>
                                         <TableCell className="hidden sm:table-cell">
-                                            <Badge
-                                                variant="outline"
-                                                className="flex w-fit items-center gap-1 bg-muted/20"
-                                            >
-                                                <Users className="h-3 w-3" />
-                                                {role.users.length} Users
-                                            </Badge>
+                                            <Link href="/inventory/admin/users">
+                                                <Badge
+                                                    variant="outline"
+                                                    className="flex w-fit cursor-pointer items-center gap-1 bg-muted/20 transition-colors hover:bg-muted/30"
+                                                >
+                                                    <Users className="h-3 w-3" />
+                                                    {role.users.length} Users
+                                                </Badge>
+                                            </Link>
                                         </TableCell>
                                         <TableCell className="hidden sm:table-cell">
                                             <Badge

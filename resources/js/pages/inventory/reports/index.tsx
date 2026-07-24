@@ -1,5 +1,5 @@
 import { Head, usePage, setLayoutProps } from '@inertiajs/react';
-import { FileText, Printer, Eye, Loader2 } from 'lucide-react';
+import { FileText, Printer, Eye } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,7 @@ import {
 import { Label } from '@/components/ui/label';
 
 import { SmartSelect } from '@/components/ui/smart-select';
+import { Spinner } from '@/components/ui/spinner';
 import {
     Table,
     TableBody,
@@ -28,6 +29,7 @@ import { formatCurrency, formatDateTime } from '@/lib/utils';
 interface ReportType {
     id: string;
     name: string;
+    has_data?: boolean;
 }
 
 interface ReportsIndexProps {
@@ -40,9 +42,10 @@ export default function ReportsIndex({ reportTypes }: ReportsIndexProps) {
         { title: 'COA Reports Centre', href: '/inventory/reports' },
     ];
     setLayoutProps({ breadcrumbs });
-    const [selectedType, setSelectedType] = useState<string>('rpci');
+    const [selectedType, setSelectedType] = useState<string>('');
     const [reportData, setReportData] = useState<any[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
+    const [hasCompiled, setHasCompiled] = useState<boolean>(false);
 
     const [selectedItemId, setSelectedItemId] = useState<string>('');
 
@@ -65,6 +68,7 @@ export default function ReportsIndex({ reportTypes }: ReportsIndexProps) {
             .then((res) => res.json())
             .then((data) => {
                 setReportData(data);
+                setHasCompiled(true);
                 setLoading(false);
                 toast.success('Report data compiled successfully.');
             })
@@ -115,7 +119,7 @@ export default function ReportsIndex({ reportTypes }: ReportsIndexProps) {
                             variant="outline"
                             className="gap-2"
                             onClick={handlePrint}
-                            disabled={reportData.length === 0}
+                            disabled={!hasCompiled}
                         >
                             <Printer className="h-4 w-4" />
                             Print Report
@@ -147,6 +151,7 @@ export default function ReportsIndex({ reportTypes }: ReportsIndexProps) {
                                     onValueChange={(val) => {
                                         setSelectedType(val);
                                         setReportData([]);
+                                        setHasCompiled(false);
                                     }}
                                     placeholder="Select Report Type"
                                     className="w-full"
@@ -172,10 +177,16 @@ export default function ReportsIndex({ reportTypes }: ReportsIndexProps) {
                                 <Button
                                     className="w-full gap-2"
                                     onClick={handleGenerate}
-                                    disabled={loading}
+                                    disabled={
+                                        !selectedType ||
+                                        !reportTypes.find((r) => r.id === selectedType)?.has_data ||
+                                        (selectedType === 'stock_ledger' &&
+                                            !selectedItemId) ||
+                                        loading
+                                    }
                                 >
                                     {loading ? (
-                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                        <Spinner className="h-4 w-4" />
                                     ) : (
                                         <Eye className="h-4 w-4" />
                                     )}
@@ -187,7 +198,7 @@ export default function ReportsIndex({ reportTypes }: ReportsIndexProps) {
                 </Card>
 
                 {/* Printable Report Output Area */}
-                {reportData.length > 0 ? (
+                {hasCompiled ? (
                     <Card className="overflow-hidden border shadow-xs print:border-0 print:shadow-none">
                         {/* Report Heading Header (for print) */}
                         <div className="space-y-2 border-b border-border bg-muted/25 p-8 text-center print:border-0 print:bg-transparent print:p-4">
@@ -467,6 +478,16 @@ export default function ReportsIndex({ reportTypes }: ReportsIndexProps) {
                                                     </TableCell>
                                                 </TableRow>
                                             ))}
+                                            {reportData.length === 0 && (
+                                                <TableRow>
+                                                    <TableCell
+                                                        colSpan={8}
+                                                        className="py-8 text-center text-muted-foreground"
+                                                    >
+                                                        No property assets available.
+                                                    </TableCell>
+                                                </TableRow>
+                                            )}
                                         </TableBody>
                                     </Table>
                                 </div>
@@ -524,6 +545,16 @@ export default function ReportsIndex({ reportTypes }: ReportsIndexProps) {
                                                     </TableCell>
                                                 </TableRow>
                                             ))}
+                                            {reportData.length === 0 && (
+                                                <TableRow>
+                                                    <TableCell
+                                                        colSpan={5}
+                                                        className="py-8 text-center text-muted-foreground"
+                                                    >
+                                                        No transaction records for this item.
+                                                    </TableCell>
+                                                </TableRow>
+                                            )}
                                         </TableBody>
                                     </Table>
                                 </div>
@@ -577,9 +608,9 @@ export default function ReportsIndex({ reportTypes }: ReportsIndexProps) {
                                                         {row.action}
                                                     </TableCell>
                                                     <TableCell className="border border-muted-foreground/20">
-                                                        {row.auditable_type
-                                                            .split('\\')
-                                                            .pop()}{' '}
+                                                        {row.auditable_type && typeof row.auditable_type === 'string'
+                                                            ? row.auditable_type.split('\\').pop()
+                                                            : 'N/A'}{' '}
                                                         #{row.auditable_id}
                                                     </TableCell>
                                                     <TableCell className="border border-muted-foreground/20">
@@ -590,6 +621,16 @@ export default function ReportsIndex({ reportTypes }: ReportsIndexProps) {
                                                     </TableCell>
                                                 </TableRow>
                                             ))}
+                                            {reportData.length === 0 && (
+                                                <TableRow>
+                                                    <TableCell
+                                                        colSpan={7}
+                                                        className="py-8 text-center text-muted-foreground"
+                                                    >
+                                                        No audit logs found.
+                                                    </TableCell>
+                                                </TableRow>
+                                            )}
                                         </TableBody>
                                     </Table>
                                 </div>

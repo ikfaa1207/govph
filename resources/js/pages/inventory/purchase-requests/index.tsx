@@ -29,6 +29,13 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { SmartSelect } from '@/components/ui/smart-select';
 import {
     Table,
@@ -842,20 +849,30 @@ export default function PurchaseRequestsIndex({
                     </div>
 
                     <div className="flex w-full gap-2 sm:w-auto">
-                        <select
+                        <Select
                             value={status}
-                            onChange={(e) => {
-                                setStatus(e.target.value);
-                                handleFilterChange(search, e.target.value);
+                            onValueChange={(val) => {
+                                setStatus(val);
+                                handleFilterChange(search, val);
                             }}
-                            className="rounded-md border bg-background px-3 py-2 text-sm"
                         >
-                            <option value="all">All Statuses</option>
-                            <option value="pending">Pending</option>
-                            <option value="approved">Approved</option>
-                            <option value="ordered">Ordered</option>
-                            <option value="rejected">Rejected</option>
-                        </select>
+                            <SelectTrigger className="w-[180px] bg-background">
+                                <SelectValue placeholder="All Statuses" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">
+                                    All Statuses
+                                </SelectItem>
+                                <SelectItem value="pending">Pending</SelectItem>
+                                <SelectItem value="approved">
+                                    Approved
+                                </SelectItem>
+                                <SelectItem value="ordered">Ordered</SelectItem>
+                                <SelectItem value="rejected">
+                                    Rejected
+                                </SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
                 </form>
 

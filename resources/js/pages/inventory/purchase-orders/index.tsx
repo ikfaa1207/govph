@@ -26,6 +26,13 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { SmartSelect } from '@/components/ui/smart-select';
 import {
     Table,
@@ -834,44 +841,52 @@ export default function PurchaseOrdersIndex({
                     </div>
 
                     <div className="flex w-full gap-2 sm:w-auto">
-                        <select
+                        <Select
                             value={status}
-                            onChange={(e) => {
-                                setStatus(e.target.value);
-                                handleFilterChange(
-                                    search,
-                                    e.target.value,
-                                    supplierId,
-                                );
+                            onValueChange={(val) => {
+                                setStatus(val);
+                                handleFilterChange(search, val, supplierId);
                             }}
-                            className="rounded-md border bg-background px-3 py-2 text-sm"
                         >
-                            <option value="all">All Statuses</option>
-                            <option value="draft">Draft</option>
-                            <option value="sent">Sent</option>
-                            <option value="received">Received</option>
-                            <option value="cancelled">Cancelled</option>
-                        </select>
+                            <SelectTrigger className="w-[180px] bg-background">
+                                <SelectValue placeholder="All Statuses" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">
+                                    All Statuses
+                                </SelectItem>
+                                <SelectItem value="draft">Draft</SelectItem>
+                                <SelectItem value="sent">Sent</SelectItem>
+                                <SelectItem value="received">
+                                    Received
+                                </SelectItem>
+                                <SelectItem value="cancelled">
+                                    Cancelled
+                                </SelectItem>
+                            </SelectContent>
+                        </Select>
 
-                        <select
+                        <Select
                             value={supplierId}
-                            onChange={(e) => {
-                                setSupplierId(e.target.value);
-                                handleFilterChange(
-                                    search,
-                                    status,
-                                    e.target.value,
-                                );
+                            onValueChange={(val) => {
+                                setSupplierId(val);
+                                handleFilterChange(search, status, val);
                             }}
-                            className="max-w-[200px] rounded-md border bg-background px-3 py-2 text-sm"
                         >
-                            <option value="all">All Suppliers</option>
-                            {suppliers.map((s) => (
-                                <option key={s.id} value={String(s.id)}>
-                                    {s.name}
-                                </option>
-                            ))}
-                        </select>
+                            <SelectTrigger className="w-[200px] bg-background">
+                                <SelectValue placeholder="All Suppliers" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">
+                                    All Suppliers
+                                </SelectItem>
+                                {suppliers.map((s) => (
+                                    <SelectItem key={s.id} value={String(s.id)}>
+                                        {s.name}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                     </div>
                 </form>
 

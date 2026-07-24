@@ -22,12 +22,38 @@ class ReportController extends Controller
     {
         Gate::authorize('reports.view');
 
+        $hasRpci = Item::whereHas('category', function ($q) {
+            $q->where('is_ppe', false);
+        })->exists();
+
+        $hasRpcppe = Property::exists();
+
+        $hasStockLedger = Item::exists();
+
+        $hasAuditTrail = AuditLog::exists();
+
         return Inertia::render('inventory/reports/index', [
             'reportTypes' => [
-                ['id' => 'rpci', 'name' => 'Report on the Physical Count of Inventories (RPCI)'],
-                ['id' => 'rpcppe', 'name' => 'Report on Physical Count of Property, Plant, & Equipment (RPCPPE)'],
-                ['id' => 'stock_ledger', 'name' => 'Stock Card Ledger'],
-                ['id' => 'audit_trail', 'name' => 'Secure Audit Log Trail'],
+                [
+                    'id' => 'rpci',
+                    'name' => 'Report on the Physical Count of Inventories (RPCI)',
+                    'has_data' => $hasRpci,
+                ],
+                [
+                    'id' => 'rpcppe',
+                    'name' => 'Report on Physical Count of Property, Plant, & Equipment (RPCPPE)',
+                    'has_data' => $hasRpcppe,
+                ],
+                [
+                    'id' => 'stock_ledger',
+                    'name' => 'Stock Card Ledger',
+                    'has_data' => $hasStockLedger,
+                ],
+                [
+                    'id' => 'audit_trail',
+                    'name' => 'Secure Audit Log Trail',
+                    'has_data' => $hasAuditTrail,
+                ],
             ],
         ]);
     }
@@ -118,12 +144,13 @@ class ReportController extends Controller
                     ->map(function ($log) {
                         return [
                             'id' => $log->id,
-                            'operator' => $log->user->name ?? 'System',
-                            'role' => $log->user ? $log->user->roles->pluck('name')->join(', ') : 'N/A',
+                            'user_name' => $log->user->name ?? 'System',
+                            'user_role' => $log->user_role ?: ($log->user ? $log->user->roles->pluck('name')->join(', ') : 'N/A'),
                             'action' => $log->action,
-                            'target' => class_basename($log->model_type)." #{$log->model_id}",
-                            'ip' => $log->ip_address,
-                            'date' => $log->created_at->format('Y-m-d H:i:s'),
+                            'auditable_type' => $log->model_type ?? 'N/A',
+                            'auditable_id' => $log->model_id ?? 0,
+                            'ip_address' => $log->ip_address,
+                            'created_at' => $log->created_at->format('Y-m-d H:i:s'),
                         ];
                     });
 
