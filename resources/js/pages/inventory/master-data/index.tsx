@@ -38,7 +38,7 @@ interface MasterDataProps {
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Inventory', href: '/inventory/dashboard' },
+    { title: 'Administration', href: '#' },
     { title: 'System Libraries', href: '/inventory/master-data' },
 ];
 
