@@ -56,6 +56,7 @@ class SystemRolePermissionSeeder extends Seeder
         $roleHead = Role::firstOrCreate(['name' => 'Department Head'], ['description' => 'Authorizes departmental requisitions and requests.']);
         $roleEmployee = Role::firstOrCreate(['name' => 'Requesting Employee'], ['description' => 'Submits personal requisitions and tracks accountability.']);
         $roleAuditor = Role::firstOrCreate(['name' => 'Auditor'], ['description' => 'Inspects ledgers, transaction cards, and audit logs.']);
+        $roleInspector = Role::firstOrCreate(['name' => 'Inspection Officer'], ['description' => 'Inspects and verifies incoming deliveries and items.']);
 
         $roleAdmin->permissions()->sync(array_values(array_map(fn ($m) => $m->id, $permissionModels)));
         $roleSupply->permissions()->sync(array_map(fn ($name) => $permissionModels[$name]->id, [
@@ -72,6 +73,9 @@ class SystemRolePermissionSeeder extends Seeder
         ]));
         $roleAuditor->permissions()->sync(array_map(fn ($name) => $permissionModels[$name]->id, [
             'dashboard.view', 'inventory.view', 'warehouse.view', 'procurement.view', 'property.view', 'reports.view', 'reports.print', 'audit.view',
+        ]));
+        $roleInspector->permissions()->sync(array_map(fn ($name) => $permissionModels[$name]->id, [
+            'dashboard.view', 'inventory.view', 'warehouse.view', 'warehouse.receive',
         ]));
     }
 }

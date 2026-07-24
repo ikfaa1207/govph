@@ -1998,7 +1998,9 @@ export default function ReceivingIndex({
                             className="space-y-4"
                         >
                             <div className="space-y-1">
-                                <Label htmlFor="sup_name">Supplier Name</Label>
+                                <Label htmlFor="sup_name" required>
+                                    Supplier Name
+                                </Label>
                                 <Input
                                     id="sup_name"
                                     value={supplierHttp.data.name}
@@ -2055,7 +2057,7 @@ export default function ReceivingIndex({
                                 />
                             </div>
                             <div className="space-y-1">
-                                <Label htmlFor="sup_contact_number" required>
+                                <Label htmlFor="sup_contact_number">
                                     Contact Number
                                 </Label>
                                 <Input
@@ -2070,7 +2072,7 @@ export default function ReceivingIndex({
                                 />
                             </div>
                             <div className="space-y-1">
-                                <Label htmlFor="sup_address">
+                                <Label htmlFor="sup_address" required>
                                     Office Address
                                 </Label>
                                 <textarea

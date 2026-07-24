@@ -832,7 +832,7 @@ export default function PurchaseOrdersIndex({
                                         className="space-y-4"
                                     >
                                         <div className="space-y-1">
-                                            <Label htmlFor="sup_name">
+                                            <Label htmlFor="sup_name" required>
                                                 Supplier Name
                                             </Label>
                                             <Input
@@ -853,7 +853,7 @@ export default function PurchaseOrdersIndex({
                                             )}
                                         </div>
                                         <div className="space-y-1">
-                                            <Label htmlFor="sup_tin">
+                                            <Label htmlFor="sup_tin" required>
                                                 TIN (Taxpayer Identification
                                                 No.)
                                             </Label>
@@ -876,7 +876,10 @@ export default function PurchaseOrdersIndex({
                                             )}
                                         </div>
                                         <div className="space-y-1">
-                                            <Label htmlFor="sup_contact_person">
+                                            <Label
+                                                htmlFor="sup_contact_person"
+                                                required
+                                            >
                                                 Contact Person
                                             </Label>
                                             <Input
@@ -913,7 +916,10 @@ export default function PurchaseOrdersIndex({
                                             />
                                         </div>
                                         <div className="space-y-1">
-                                            <Label htmlFor="sup_address">
+                                            <Label
+                                                htmlFor="sup_address"
+                                                required
+                                            >
                                                 Office Address
                                             </Label>
                                             <textarea
