@@ -30,25 +30,41 @@ class AdminController extends Controller
     {
         Gate::authorize('users.manage');
 
+        $query = User::select(['id', 'name', 'email', 'is_active', 'created_at']);
+
+        if ($request->filled('role_id')) {
+            $query->whereHas('roles', function ($q) use ($request) {
+                $q->where('roles.id', $request->integer('role_id'));
+            });
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
         // Paginate users and limit selected columns to reduce payload
-        $users = User::select(['id', 'name', 'email', 'is_active', 'created_at'])
-            ->with([
-                'employee' => function ($q) {
-                    $q->select('id', 'user_id', 'office_id', 'department_id', 'position');
-                },
-                'employee.office' => function ($q) {
-                    $q->select('id', 'name');
-                },
-                'employee.department' => function ($q) {
-                    $q->select('id', 'name');
-                },
-                'roles' => function ($q) {
-                    // Qualify columns to avoid ambiguous column name errors (SQLite joins)
-                    $q->select('roles.id', 'roles.name');
-                },
-            ])
+        $users = $query->with([
+            'employee' => function ($q) {
+                $q->select('id', 'user_id', 'office_id', 'department_id', 'position');
+            },
+            'employee.office' => function ($q) {
+                $q->select('id', 'name');
+            },
+            'employee.department' => function ($q) {
+                $q->select('id', 'name');
+            },
+            'roles' => function ($q) {
+                // Qualify columns to avoid ambiguous column name errors (SQLite joins)
+                $q->select('roles.id', 'roles.name');
+            },
+        ])
             ->orderBy('name')
-            ->paginate(25);
+            ->paginate(25)
+            ->withQueryString();
 
         $roles = Role::select('id', 'name')->get();
         $offices = Office::select('id', 'name')->get();
@@ -59,6 +75,10 @@ class AdminController extends Controller
             'roles' => $roles,
             'offices' => $offices,
             'departments' => $departments,
+            'filters' => [
+                'role_id' => $request->input('role_id'),
+                'search' => $request->input('search'),
+            ],
         ]);
     }
 

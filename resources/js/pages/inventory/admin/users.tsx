@@ -68,6 +68,10 @@ interface UsersProps {
     roles: any[];
     offices: any[];
     departments: any[];
+    filters?: {
+        role_id?: string;
+        search?: string;
+    };
 }
 
 export default function UsersIndex({
@@ -75,6 +79,7 @@ export default function UsersIndex({
     roles,
     offices: initialOffices,
     departments: initialDepartments,
+    filters = {},
 }: UsersProps) {
     const { auth } = usePage().props as any;
     const currentUser = auth.user;
@@ -135,6 +140,43 @@ export default function UsersIndex({
 
     const [now] = useState(() => Date.now());
     const [isPaginating, setIsPaginating] = useState(false);
+
+    const [search, setSearch] = useState(filters.search || '');
+    const [selectedRoleId, setSelectedRoleId] = useState(
+        filters.role_id || 'all',
+    );
+
+    const handleFilterChange = (newSearch: string, newRole: string) => {
+        router.get(
+            '/inventory/admin/users',
+            {
+                search: newSearch || undefined,
+                role_id: newRole !== 'all' ? newRole : undefined,
+            },
+            {
+                preserveState: true,
+                replace: true,
+            },
+        );
+    };
+
+    const handleSearchSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        handleFilterChange(search, selectedRoleId);
+    };
+
+    const clearFilters = () => {
+        setSearch('');
+        setSelectedRoleId('all');
+        router.get(
+            '/inventory/admin/users',
+            {},
+            {
+                preserveState: true,
+                replace: true,
+            },
+        );
+    };
 
     const isUserLocked = (u: User) => {
         if (!u.locked_until) {
@@ -411,6 +453,59 @@ export default function UsersIndex({
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
+                        {/* Filter Bar */}
+                        <form
+                            onSubmit={handleSearchSubmit}
+                            className="mb-6 flex flex-col items-center justify-between gap-4 rounded-lg border bg-card p-4 shadow-xs sm:flex-row"
+                        >
+                            <div className="flex w-full gap-2 sm:flex-1">
+                                <Input
+                                    placeholder="Search name or email..."
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                    className="max-w-md bg-background"
+                                />
+                                <Button type="submit" variant="secondary">
+                                    Search
+                                </Button>
+                                {(search || selectedRoleId !== 'all') && (
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        onClick={clearFilters}
+                                    >
+                                        Reset
+                                    </Button>
+                                )}
+                            </div>
+
+                            <div className="flex w-full gap-2 sm:w-auto">
+                                <Select
+                                    value={selectedRoleId}
+                                    onValueChange={(val) => {
+                                        setSelectedRoleId(val);
+                                        handleFilterChange(search, val);
+                                    }}
+                                >
+                                    <SelectTrigger className="w-[200px] bg-background">
+                                        <SelectValue placeholder="All Roles" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">
+                                            All Roles
+                                        </SelectItem>
+                                        {roles.map((role) => (
+                                            <SelectItem
+                                                key={role.id}
+                                                value={String(role.id)}
+                                            >
+                                                {role.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </form>
                         {(users && users.data ? users.data : users).length ===
                         0 ? (
                             <div className="flex flex-col items-center justify-center py-12 text-center">

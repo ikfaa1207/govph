@@ -464,7 +464,9 @@ export default function RolesIndex({ roles, permissions }: RolesIndexProps) {
                                         </div>
                                     </TableCell>
                                     <TableCell className="hidden sm:table-cell">
-                                        <Link href="/inventory/admin/users">
+                                        <Link
+                                            href={`/inventory/admin/users?role_id=${role.id}`}
+                                        >
                                             <Badge
                                                 variant="outline"
                                                 className="flex w-fit cursor-pointer items-center gap-1 bg-muted/20 transition-colors hover:bg-muted/30"
