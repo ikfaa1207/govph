@@ -179,7 +179,9 @@ export default function ReportsIndex({ reportTypes }: ReportsIndexProps) {
                                     onClick={handleGenerate}
                                     disabled={
                                         !selectedType ||
-                                        !reportTypes.find((r) => r.id === selectedType)?.has_data ||
+                                        !reportTypes.find(
+                                            (r) => r.id === selectedType,
+                                        )?.has_data ||
                                         (selectedType === 'stock_ledger' &&
                                             !selectedItemId) ||
                                         loading
@@ -484,7 +486,8 @@ export default function ReportsIndex({ reportTypes }: ReportsIndexProps) {
                                                         colSpan={8}
                                                         className="py-8 text-center text-muted-foreground"
                                                     >
-                                                        No property assets available.
+                                                        No property assets
+                                                        available.
                                                     </TableCell>
                                                 </TableRow>
                                             )}
@@ -551,7 +554,8 @@ export default function ReportsIndex({ reportTypes }: ReportsIndexProps) {
                                                         colSpan={5}
                                                         className="py-8 text-center text-muted-foreground"
                                                     >
-                                                        No transaction records for this item.
+                                                        No transaction records
+                                                        for this item.
                                                     </TableCell>
                                                 </TableRow>
                                             )}
@@ -608,8 +612,12 @@ export default function ReportsIndex({ reportTypes }: ReportsIndexProps) {
                                                         {row.action}
                                                     </TableCell>
                                                     <TableCell className="border border-muted-foreground/20">
-                                                        {row.auditable_type && typeof row.auditable_type === 'string'
-                                                            ? row.auditable_type.split('\\').pop()
+                                                        {row.auditable_type &&
+                                                        typeof row.auditable_type ===
+                                                            'string'
+                                                            ? row.auditable_type
+                                                                  .split('\\')
+                                                                  .pop()
                                                             : 'N/A'}{' '}
                                                         #{row.auditable_id}
                                                     </TableCell>

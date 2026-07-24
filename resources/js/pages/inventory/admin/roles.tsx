@@ -433,95 +433,85 @@ export default function RolesIndex({ roles, permissions }: RolesIndexProps) {
                         </Button>
                     </Card>
                 ) : (
-                    <Card>
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead className="w-[30%]">
-                                        Role / Description
-                                    </TableHead>
-                                    <TableHead className="hidden sm:table-cell">
-                                        Users Assigned
-                                    </TableHead>
-                                    <TableHead className="hidden sm:table-cell">
-                                        Permissions Count
-                                    </TableHead>
-                                    <TableHead className="text-right">
-                                        Actions
-                                    </TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {roles.map((role) => (
-                                    <TableRow key={role.id}>
-                                        <TableCell>
-                                            <div className="font-semibold text-foreground">
-                                                {role.name}
-                                            </div>
-                                            <div className="text-xs text-muted-foreground">
-                                                {role.description ||
-                                                    'No description provided'}
-                                            </div>
-                                        </TableCell>
-                                        <TableCell className="hidden sm:table-cell">
-                                            <Link href="/inventory/admin/users">
-                                                <Badge
-                                                    variant="outline"
-                                                    className="flex w-fit cursor-pointer items-center gap-1 bg-muted/20 transition-colors hover:bg-muted/30"
-                                                >
-                                                    <Users className="h-3 w-3" />
-                                                    {role.users.length} Users
-                                                </Badge>
-                                            </Link>
-                                        </TableCell>
-                                        <TableCell className="hidden sm:table-cell">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead className="w-[30%]">
+                                    Role / Description
+                                </TableHead>
+                                <TableHead className="hidden sm:table-cell">
+                                    Users Assigned
+                                </TableHead>
+                                <TableHead className="hidden sm:table-cell">
+                                    Permissions Count
+                                </TableHead>
+                                <TableHead className="text-right">
+                                    Actions
+                                </TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {roles.map((role) => (
+                                <TableRow key={role.id}>
+                                    <TableCell>
+                                        <div className="font-semibold text-foreground">
+                                            {role.name}
+                                        </div>
+                                        <div className="text-xs text-muted-foreground">
+                                            {role.description ||
+                                                'No description provided'}
+                                        </div>
+                                    </TableCell>
+                                    <TableCell className="hidden sm:table-cell">
+                                        <Link href="/inventory/admin/users">
                                             <Badge
-                                                variant="secondary"
-                                                className="font-mono"
+                                                variant="outline"
+                                                className="flex w-fit cursor-pointer items-center gap-1 bg-muted/20 transition-colors hover:bg-muted/30"
                                             >
-                                                {role.permissions.length}{' '}
-                                                Configured
+                                                <Users className="h-3 w-3" />
+                                                {role.users.length} Users
                                             </Badge>
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            <RowActionsMenu
-                                                actions={[
-                                                    {
-                                                        label: 'Edit Permissions',
-                                                        icon: Edit2,
-                                                        onClick: () =>
-                                                            openEditDialog(
-                                                                role,
-                                                            ),
-                                                    },
-                                                    {
-                                                        label: 'Clone Role',
-                                                        icon: Copy,
-                                                        onClick: () =>
-                                                            openCloneDialog(
-                                                                role,
-                                                            ),
-                                                    },
-                                                    {
-                                                        label: 'Delete Role',
-                                                        icon: Trash2,
-                                                        onClick: () =>
-                                                            handleDeleteRole(
-                                                                role,
-                                                            ),
-                                                        show:
-                                                            role.users
-                                                                .length === 0,
-                                                        destructive: true,
-                                                    },
-                                                ]}
-                                            />
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </Card>
+                                        </Link>
+                                    </TableCell>
+                                    <TableCell className="hidden sm:table-cell">
+                                        <Badge
+                                            variant="secondary"
+                                            className="font-mono"
+                                        >
+                                            {role.permissions.length} Configured
+                                        </Badge>
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                        <RowActionsMenu
+                                            actions={[
+                                                {
+                                                    label: 'Edit Permissions',
+                                                    icon: Edit2,
+                                                    onClick: () =>
+                                                        openEditDialog(role),
+                                                },
+                                                {
+                                                    label: 'Clone Role',
+                                                    icon: Copy,
+                                                    onClick: () =>
+                                                        openCloneDialog(role),
+                                                },
+                                                {
+                                                    label: 'Delete Role',
+                                                    icon: Trash2,
+                                                    onClick: () =>
+                                                        handleDeleteRole(role),
+                                                    show:
+                                                        role.users.length === 0,
+                                                    destructive: true,
+                                                },
+                                            ]}
+                                        />
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
                 )}
 
                 {/* Dialog: Edit Permissions */}

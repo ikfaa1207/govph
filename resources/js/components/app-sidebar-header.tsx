@@ -2,7 +2,6 @@ import { usePage } from '@inertiajs/react';
 import { Shield, Clock, Search } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Breadcrumbs } from '@/components/breadcrumbs';
-import { Badge } from '@/components/ui/badge';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import type { BreadcrumbItem as BreadcrumbItemType } from '@/types';
 
@@ -123,7 +122,7 @@ export function AppSidebarHeader({
                         <span className="font-mono text-[11px] font-semibold tracking-tight text-foreground/80">
                             {time}
                         </span>
-                        <span className="rounded bg-neutral-200/60 px-1 py-0.5 font-mono text-[9px] font-bold text-neutral-600 dark:bg-neutral-800/80 dark:text-neutral-400 uppercase">
+                        <span className="rounded bg-neutral-200/60 px-1 py-0.5 font-mono text-[9px] font-bold text-neutral-600 uppercase dark:bg-neutral-800/80 dark:text-neutral-400">
                             PHT
                         </span>
                     </div>
@@ -132,10 +131,15 @@ export function AppSidebarHeader({
                 {/* Security Clearance Badge */}
                 {(() => {
                     const config = getRoleConfig(primaryRole);
+
                     return (
-                        <div className={`flex h-8 items-center gap-2 rounded-full border px-3 text-[11px] font-bold tracking-wide transition-all hover:scale-[1.02] ${config.bg} ${config.text} ${config.border} ${config.glow}`}>
-                            <Shield className={`h-3.5 w-3.5 shrink-0 ${config.iconColor}`} />
-                            <span className="uppercase text-[9px] font-extrabold opacity-60">
+                        <div
+                            className={`flex h-8 items-center gap-2 rounded-full border px-3 text-[11px] font-bold tracking-wide transition-all hover:scale-[1.02] ${config.bg} ${config.text} ${config.border} ${config.glow}`}
+                        >
+                            <Shield
+                                className={`h-3.5 w-3.5 shrink-0 ${config.iconColor}`}
+                            />
+                            <span className="text-[9px] font-extrabold uppercase opacity-60">
                                 Clearance:
                             </span>
                             <span>{primaryRole}</span>
