@@ -80,6 +80,7 @@ export default function RolesIndex({ roles, permissions }: RolesIndexProps) {
 
     const [isAddOpen, setIsAddOpen] = useState(false);
     const [selectedRole, setSelectedRole] = useState<Role | null>(null);
+    const [isViewOpen, setIsViewOpen] = useState(false);
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [isCloneOpen, setIsCloneOpen] = useState(false);
     const [roleToDelete, setRoleToDelete] = useState<Role | null>(null);
@@ -476,7 +477,11 @@ export default function RolesIndex({ roles, permissions }: RolesIndexProps) {
                                     <TableCell className="hidden sm:table-cell">
                                         <Badge
                                             variant="secondary"
-                                            className="font-mono"
+                                            className="cursor-pointer font-mono transition-colors hover:bg-secondary/80"
+                                            onClick={() => {
+                                                setSelectedRole(role);
+                                                setIsViewOpen(true);
+                                            }}
                                         >
                                             {role.permissions.length} Configured
                                         </Badge>
@@ -717,6 +722,104 @@ export default function RolesIndex({ roles, permissions }: RolesIndexProps) {
                                 </div>
                             </form>
                         )}
+                    </DialogContent>
+                </Dialog>
+
+                {/* Dialog: View Permissions */}
+                <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
+                    <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
+                        <DialogHeader>
+                            <DialogTitle className="flex items-center gap-2">
+                                <Shield className="h-5 w-5 text-indigo-500" />
+                                <span>
+                                    {selectedRole?.name} - Configured
+                                    Permissions
+                                </span>
+                            </DialogTitle>
+                            <DialogDescription>
+                                {selectedRole?.description ||
+                                    'No description provided'}
+                            </DialogDescription>
+                        </DialogHeader>
+
+                        <div className="space-y-4 pt-2">
+                            {selectedRole &&
+                                (() => {
+                                    const grouped =
+                                        selectedRole.permissions.reduce(
+                                            (acc, perm) => {
+                                                const module =
+                                                    perm.module || 'Other';
+
+                                                if (!acc[module]) {
+                                                    acc[module] = [];
+                                                }
+
+                                                acc[module].push(perm);
+
+                                                return acc;
+                                            },
+                                            {} as Record<
+                                                string,
+                                                typeof selectedRole.permissions
+                                            >,
+                                        );
+
+                                    const modules = Object.entries(grouped);
+
+                                    if (modules.length === 0) {
+                                        return (
+                                            <div className="py-6 text-center text-sm text-muted-foreground">
+                                                No permissions assigned to this
+                                                role.
+                                            </div>
+                                        );
+                                    }
+
+                                    return modules.map(([module, permList]) => (
+                                        <div
+                                            key={module}
+                                            className="rounded-lg border bg-card p-4"
+                                        >
+                                            <h4 className="mb-3 text-xs font-bold tracking-wider text-primary uppercase">
+                                                {module} Module
+                                            </h4>
+                                            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                                                {permList.map((perm) => (
+                                                    <div
+                                                        key={perm.id}
+                                                        className="flex items-start space-x-2 text-xs"
+                                                    >
+                                                        <span className="mt-0.5 font-bold text-emerald-500">
+                                                            ✓
+                                                        </span>
+                                                        <div>
+                                                            <div className="font-semibold text-foreground">
+                                                                {formatPermissionName(
+                                                                    perm.name,
+                                                                )}
+                                                            </div>
+                                                            <div className="text-[11px] leading-snug text-muted-foreground">
+                                                                {
+                                                                    perm.description
+                                                                }
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ));
+                                })()}
+                        </div>
+                        <div className="flex justify-end pt-2">
+                            <Button
+                                variant="outline"
+                                onClick={() => setIsViewOpen(false)}
+                            >
+                                Close
+                            </Button>
+                        </div>
                     </DialogContent>
                 </Dialog>
             </div>

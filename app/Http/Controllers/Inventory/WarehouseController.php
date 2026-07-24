@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Location;
 use App\Models\Warehouse;
 use App\Services\Audit\AuditLogger;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -15,7 +16,7 @@ class WarehouseController extends Controller
     /**
      * Store a newly created warehouse.
      */
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request): RedirectResponse|JsonResponse
     {
         Gate::authorize('inventory.create');
 
@@ -27,6 +28,10 @@ class WarehouseController extends Controller
         $warehouse = Warehouse::create($validated);
 
         AuditLogger::log('CREATE_WAREHOUSE', $warehouse, null, $warehouse->toArray());
+
+        if ($request->wantsJson()) {
+            return response()->json($warehouse, 201);
+        }
 
         return back();
     }

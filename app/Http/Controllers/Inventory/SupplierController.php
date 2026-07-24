@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\PurchaseOrder;
 use App\Models\Supplier;
 use App\Services\Audit\AuditLogger;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -15,7 +16,7 @@ class SupplierController extends Controller
     /**
      * Store a newly created supplier in database.
      */
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request): RedirectResponse|JsonResponse
     {
         Gate::authorize('warehouse.receive');
 
@@ -30,6 +31,10 @@ class SupplierController extends Controller
         $supplier = Supplier::create($validated);
 
         AuditLogger::log('CREATE_SUPPLIER', $supplier, null, $supplier->toArray());
+
+        if ($request->wantsJson()) {
+            return response()->json($supplier, 201);
+        }
 
         return back();
     }

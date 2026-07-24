@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Inventory;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Services\Audit\AuditLogger;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -14,7 +15,7 @@ class CategoryController extends Controller
     /**
      * Store a newly created category.
      */
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request): RedirectResponse|JsonResponse
     {
         Gate::authorize('inventory.create');
 
@@ -27,6 +28,10 @@ class CategoryController extends Controller
         $category = Category::create($validated);
 
         AuditLogger::log('CREATE_CATEGORY', $category, null, $category->toArray());
+
+        if ($request->wantsJson()) {
+            return response()->json($category, 201);
+        }
 
         return back();
     }

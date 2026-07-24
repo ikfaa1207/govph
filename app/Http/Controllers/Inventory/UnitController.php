@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Item;
 use App\Models\Unit;
 use App\Services\Audit\AuditLogger;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -15,7 +16,7 @@ class UnitController extends Controller
     /**
      * Store a newly created unit of measurement.
      */
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request): RedirectResponse|JsonResponse
     {
         Gate::authorize('inventory.create');
 
@@ -27,6 +28,10 @@ class UnitController extends Controller
         $unit = Unit::create($validated);
 
         AuditLogger::log('CREATE_UNIT', $unit, null, $unit->toArray());
+
+        if ($request->wantsJson()) {
+            return response()->json($unit, 201);
+        }
 
         return back();
     }

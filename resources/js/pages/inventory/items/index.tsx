@@ -224,9 +224,11 @@ export default function ItemsIndex({
                 categoryHttp.reset();
                 toast.success('Category created successfully.');
             },
-            onError: () => {
+            onError: (errs) => {
+                const firstError = Object.values(errs)[0];
                 toast.error(
-                    'Failed to create category. Check unique constraints.',
+                    firstError ||
+                        'Failed to create category. Check unique constraints.',
                 );
             },
         });
@@ -262,9 +264,11 @@ export default function ItemsIndex({
                 locationHttp.reset();
                 toast.success('Storage location created successfully.');
             },
-            onError: () => {
+            onError: (errs) => {
+                const firstError = Object.values(errs)[0];
                 toast.error(
-                    'Failed to create storage location. Check unique constraints.',
+                    firstError ||
+                        'Failed to create storage location. Check unique constraints.',
                 );
             },
         });
@@ -280,9 +284,11 @@ export default function ItemsIndex({
                 warehouseHttp.reset();
                 toast.success('Warehouse created successfully.');
             },
-            onError: () => {
+            onError: (errs) => {
+                const firstError = Object.values(errs)[0];
                 toast.error(
-                    'Failed to create warehouse. Check unique constraints.',
+                    firstError ||
+                        'Failed to create warehouse. Check unique constraints.',
                 );
             },
         });

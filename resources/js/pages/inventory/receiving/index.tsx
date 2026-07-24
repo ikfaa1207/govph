@@ -312,8 +312,12 @@ export default function ReceivingIndex({
                 supplierHttp.reset();
                 toast.success('Supplier registered successfully.');
             },
-            onError: () => {
-                toast.error('Failed to add supplier. Ensure TIN is unique.');
+            onError: (errs) => {
+                const firstError = Object.values(errs)[0];
+                toast.error(
+                    firstError ||
+                        'Failed to add supplier. Ensure TIN is unique.',
+                );
             },
         });
     };
