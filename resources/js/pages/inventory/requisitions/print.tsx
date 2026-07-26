@@ -470,7 +470,7 @@ export default function RequisitionPrint({ requisition }: PrintProps) {
                                 {formatDate(latestIssuance?.issued_date)}
                             </td>
                             <td className="p-2 text-center">
-                                {formatDate(latestIssuance?.created_at)}
+                                {formatDate(latestIssuance?.issued_date)}
                             </td>
                         </tr>
                     </tbody>

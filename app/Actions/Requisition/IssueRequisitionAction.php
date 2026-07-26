@@ -32,7 +32,7 @@ class IssueRequisitionAction
             $issuance = Issuance::create([
                 'requisition_id' => $requisition->id,
                 'issue_number' => $issueNumber,
-                'issued_date' => now()->toDateString(),
+                'issued_date' => now(),
                 'issued_by' => $employee->id,
                 'received_by' => $requisition->requesting_employee_id,
                 'purpose' => $requisition->remarks,

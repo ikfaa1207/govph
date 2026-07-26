@@ -22,6 +22,16 @@ class Issuance extends Model
     use HasFactory;
 
     /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'issued_date' => 'datetime',
+        ];
+    }
+
+    /**
      * Get the associated Requisition (RIS).
      *
      * @return BelongsTo<Requisition, $this>
