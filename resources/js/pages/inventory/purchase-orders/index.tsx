@@ -159,6 +159,7 @@ export default function PurchaseOrdersIndex({
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [selectedPO, setSelectedPO] = useState<PurchaseOrder | null>(null);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
+    const [isSendOpen, setIsSendOpen] = useState(false);
 
     const [localSuppliers, setLocalSuppliers] = useState(suppliers);
     const [isAddSupplierOpen, setIsAddSupplierOpen] = useState(false);
@@ -289,20 +290,17 @@ export default function PurchaseOrdersIndex({
         });
     };
 
-    const handleSendPO = (po: PurchaseOrder) => {
-        if (
-            !confirm(
-                'Mark this PO as sent to supplier? This moves it out of draft state.',
-            )
-        ) {
+    const handleSendPO = () => {
+        if (!selectedPO) {
             return;
         }
 
         router.post(
-            `/inventory/purchase-orders/${po.id}/send`,
+            `/inventory/purchase-orders/${selectedPO.id}/send`,
             {},
             {
                 onSuccess: () => {
+                    setIsSendOpen(false);
                     setIsDetailOpen(false);
                     toast.success('Purchase Order marked as sent.');
                 },
@@ -1415,7 +1413,7 @@ export default function PurchaseOrdersIndex({
                                             <Button
                                                 className="gap-1 bg-amber-600 text-white hover:bg-amber-700"
                                                 onClick={() =>
-                                                    handleSendPO(selectedPO)
+                                                    setIsSendOpen(true)
                                                 }
                                             >
                                                 Mark as Sent
@@ -1424,6 +1422,38 @@ export default function PurchaseOrdersIndex({
                                 </div>
                             </>
                         )}
+                    </DialogContent>
+                </Dialog>
+
+                {/* Send PO Confirmation Dialog */}
+                <Dialog open={isSendOpen} onOpenChange={setIsSendOpen}>
+                    <DialogContent className="max-w-md">
+                        <DialogHeader>
+                            <DialogTitle>
+                                Mark Purchase Order as Sent
+                            </DialogTitle>
+                            <DialogDescription>
+                                Are you sure you want to mark this Purchase
+                                Order as sent to the supplier? This moves it out
+                                of the draft state.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <div className="mt-4 flex justify-end gap-2">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setIsSendOpen(false)}
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                type="button"
+                                className="bg-amber-600 text-white hover:bg-amber-700"
+                                onClick={handleSendPO}
+                            >
+                                Confirm Sent
+                            </Button>
+                        </div>
                     </DialogContent>
                 </Dialog>
             </div>
