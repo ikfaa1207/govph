@@ -144,6 +144,7 @@ export default function PurchaseRequestsIndex({
     const [selectedPR, setSelectedPR] = useState<PurchaseRequest | null>(null);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
     const [isRejectOpen, setIsRejectOpen] = useState(false);
+    const [isApproveOpen, setIsApproveOpen] = useState(false);
 
     const handleFilterChange = (newSearch: string, newStatus: string) => {
         router.get(
@@ -244,18 +245,17 @@ export default function PurchaseRequestsIndex({
         });
     };
 
-    const handleApprove = (pr: PurchaseRequest) => {
-        if (
-            !confirm('Are you sure you want to approve this Purchase Request?')
-        ) {
+    const handleApprove = () => {
+        if (!selectedPR) {
             return;
         }
 
         router.post(
-            `/inventory/purchase-requests/${pr.id}/approve`,
+            `/inventory/purchase-requests/${selectedPR.id}/approve`,
             {},
             {
                 onSuccess: () => {
+                    setIsApproveOpen(false);
                     setIsDetailOpen(false);
                     toast.success('Purchase Request approved.');
                 },
@@ -1170,9 +1170,7 @@ export default function PurchaseRequestsIndex({
                                                 <Button
                                                     className="bg-emerald-600 text-white hover:bg-emerald-700"
                                                     onClick={() =>
-                                                        handleApprove(
-                                                            selectedPR,
-                                                        )
+                                                        setIsApproveOpen(true)
                                                     }
                                                 >
                                                     Approve PR
@@ -1239,6 +1237,36 @@ export default function PurchaseRequestsIndex({
                                 </Button>
                             </div>
                         </form>
+                    </DialogContent>
+                </Dialog>
+
+                {/* Approve Confirmation Dialog */}
+                <Dialog open={isApproveOpen} onOpenChange={setIsApproveOpen}>
+                    <DialogContent className="max-w-md">
+                        <DialogHeader>
+                            <DialogTitle>Approve Purchase Request</DialogTitle>
+                            <DialogDescription>
+                                Are you sure you want to approve this Purchase
+                                Request? This will route the request to the next
+                                stage of approval.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <div className="mt-4 flex justify-end gap-2">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setIsApproveOpen(false)}
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                type="button"
+                                className="bg-emerald-600 text-white hover:bg-emerald-700"
+                                onClick={handleApprove}
+                            >
+                                Confirm Approve
+                            </Button>
+                        </div>
                     </DialogContent>
                 </Dialog>
             </div>
