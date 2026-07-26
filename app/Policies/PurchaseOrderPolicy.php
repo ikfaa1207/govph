@@ -2,6 +2,7 @@
 
 namespace App\Policies;
 
+use App\Enums\PurchaseOrderStatus;
 use App\Models\PurchaseOrder;
 use App\Models\User;
 use Illuminate\Auth\Access\Response;
@@ -59,7 +60,7 @@ class PurchaseOrderPolicy
             return Response::deny('You do not have permission to update purchase orders.');
         }
 
-        if ($purchaseOrder->status !== 'draft') {
+        if ($purchaseOrder->status !== PurchaseOrderStatus::Draft) {
             return Response::deny('Only draft purchase orders can be edited.');
         }
 
@@ -75,7 +76,7 @@ class PurchaseOrderPolicy
             return Response::deny('You do not have permission to send purchase orders.');
         }
 
-        if ($purchaseOrder->status !== 'draft') {
+        if ($purchaseOrder->status !== PurchaseOrderStatus::Draft) {
             return Response::deny('Only draft purchase orders can be sent.');
         }
 
