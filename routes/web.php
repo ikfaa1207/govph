@@ -25,7 +25,7 @@ use App\Http\Controllers\Inventory\WarehouseController;
 use App\Http\Controllers\RpcppeReportController;
 use Illuminate\Support\Facades\Route;
 
-Route::inertia('/', 'welcome')->name('home');
+Route::redirect('/', '/dashboard')->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
