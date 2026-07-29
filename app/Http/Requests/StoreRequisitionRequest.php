@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Item;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -24,7 +25,16 @@ class StoreRequisitionRequest extends FormRequest
     {
         return [
             'items' => ['required', 'array', 'min:1'],
-            'items.*.item_id' => ['required', 'exists:items,id'],
+            'items.*.item_id' => [
+                'required',
+                'exists:items,id',
+                function ($attribute, $value, $fail) {
+                    $item = Item::find($value);
+                    if ($item instanceof Item && $item->current_stock < 1) {
+                        $fail("The selected item '{$item->name}' is out of stock.");
+                    }
+                },
+            ],
             'items.*.quantity' => ['required', 'integer', 'min:1'],
             'purpose' => ['nullable', 'string'],
         ];

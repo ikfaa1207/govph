@@ -67,6 +67,7 @@ interface RequisitionItem {
         name: string;
         unit_cost: number;
         current_stock: number;
+        reorder_level: number;
         unit?: {
             abbreviation: string;
         };
@@ -1075,6 +1076,26 @@ export default function RequisitionsIndex({
                                                         ' ',
                                                     )}
                                                 </Badge>
+                                                {[
+                                                    'pending_dept_head',
+                                                    'pending_supply',
+                                                    'partially_issued',
+                                                ].includes(req.status) &&
+                                                    req.items.some(
+                                                        (item) =>
+                                                            item.item
+                                                                .current_stock <=
+                                                            item.item
+                                                                .reorder_level,
+                                                    ) && (
+                                                        <Badge
+                                                            variant="outline"
+                                                            className="gap-1 border-amber-500/50 bg-amber-500/10 font-medium text-amber-600 dark:text-amber-400"
+                                                        >
+                                                            <ShieldAlert className="h-3 w-3" />
+                                                            Low Stock Item(s)
+                                                        </Badge>
+                                                    )}
                                             </div>
                                             <CardDescription>
                                                 Submitted by{' '}
@@ -1202,13 +1223,52 @@ export default function RequisitionsIndex({
                                                                         key={
                                                                             item.id
                                                                         }
-                                                                    >
-                                                                        <TableCell className="font-medium">
-                                                                            {
+                                                                        className={
+                                                                            item
+                                                                                .item
+                                                                                .current_stock <=
                                                                                 item
                                                                                     .item
-                                                                                    .name
-                                                                            }
+                                                                                    .reorder_level &&
+                                                                            [
+                                                                                'pending_dept_head',
+                                                                                'pending_supply',
+                                                                                'partially_issued',
+                                                                            ].includes(
+                                                                                req.status,
+                                                                            )
+                                                                                ? 'bg-amber-500/5 dark:bg-amber-500/10'
+                                                                                : ''
+                                                                        }
+                                                                    >
+                                                                        <TableCell className="font-medium">
+                                                                            <div className="flex items-center gap-1.5">
+                                                                                <span>
+                                                                                    {
+                                                                                        item
+                                                                                            .item
+                                                                                            .name
+                                                                                    }
+                                                                                </span>
+                                                                                {item
+                                                                                    .item
+                                                                                    .current_stock <=
+                                                                                    item
+                                                                                        .item
+                                                                                        .reorder_level &&
+                                                                                    [
+                                                                                        'pending_dept_head',
+                                                                                        'pending_supply',
+                                                                                        'partially_issued',
+                                                                                    ].includes(
+                                                                                        req.status,
+                                                                                    ) && (
+                                                                                        <span className="inline-flex items-center rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400">
+                                                                                            Low
+                                                                                            Stock
+                                                                                        </span>
+                                                                                    )}
+                                                                            </div>
                                                                         </TableCell>
                                                                         <TableCell className="text-right">
                                                                             {
@@ -1282,6 +1342,22 @@ export default function RequisitionsIndex({
                                 onSubmit={handleApproveSubmit}
                                 className="space-y-4"
                             >
+                                {selectedReq.items.some(
+                                    (item) =>
+                                        item.item.current_stock <=
+                                        item.item.reorder_level,
+                                ) && (
+                                    <div className="flex gap-2 rounded-md border border-amber-500/20 bg-amber-500/10 p-3 text-xs text-amber-600 dark:text-amber-400">
+                                        <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0" />
+                                        <div>
+                                            <strong>Low Stock Alert:</strong>{' '}
+                                            One or more requested items are
+                                            currently at or below their
+                                            reorder/buffer level. Please verify
+                                            carefully.
+                                        </div>
+                                    </div>
+                                )}
                                 <div className="max-h-[60vh] overflow-y-auto pr-2">
                                     <div className="space-y-3">
                                         {selectedReq.items.map((item) => {
@@ -1315,6 +1391,26 @@ export default function RequisitionsIndex({
                                                                 ?.abbreviation ||
                                                                 'pcs'}
                                                         </div>
+                                                        {item.item
+                                                            .current_stock <=
+                                                            item.item
+                                                                .reorder_level && (
+                                                            <div className="mt-1.5 flex items-center gap-1 text-[11px] font-medium text-amber-600 dark:text-amber-400">
+                                                                <ShieldAlert className="h-3.5 w-3.5 shrink-0" />
+                                                                Stock is at or
+                                                                below reorder
+                                                                level (
+                                                                {
+                                                                    item.item
+                                                                        .reorder_level
+                                                                }
+                                                                ). Available:{' '}
+                                                                {
+                                                                    item.item
+                                                                        .current_stock
+                                                                }
+                                                            </div>
+                                                        )}
                                                     </div>
                                                     <div className="flex items-center gap-3">
                                                         <Label className="hidden text-xs font-medium text-muted-foreground sm:block">

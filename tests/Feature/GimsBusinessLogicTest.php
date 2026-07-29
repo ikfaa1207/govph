@@ -800,3 +800,75 @@ test('valuation service handles recordStockOut insufficient stock boundary condi
     expect(fn () => $service->recordStockOut($item, 11, 'Test', 2, 'Exceed stock'))
         ->toThrow(InsufficientStockException::class);
 });
+
+test('requisition items must have stock balance of 1 and above', function () {
+    // Setup foundation records
+    $office = Office::create(['code' => 'O-TEST-RIS', 'name' => 'Test Office RIS']);
+    $dept = Department::create(['office_id' => $office->id, 'code' => 'D-TEST-RIS', 'name' => 'Test Dept RIS']);
+    $unit = Unit::create(['name' => 'Piece', 'abbreviation' => 'pc']);
+    $category = Category::create(['name' => 'Office Supplies', 'code' => 'SUPP', 'is_ppe' => false]);
+
+    $inStockItem = Item::create([
+        'item_code' => 'ITEM-IN-STOCK',
+        'name' => 'Available Item',
+        'category_id' => $category->id,
+        'unit_id' => $unit->id,
+        'unit_cost' => 10.00,
+        'reorder_level' => 10,
+        'maximum_stock' => 100,
+        'status' => 'active',
+    ]);
+    (new ValuationService)->recordStockIn($inStockItem, 5, 10.00, 'Test', 1, 'Initial balance');
+
+    $outOfStockItem = Item::create([
+        'item_code' => 'ITEM-OUT-STOCK',
+        'name' => 'Unavailable Item',
+        'category_id' => $category->id,
+        'unit_id' => $unit->id,
+        'unit_cost' => 10.00,
+        'reorder_level' => 10,
+        'maximum_stock' => 100,
+        'status' => 'active',
+    ]);
+
+    $employeeUser = User::factory()->employee()->create(['name' => 'Staff RIS', 'email' => 'staffris@example.com', 'password' => bcrypt('password')]);
+    $employee = Employee::create(['user_id' => $employeeUser->id, 'employee_id' => 'E01-RIS', 'name' => 'Staff RIS', 'position' => 'Staff', 'office_id' => $office->id, 'department_id' => $dept->id]);
+
+    Permission::create(['name' => 'request.create', 'module' => 'requisition']);
+    Permission::create(['name' => 'requisition.viewAny', 'module' => 'requisition']);
+    $employeeUser->givePermissionTo('request.create');
+    $employeeUser->givePermissionTo('requisition.viewAny');
+
+    // Authenticate employee
+    $this->actingAs($employeeUser);
+
+    // 1. Verify index returns only items with stock >= 1
+    $response = $this->get(route('inventory.requisitions.index'));
+    $response->assertStatus(200);
+    $items = $response->viewData('page')['props']['items'];
+
+    $itemIds = collect($items)->pluck('id')->toArray();
+    expect($itemIds)->toContain($inStockItem->id);
+    expect($itemIds)->not->toContain($outOfStockItem->id);
+
+    // 2. Submitting Requisition with out of stock item should fail validation
+    $response = $this->post(route('inventory.requisitions.store'), [
+        'items' => [
+            ['item_id' => $outOfStockItem->id, 'quantity' => 1],
+        ],
+        'purpose' => 'For office use',
+    ]);
+    $response->assertSessionHasErrors(['items.0.item_id']);
+
+    // 3. Submitting Requisition with in stock item should succeed
+    $response = $this->post(route('inventory.requisitions.store'), [
+        'items' => [
+            ['item_id' => $inStockItem->id, 'quantity' => 1],
+        ],
+        'purpose' => 'For office use',
+    ]);
+    $response->assertRedirect();
+    $this->assertDatabaseHas('requisitions', [
+        'requesting_employee_id' => $employee->id,
+    ]);
+});

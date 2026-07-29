@@ -240,7 +240,7 @@ class ItemController extends Controller
             ? ItemStatus::Inactive
             : ItemStatus::Active;
 
-        $item->status = $newStatus->value;
+        $item->status = $newStatus;
         $item->save();
 
         AuditLogger::log('TOGGLE_ITEM_STATUS', $item, null, $item->toArray());

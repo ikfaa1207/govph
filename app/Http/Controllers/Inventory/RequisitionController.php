@@ -70,6 +70,7 @@ class RequisitionController extends Controller
         $requisitions = $query->orderBy('id', 'desc')->paginate(15);
 
         $allItems = Item::where('status', 'active')
+            ->where('current_stock', '>=', 1)
             ->whereHas('category', fn ($q) => $q->where('is_ppe', false))
             ->with('unit')
             ->get()

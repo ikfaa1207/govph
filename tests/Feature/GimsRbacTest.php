@@ -440,6 +440,7 @@ test('requisition automatically resolves and sets correct department_head_id on 
         'reorder_level' => 10,
         'maximum_stock' => 100,
     ]);
+    $item->forceFill(['current_stock' => 10])->save();
 
     // Create staff employee and head employee in the same department
     $employeeUser = User::factory()->employee()->create(['name' => 'Staff', 'email' => 'staff1@example.com', 'password' => bcrypt('password')]);
@@ -479,6 +480,7 @@ test('a department head cannot approve a requisition routed to a different depar
         'reorder_level' => 10,
         'maximum_stock' => 100,
     ]);
+    $item->forceFill(['current_stock' => 10])->save();
 
     // Dept A Staff and Head
     $staffAUser = User::factory()->employee()->create(['name' => 'Staff A', 'email' => 'staffa@example.com', 'password' => bcrypt('password')]);
@@ -542,6 +544,7 @@ test('system administrators can approve any requisition (override/bypass)', func
         'reorder_level' => 10,
         'maximum_stock' => 100,
     ]);
+    $item->forceFill(['current_stock' => 10])->save();
 
     $employeeUser = User::factory()->employee()->create(['name' => 'Staff', 'email' => 'staff3@example.com', 'password' => bcrypt('password')]);
     $employee = Employee::create(['user_id' => $employeeUser->id, 'employee_id' => 'E30', 'name' => 'Staff', 'position' => 'Staff', 'office_id' => $office->id, 'department_id' => $dept->id]);
@@ -595,6 +598,7 @@ test('system administrators can approve a requisition with no designated departm
         'reorder_level' => 10,
         'maximum_stock' => 100,
     ]);
+    $item->forceFill(['current_stock' => 10])->save();
 
     $employeeUser = User::factory()->employee()->create(['name' => 'Staff', 'email' => 'staff4@example.com', 'password' => bcrypt('password')]);
     $employee = Employee::create(['user_id' => $employeeUser->id, 'employee_id' => 'E40', 'name' => 'Staff', 'position' => 'Staff', 'office_id' => $office->id, 'department_id' => $dept->id]);
@@ -899,8 +903,7 @@ test('requisition issued quantity cannot exceed approved quantity', function () 
         'reorder_level' => 10,
         'maximum_stock' => 100,
     ]);
-    $item->current_stock = 50;
-    $item->save();
+    $item->forceFill(['current_stock' => 50])->save();
 
     $employeeUser = User::factory()->employee()->create(['name' => 'Staff', 'email' => 'staff88@example.com']);
     $employee = Employee::create(['user_id' => $employeeUser->id, 'employee_id' => 'E88', 'name' => 'Staff', 'position' => 'Staff', 'office_id' => $office->id, 'department_id' => $dept->id]);

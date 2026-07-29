@@ -10,7 +10,28 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property int $id
+ * @property string $item_code
+ * @property string|null $stock_number
+ * @property string $name
+ * @property string|null $description
+ * @property int|null $category_id
+ * @property int|null $unit_id
+ * @property string $unit_cost
+ * @property int $reorder_level
+ * @property int $maximum_stock
+ * @property int $current_stock
+ * @property int|null $location_id
+ * @property Carbon|null $expiration_date
+ * @property string|null $barcode
+ * @property string|null $image_path
+ * @property ItemStatus $status
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ */
 #[Fillable([
     'item_code',
     'stock_number',
