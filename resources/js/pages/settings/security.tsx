@@ -38,7 +38,7 @@ export default function Security(props: Props) {
                 <Form
                     {...SecurityController.update.form()}
                     options={{
-                        preserveScroll: true,
+                        preserveScroll: false,
                     }}
                     resetOnError={[
                         'password',

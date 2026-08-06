@@ -937,3 +937,46 @@ test('finalizing IAR with PPE item auto spawns Property records', function () {
     $response2->assertSessionHasNoErrors();
     expect(Property::where('receiving_report_item_id', $reportItem->id)->count())->toBe(2);
 });
+
+test('searching by iar_number returns receiving reports successfully', function () {
+    $office = Office::create(['code' => 'O-SRCH', 'name' => 'Office']);
+    $dept = Department::create(['code' => 'D-SRCH', 'name' => 'Dept', 'office_id' => $office->id]);
+    $user = User::factory()->create();
+    Permission::firstOrCreate(['name' => 'warehouse.receive'], ['module' => 'receiving']);
+    $user->givePermissionTo('warehouse.receive');
+    $employee = Employee::create([
+        'user_id' => $user->id,
+        'employee_id' => 'EMP-SRCH',
+        'name' => 'Receiver Name',
+        'position' => 'Officer',
+        'office_id' => $office->id,
+        'department_id' => $dept->id,
+    ]);
+
+    $supplier = Supplier::create([
+        'name' => 'Test Supplier',
+        'address' => 'Addr 1',
+        'contact_person' => 'Contact 1',
+        'contact_number' => '1234',
+        'tin' => '111-222-333',
+    ]);
+    $po = PurchaseOrder::create([
+        'po_number' => 'PO-SRCH-1',
+        'supplier_id' => $supplier->id,
+        'po_date' => '2026-06-01',
+        'status' => 'sent',
+    ]);
+
+    ReceivingReport::create([
+        'purchase_order_id' => $po->id,
+        'iar_number' => 'IAR-20260726-7704',
+        'delivery_receipt_number' => 'DR-7704',
+        'received_date' => now()->toDateString(),
+        'received_by' => $employee->id,
+        'inspected_by' => $employee->id,
+        'status' => 'finalized',
+    ]);
+
+    $response = $this->actingAs($user)->get(route('inventory.receiving.index', ['search' => 'IAR-20260726-7704']));
+    $response->assertStatus(200);
+});

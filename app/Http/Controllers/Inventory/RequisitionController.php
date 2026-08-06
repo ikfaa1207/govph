@@ -11,6 +11,7 @@ use App\Http\Requests\ApproveRequisitionRequest;
 use App\Http\Requests\IssueRequisitionRequest;
 use App\Http\Requests\RejectRequisitionRequest;
 use App\Http\Requests\StoreRequisitionRequest;
+use App\Models\Employee;
 use App\Models\Item;
 use App\Models\Requisition;
 use Illuminate\Http\RedirectResponse;
@@ -47,7 +48,10 @@ class RequisitionController extends Controller
         if ($request->filled('search')) {
             $search = $request->input('search');
             $query->where(function ($q) use ($search) {
-                $q->where('requisition_number', 'like', "%{$search}%")
+                $q->where('ris_number', 'like', "%{$search}%")
+                    ->orWhereHas('issuances', function ($sub) use ($search) {
+                        $sub->where('issue_number', 'like', "%{$search}%");
+                    })
                     ->orWhereHas('requester', function ($sub) use ($search) {
                         $sub->where('name', 'like', "%{$search}%");
                     });
@@ -174,6 +178,19 @@ class RequisitionController extends Controller
             'issuances.issuer',
             'issuances.receiver',
         ]);
+
+        if (! $requisition->departmentHead && $requisition->department_id) {
+            $fallbackHead = Employee::where('department_id', $requisition->department_id)
+                ->where(function ($q) {
+                    $q->whereHas('user.roles', fn ($r) => $r->whereIn('name', ['Department Head', 'Division Head', 'Manager']))
+                        ->orWhereHas('user.permissions', fn ($p) => $p->where('name', 'request.approve'));
+                })
+                ->first();
+
+            if ($fallbackHead) {
+                $requisition->setRelation('departmentHead', $fallbackHead);
+            }
+        }
 
         return Inertia::render('inventory/requisitions/print', [
             'requisition' => $requisition,

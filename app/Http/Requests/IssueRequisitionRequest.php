@@ -21,6 +21,7 @@ class IssueRequisitionRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'issued_date' => ['nullable', 'date'],
             'items' => ['required', 'array'],
             'items.*.id' => ['required', 'exists:requisition_items,id'],
             'items.*.quantity_issued' => [

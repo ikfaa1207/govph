@@ -181,7 +181,7 @@ export default function ReceivingIndex({
         newSupplier: string,
     ) => {
         router.get(
-            '/inventory/receiving',
+            '/inventory/receiving-reports',
             {
                 search: newSearch || undefined,
                 status: newStatus !== 'all' ? newStatus : undefined,
@@ -204,7 +204,7 @@ export default function ReceivingIndex({
         setStatus('all');
         setSupplierId('all');
         router.get(
-            '/inventory/receiving',
+            '/inventory/receiving-reports',
             {},
             {
                 preserveState: true,

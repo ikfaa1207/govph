@@ -60,6 +60,9 @@ class ReceivingReportController extends Controller
                             ->orWhereHas('supplier', function ($sup) use ($search) {
                                 $sup->where('name', 'like', "%{$search}%");
                             });
+                    })
+                    ->orWhereHas('items.item', function ($sub) use ($search) {
+                        $sub->where('name', 'like', "%{$search}%");
                     });
             });
         }

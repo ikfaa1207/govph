@@ -5,6 +5,7 @@ use App\Exceptions\InsufficientStockException;
 use App\Models\Category;
 use App\Models\Department;
 use App\Models\Employee;
+use App\Models\Issuance;
 use App\Models\Item;
 use App\Models\Office;
 use App\Models\Permission;
@@ -871,4 +872,39 @@ test('requisition items must have stock balance of 1 and above', function () {
     $this->assertDatabaseHas('requisitions', [
         'requesting_employee_id' => $employee->id,
     ]);
+});
+
+test('requisitions index page search filter works by ris_number and issue_number', function () {
+    $office = Office::create(['code' => 'OFF-SRCH', 'name' => 'Search Office']);
+    $dept = Department::create(['code' => 'D01-SRCH', 'name' => 'Search Dept', 'office_id' => $office->id]);
+    $user = User::factory()->create();
+    $employee = Employee::create(['user_id' => $user->id, 'employee_id' => 'E01-SRCH', 'name' => 'Search Employee', 'position' => 'Staff', 'office_id' => $office->id, 'department_id' => $dept->id]);
+
+    Permission::create(['name' => 'request.create', 'module' => 'requisition']);
+    $user->givePermissionTo('request.create');
+
+    $requisition = Requisition::create([
+        'ris_number' => 'RIS-2026-000002',
+        'requesting_employee_id' => $employee->id,
+        'department_id' => $dept->id,
+        'status' => 'issued',
+    ]);
+
+    Issuance::create([
+        'requisition_id' => $requisition->id,
+        'issue_number' => 'ISSUE-2026-000002',
+        'issued_date' => now()->toDateString(),
+        'issued_by' => $employee->id,
+        'received_by' => $employee->id,
+    ]);
+
+    $this->actingAs($user);
+
+    // Search by issue_number (e.g. ISSUE-2026-000002)
+    $response = $this->get(route('inventory.requisitions.index', ['search' => 'ISSUE-2026-000002']));
+    $response->assertStatus(200);
+
+    // Search by ris_number (e.g. RIS-2026-000002)
+    $response = $this->get(route('inventory.requisitions.index', ['search' => 'RIS-2026-000002']));
+    $response->assertStatus(200);
 });

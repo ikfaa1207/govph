@@ -120,4 +120,56 @@ class User extends Authenticatable implements PasskeyUser
     {
         return $this->hasMany(Ticket::class);
     }
+
+    /**
+     * Get the first URL authorized for this user based on their permissions.
+     */
+    public function getFirstAuthorizedUrl(): string
+    {
+        if ($this->hasPermissionTo('dashboard.view')) {
+            return route('dashboard');
+        }
+
+        if ($this->hasPermissionTo('requisition.viewAny') || $this->hasPermissionTo('request.viewAny')) {
+            return '/inventory/requisitions';
+        }
+
+        if ($this->hasPermissionTo('item.viewAny')) {
+            return '/inventory/items';
+        }
+
+        if ($this->hasPermissionTo('property.viewAny')) {
+            return '/inventory/property';
+        }
+
+        if ($this->hasPermissionTo('receiving.viewAny')) {
+            return '/inventory/receiving-reports';
+        }
+
+        if ($this->hasPermissionTo('purchase_request.viewAny')) {
+            return '/inventory/purchase-requests';
+        }
+
+        if ($this->hasPermissionTo('purchase_order.viewAny')) {
+            return '/inventory/purchase-orders';
+        }
+
+        if ($this->hasPermissionTo('physical_count.viewAny')) {
+            return '/inventory/physical-counts';
+        }
+
+        if ($this->hasPermissionTo('helpdesk.viewAny')) {
+            return '/inventory/helpdesk';
+        }
+
+        if ($this->hasPermissionTo('report.viewAny')) {
+            return '/inventory/reports';
+        }
+
+        if ($this->hasPermissionTo('user.viewAny')) {
+            return '/inventory/admin/users';
+        }
+
+        return route('dashboard');
+    }
 }

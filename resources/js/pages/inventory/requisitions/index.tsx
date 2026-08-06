@@ -254,6 +254,7 @@ export default function RequisitionsIndex({
 
     // Form for Supply Officer Issuance
     const issueForm = useForm({
+        issued_date: '',
         items: [] as Array<{ id: number; quantity_issued: number }>,
     });
 
@@ -348,13 +349,17 @@ export default function RequisitionsIndex({
 
     const openIssueDialog = (req: Requisition) => {
         setSelectedReq(req);
-        issueForm.setData(
-            'items',
-            req.items.map((item) => ({
+        const nowLocal = new Date();
+        const pad = (n: number) => n.toString().padStart(2, '0');
+        const defaultDateStr = `${nowLocal.getFullYear()}-${pad(nowLocal.getMonth() + 1)}-${pad(nowLocal.getDate())}T${pad(nowLocal.getHours())}:${pad(nowLocal.getMinutes())}`;
+
+        issueForm.setData({
+            issued_date: defaultDateStr,
+            items: req.items.map((item) => ({
                 id: item.id,
                 quantity_issued: item.quantity_approved - item.quantity_issued,
             })),
-        );
+        });
         setIsIssueOpen(true);
     };
 
@@ -1544,7 +1549,32 @@ export default function RequisitionsIndex({
                                 onSubmit={handleIssueSubmit}
                                 className="space-y-4"
                             >
-                                <div className="max-h-[60vh] overflow-y-auto pr-2">
+                                <div className="space-y-1.5 rounded-md border bg-muted/40 p-3">
+                                    <Label
+                                        htmlFor="issued_date"
+                                        className="text-xs font-semibold"
+                                    >
+                                        Issuance Date & Time (Optional)
+                                    </Label>
+                                    <Input
+                                        id="issued_date"
+                                        type="datetime-local"
+                                        value={issueForm.data.issued_date}
+                                        onChange={(e) =>
+                                            issueForm.setData(
+                                                'issued_date',
+                                                e.target.value,
+                                            )
+                                        }
+                                        className="bg-background text-xs"
+                                    />
+                                    <p className="text-[11px] text-muted-foreground">
+                                        Defaults to current time. Adjust if
+                                        logging an earlier morning physical
+                                        release.
+                                    </p>
+                                </div>
+                                <div className="max-h-[50vh] overflow-y-auto pr-2">
                                     <div className="space-y-3">
                                         {selectedReq.items.map((item) => {
                                             const formItem =

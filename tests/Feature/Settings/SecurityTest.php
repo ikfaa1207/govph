@@ -83,7 +83,7 @@ test('password can be updated', function () {
 
     $response
         ->assertSessionHasNoErrors()
-        ->assertRedirect(route('security.edit'));
+        ->assertRedirect($user->getFirstAuthorizedUrl());
 
     $user->refresh();
     expect(Hash::check('SecurePassword123!', $user->password))->toBeTrue();

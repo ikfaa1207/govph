@@ -12,6 +12,7 @@ use App\Models\RequisitionItem;
 use App\Services\Audit\AuditLogger;
 use App\Services\DocumentSequenceService;
 use App\Services\Valuation\ValuationService;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class IssueRequisitionAction
@@ -32,7 +33,7 @@ class IssueRequisitionAction
             $issuance = Issuance::create([
                 'requisition_id' => $requisition->id,
                 'issue_number' => $issueNumber,
-                'issued_date' => now(),
+                'issued_date' => ! empty($data['issued_date']) ? Carbon::parse($data['issued_date']) : now(),
                 'issued_by' => $employee->id,
                 'received_by' => $requisition->requesting_employee_id,
                 'purpose' => $requisition->remarks,

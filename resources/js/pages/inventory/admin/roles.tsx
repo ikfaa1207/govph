@@ -302,9 +302,7 @@ export default function RolesIndex({ roles, permissions }: RolesIndexProps) {
                                     />
                                 </div>
                                 <div className="space-y-1">
-                                    <Label htmlFor="rdesc" required>
-                                        Description
-                                    </Label>
+                                    <Label htmlFor="rdesc">Description</Label>
                                     <Input
                                         id="rdesc"
                                         value={addForm.data.description}
@@ -554,7 +552,7 @@ export default function RolesIndex({ roles, permissions }: RolesIndexProps) {
                                         />
                                     </div>
                                     <div className="space-y-1">
-                                        <Label htmlFor="edesc" required>
+                                        <Label htmlFor="edesc">
                                             Description
                                         </Label>
                                         <Input

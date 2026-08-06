@@ -20,7 +20,10 @@ class CreateRequisitionAction
     public function execute(Employee $employee, array $data): Requisition
     {
         $deptHead = Employee::where('department_id', $employee->department_id)
-            ->whereHas('user.roles', fn ($q) => $q->where('name', 'Department Head'))
+            ->where(function ($q) {
+                $q->whereHas('user.roles', fn ($r) => $r->whereIn('name', ['Department Head', 'Division Head', 'Manager']))
+                    ->orWhereHas('user.permissions', fn ($p) => $p->where('name', 'request.approve'));
+            })
             ->first();
 
         $risNumber = $this->sequences->next('RIS');

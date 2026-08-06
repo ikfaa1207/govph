@@ -739,7 +739,7 @@ export default function ItemsIndex({
                                             </div>
                                         </div>
                                         <div className="space-y-1">
-                                            <Label htmlFor="location" required>
+                                            <Label htmlFor="location">
                                                 Storage Location
                                             </Label>
                                             <div className="flex gap-1.5">
@@ -1088,10 +1088,7 @@ export default function ItemsIndex({
                                         </div>
                                     </div>
                                     <div className="space-y-1">
-                                        <Label
-                                            htmlFor="edit_description"
-                                            required
-                                        >
+                                        <Label htmlFor="edit_description">
                                             Description
                                         </Label>
                                         <textarea
@@ -1401,10 +1398,7 @@ export default function ItemsIndex({
                                         />
                                     </div>
                                     <div className="space-y-1">
-                                        <Label
-                                            htmlFor="loc_description"
-                                            required
-                                        >
+                                        <Label htmlFor="loc_description">
                                             Description
                                         </Label>
                                         <textarea
