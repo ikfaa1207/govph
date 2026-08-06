@@ -29,6 +29,7 @@ use Illuminate\Support\Carbon;
  * @property string|null $barcode
  * @property string|null $image_path
  * @property ItemStatus $status
+ * @property string $fund_cluster
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
@@ -47,6 +48,7 @@ use Illuminate\Support\Carbon;
     'barcode',
     'image_path',
     'status',
+    'fund_cluster',
 ])]
 class Item extends Model
 {

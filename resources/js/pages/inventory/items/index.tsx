@@ -70,6 +70,7 @@ interface Item {
     reorder_level: number;
     status: string;
     location: string;
+    fund_cluster: string;
 }
 
 interface ItemsIndexProps {
@@ -177,6 +178,7 @@ export default function ItemsIndex({
         stock_number: '',
         barcode: '',
         expiration_date: '',
+        fund_cluster: '01',
     });
 
     const { data, setData, post, processing, errors, reset } = useForm({
@@ -190,6 +192,7 @@ export default function ItemsIndex({
         stock_number: '',
         barcode: '',
         expiration_date: '',
+        fund_cluster: '01',
     });
 
     const categoryHttp = useHttp({
@@ -307,6 +310,7 @@ export default function ItemsIndex({
             stock_number: item.stock_number || '',
             barcode: '', // Or extract if available
             expiration_date: '', // Or extract if available
+            fund_cluster: item.fund_cluster || '01',
         });
         setIsEditOpen(true);
     };
@@ -503,29 +507,66 @@ export default function ItemsIndex({
                                                 </p>
                                             )}
                                         </div>
-                                        <div className="space-y-1">
-                                            <Label
-                                                htmlFor="stock_number"
-                                                required
-                                            >
-                                                COA Stock Number
-                                            </Label>
-                                            <Input
-                                                id="stock_number"
-                                                placeholder="e.g. 501-02-01"
-                                                value={data.stock_number}
-                                                onChange={(e) =>
-                                                    setData(
-                                                        'stock_number',
-                                                        e.target.value,
-                                                    )
-                                                }
-                                            />
-                                            {errors.stock_number && (
-                                                <p className="text-xs text-rose-500">
-                                                    {errors.stock_number}
-                                                </p>
-                                            )}
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="space-y-1">
+                                                <Label htmlFor="stock_number">
+                                                    COA Stock Number (Optional)
+                                                </Label>
+                                                <Input
+                                                    id="stock_number"
+                                                    placeholder="e.g. 501-02-01"
+                                                    value={data.stock_number}
+                                                    onChange={(e) =>
+                                                        setData(
+                                                            'stock_number',
+                                                            e.target.value,
+                                                        )
+                                                    }
+                                                />
+                                                {errors.stock_number && (
+                                                    <p className="text-xs text-rose-500">
+                                                        {errors.stock_number}
+                                                    </p>
+                                                )}
+                                            </div>
+                                            <div className="space-y-1">
+                                                <Label
+                                                    htmlFor="fund_cluster"
+                                                    required
+                                                >
+                                                    Fund Cluster
+                                                </Label>
+                                                <Select
+                                                    value={data.fund_cluster}
+                                                    onValueChange={(val) =>
+                                                        setData(
+                                                            'fund_cluster',
+                                                            val,
+                                                        )
+                                                    }
+                                                    required
+                                                >
+                                                    <SelectTrigger id="fund_cluster">
+                                                        <SelectValue placeholder="Select Fund Cluster" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="01">
+                                                            01 - Regular Agency
+                                                            Fund
+                                                        </SelectItem>
+                                                        <SelectItem value="05">
+                                                            05 - Internally
+                                                            Generated Tuition
+                                                            Funds
+                                                        </SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                                {errors.fund_cluster && (
+                                                    <p className="text-xs text-rose-500">
+                                                        {errors.fund_cluster}
+                                                    </p>
+                                                )}
+                                            </div>
                                         </div>
                                         <div className="grid grid-cols-2 gap-4">
                                             <div className="space-y-1">
@@ -820,10 +861,7 @@ export default function ItemsIndex({
                                             />
                                         </div>
                                         <div className="space-y-1">
-                                            <Label
-                                                htmlFor="edit_stock_number"
-                                                required
-                                            >
+                                            <Label htmlFor="edit_stock_number">
                                                 Stock Number (Optional)
                                             </Label>
                                             <Input
@@ -839,6 +877,42 @@ export default function ItemsIndex({
                                                 }
                                             />
                                         </div>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <Label
+                                            htmlFor="edit_fund_cluster"
+                                            required
+                                        >
+                                            Fund Cluster
+                                        </Label>
+                                        <Select
+                                            value={editForm.data.fund_cluster}
+                                            onValueChange={(val) =>
+                                                editForm.setData(
+                                                    'fund_cluster',
+                                                    val,
+                                                )
+                                            }
+                                            required
+                                        >
+                                            <SelectTrigger id="edit_fund_cluster">
+                                                <SelectValue placeholder="Select Fund Cluster" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="01">
+                                                    01 - Regular Agency Fund
+                                                </SelectItem>
+                                                <SelectItem value="05">
+                                                    05 - Internally Generated
+                                                    Tuition Funds
+                                                </SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        {editForm.errors.fund_cluster && (
+                                            <p className="text-xs text-rose-500">
+                                                {editForm.errors.fund_cluster}
+                                            </p>
+                                        )}
                                     </div>
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-1">

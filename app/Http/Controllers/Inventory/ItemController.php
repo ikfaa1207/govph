@@ -79,6 +79,7 @@ class ItemController extends Controller
                 'reorder_level' => $item->reorder_level,
                 'status' => $item->status,
                 'location' => $item->location ? $item->location->warehouse->name.' - '.$item->location->code : 'None',
+                'fund_cluster' => $item->fund_cluster,
             ];
         });
 
@@ -128,10 +129,30 @@ class ItemController extends Controller
             'stock_number' => ['nullable', 'string', 'unique:items,stock_number'],
             'barcode' => ['nullable', 'string', 'unique:items,barcode'],
             'expiration_date' => ['nullable', 'date'],
+            'fund_cluster' => ['required', 'string', 'in:01,05'],
         ]);
 
-        // Auto-generate code
-        $validated['item_code'] = $this->sequences->next('ITEM');
+        // Resolve Classification Prefix
+        $category = Category::where('id', $validated['category_id'])->firstOrFail();
+        $classification = match (strtoupper($category->code)) {
+            'OFF-SUPP' => 'OS',
+            'IT-EQPT' => 'IT',
+            'MED-SUPP' => 'MED',
+            'OFF-EQPT' => 'OEQ',
+            'OTH-SUPP' => 'OTH',
+            'COMM-EQPT' => 'COMM',
+            'MACH-EQPT' => 'MACH',
+            'FURN-FIXT' => 'FURN',
+            default => substr(strtoupper(str_replace('-SUPP', '', str_replace('-EQPT', '', $category->code))), 0, 4),
+        };
+
+        // Auto-generate UACS compliant code
+        $validated['item_code'] = $this->sequences->nextItemCode(
+            $classification,
+            $validated['fund_cluster'],
+            (int) date('Y')
+        );
+
         $validated['unit_cost'] = 0.00;
         $validated['status'] = 'active';
 
@@ -197,6 +218,7 @@ class ItemController extends Controller
                 'status' => $item->status,
                 'location' => $item->location ? $item->location->warehouse->name.' - '.$item->location->code : 'None',
                 'location_id' => $item->location_id,
+                'fund_cluster' => $item->fund_cluster,
             ],
             'transactions' => $transactions,
         ]);
@@ -209,6 +231,9 @@ class ItemController extends Controller
     {
         Gate::authorize('inventory.update');
 
+        $oldFund = $item->fund_cluster;
+        $oldCategory = $item->category_id;
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
@@ -220,9 +245,35 @@ class ItemController extends Controller
             'stock_number' => ['nullable', 'string', 'unique:items,stock_number,'.$item->id],
             'barcode' => ['nullable', 'string', 'unique:items,barcode,'.$item->id],
             'expiration_date' => ['nullable', 'date'],
+            'fund_cluster' => ['required', 'string', 'in:01,05'],
         ]);
 
-        $item->update($validated);
+        $item->fill($validated);
+
+        if ($item->fund_cluster !== $oldFund || $item->category_id !== $oldCategory) {
+            // Resolve Classification Prefix
+            $category = Category::where('id', $item->category_id)->firstOrFail();
+            $classification = match (strtoupper($category->code)) {
+                'OFF-SUPP' => 'OS',
+                'IT-EQPT' => 'IT',
+                'MED-SUPP' => 'MED',
+                'OFF-EQPT' => 'OEQ',
+                'OTH-SUPP' => 'OTH',
+                'COMM-EQPT' => 'COMM',
+                'MACH-EQPT' => 'MACH',
+                'FURN-FIXT' => 'FURN',
+                default => substr(strtoupper(str_replace('-SUPP', '', str_replace('-EQPT', '', $category->code))), 0, 4),
+            };
+
+            // Auto-generate new UACS compliant code
+            $item->item_code = $this->sequences->nextItemCode(
+                $classification,
+                $item->fund_cluster,
+                $item->created_at ? (int) $item->created_at->format('Y') : (int) date('Y')
+            );
+        }
+
+        $item->save();
 
         AuditLogger::log('UPDATE_ITEM', $item, null, $item->toArray());
 

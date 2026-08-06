@@ -44,6 +44,7 @@ interface ItemShowProps {
         reorder_level: number;
         status: string;
         location: string;
+        fund_cluster: string;
     };
     transactions: Transaction[];
 }
@@ -96,6 +97,16 @@ export default function ItemShow({ item, transactions }: ItemShowProps) {
                                 </span>
                                 <span className="font-mono font-semibold">
                                     {item.stock_number || 'N/A'}
+                                </span>
+                            </div>
+                            <div>
+                                <span className="block text-xs text-muted-foreground">
+                                    Fund Cluster
+                                </span>
+                                <span className="font-semibold text-foreground">
+                                    {item.fund_cluster === '05'
+                                        ? '05 - Tuition/Internally Generated Funds'
+                                        : '01 - Regular Agency Fund'}
                                 </span>
                             </div>
                             <div>

@@ -48,7 +48,7 @@
             "npm run lint",
             "@lint",
             "@types:check",
-            "@php artisan test"
+            "@php scripts/run-php.php artisan test"
         ],
         "setup": [
             "composer install",
@@ -76,13 +76,13 @@
             "@test"
         ],
         "types:check": [
-            "phpstan analyse"
+            "@php scripts/run-php.php vendor/bin/phpstan analyse"
         ],
         "test": [
-            "@php artisan config:clear --ansi",
+            "@php scripts/run-php.php artisan config:clear --ansi",
             "@lint:check",
             "@types:check",
-            "@php artisan test"
+            "@php scripts/run-php.php artisan test"
         ],
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
@@ -119,7 +119,8 @@
         "allow-plugins": {
             "pestphp/pest-plugin": true,
             "php-http/discovery": true
-        }
+        },
+        "platform-check": false
     },
     "minimum-stability": "stable",
     "prefer-stable": true

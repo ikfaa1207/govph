@@ -101,4 +101,64 @@ class DocumentSequenceService
 
         return sprintf('%s-%d-%06d', $prefix, $year, $sequence);
     }
+
+    /**
+     * Allocate and return the next UACS-compliant item code.
+     * Atomic across concurrent requests.
+     */
+    public function nextItemCode(string $classification, string $fundCluster, ?int $year = null): string
+    {
+        $year ??= (int) date('Y');
+
+        $type = "ITEM_{$classification}";
+
+        $sequence = DB::transaction(function () use ($type, $year) {
+            $row = DB::table('document_sequences')
+                ->where('type', $type)
+                ->where('year', $year)
+                ->lockForUpdate()
+                ->first();
+
+            if (! $row) {
+                try {
+                    DB::table('document_sequences')->insert([
+                        'type' => $type,
+                        'year' => $year,
+                        'last_value' => 0,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                } catch (QueryException) {
+                    // Race: another request inserted first. Re-select.
+                    $row = DB::table('document_sequences')
+                        ->where('type', $type)
+                        ->where('year', $year)
+                        ->lockForUpdate()
+                        ->first();
+                }
+            }
+
+            if ($row === null) {
+                $row = DB::table('document_sequences')
+                    ->where('type', $type)
+                    ->where('year', $year)
+                    ->lockForUpdate()
+                    ->first();
+            }
+
+            $next = (int) $row->last_value + 1;
+
+            DB::table('document_sequences')
+                ->where('id', $row->id)
+                ->update([
+                    'last_value' => $next,
+                    'updated_at' => now(),
+                ]);
+
+            return $next;
+        }, 3);
+
+        // Format as EntityCode(08047)-FundCluster-Year-ClassificationPrefix-Serial(4-digit zero-padded)
+        return sprintf('08047-%s-%d-%s-%04d', $fundCluster, $year, $classification, $sequence);
+    }
 }
