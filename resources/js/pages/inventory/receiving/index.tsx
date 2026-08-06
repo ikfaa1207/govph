@@ -1307,7 +1307,6 @@ export default function ReceivingIndex({
                                                 <Label
                                                     htmlFor="remarks"
                                                     className="text-xs font-semibold"
-                                                    required
                                                 >
                                                     Remarks / Delivery Notes
                                                 </Label>

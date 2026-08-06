@@ -569,11 +569,14 @@ export default function ItemsIndex({
                                             </div>
                                         </div>
                                         <div className="grid grid-cols-2 gap-4">
-                                            <div className="space-y-1">
-                                                <Label htmlFor="category">
+                                            <div className="min-w-0 space-y-1">
+                                                <Label
+                                                    htmlFor="category"
+                                                    required
+                                                >
                                                     Category
                                                 </Label>
-                                                <div className="flex gap-1.5">
+                                                <div className="flex min-w-0 gap-1.5">
                                                     <Select
                                                         value={String(
                                                             data.category_id,
@@ -586,10 +589,10 @@ export default function ItemsIndex({
                                                         }
                                                         required
                                                     >
-                                                        <SelectTrigger className="flex-1 overflow-hidden">
+                                                        <SelectTrigger className="min-w-0 flex-1 overflow-hidden">
                                                             <SelectValue
                                                                 placeholder="Select Category"
-                                                                className="truncate"
+                                                                className="block max-w-full truncate overflow-hidden text-ellipsis whitespace-nowrap"
                                                             />
                                                         </SelectTrigger>
                                                         <SelectContent>
@@ -915,10 +918,10 @@ export default function ItemsIndex({
                                         )}
                                     </div>
                                     <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-1">
-                                            <Label>Category</Label>
-                                            <div className="flex gap-2">
-                                                <div className="flex-1">
+                                        <div className="min-w-0 space-y-1">
+                                            <Label required>Category</Label>
+                                            <div className="flex min-w-0 gap-2">
+                                                <div className="min-w-0 flex-1">
                                                     <Select
                                                         value={
                                                             editForm.data
@@ -932,10 +935,10 @@ export default function ItemsIndex({
                                                         }
                                                         required
                                                     >
-                                                        <SelectTrigger className="flex-1 overflow-hidden">
+                                                        <SelectTrigger className="w-full min-w-0 overflow-hidden">
                                                             <SelectValue
                                                                 placeholder="Select Category"
-                                                                className="truncate"
+                                                                className="block max-w-full truncate overflow-hidden text-ellipsis whitespace-nowrap"
                                                             />
                                                         </SelectTrigger>
                                                         <SelectContent>
@@ -960,12 +963,12 @@ export default function ItemsIndex({
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="space-y-1">
+                                        <div className="min-w-0 space-y-1">
                                             <Label required>
                                                 Unit of Measurement
                                             </Label>
-                                            <div className="flex gap-2">
-                                                <div className="flex-1">
+                                            <div className="flex min-w-0 gap-2">
+                                                <div className="min-w-0 flex-1">
                                                     <Select
                                                         value={
                                                             editForm.data
@@ -979,10 +982,10 @@ export default function ItemsIndex({
                                                         }
                                                         required
                                                     >
-                                                        <SelectTrigger className="flex-1 overflow-hidden">
+                                                        <SelectTrigger className="w-full min-w-0 overflow-hidden">
                                                             <SelectValue
                                                                 placeholder="Select Unit"
-                                                                className="truncate"
+                                                                className="block max-w-full truncate overflow-hidden text-ellipsis whitespace-nowrap"
                                                             />
                                                         </SelectTrigger>
                                                         <SelectContent>
@@ -1012,12 +1015,12 @@ export default function ItemsIndex({
                                         </div>
                                     </div>
                                     <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-1">
-                                            <Label required>
+                                        <div className="min-w-0 space-y-1">
+                                            <Label>
                                                 Primary Storage Location
                                             </Label>
-                                            <div className="flex gap-2">
-                                                <div className="flex-1">
+                                            <div className="flex min-w-0 gap-2">
+                                                <div className="min-w-0 flex-1">
                                                     <Select
                                                         value={
                                                             editForm.data
@@ -1030,10 +1033,10 @@ export default function ItemsIndex({
                                                             )
                                                         }
                                                     >
-                                                        <SelectTrigger className="flex-1 overflow-hidden">
+                                                        <SelectTrigger className="w-full min-w-0 overflow-hidden">
                                                             <SelectValue
                                                                 placeholder="Select Location"
-                                                                className="truncate"
+                                                                className="block max-w-full truncate overflow-hidden text-ellipsis whitespace-nowrap"
                                                             />
                                                         </SelectTrigger>
                                                         <SelectContent>
