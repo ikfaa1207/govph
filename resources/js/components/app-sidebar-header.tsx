@@ -1,5 +1,13 @@
 import { usePage } from '@inertiajs/react';
-import { Shield, Clock, Search } from 'lucide-react';
+import {
+    ShieldCheck,
+    PackageCheck,
+    Building2,
+    FileCheck,
+    User,
+    Clock,
+    Search,
+} from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { SidebarTrigger } from '@/components/ui/sidebar';
@@ -38,12 +46,13 @@ export function AppSidebarHeader({
     const rawRole = userRoles.length > 0 ? userRoles[0] : 'Employee';
     const primaryRole = rawRole.replace(/[-_]/g, ' ');
 
-    // Config code role badge with colors and glows
+    // Config code role badge with custom icons, colors, and subtle glow
     const getRoleConfig = (role: string) => {
         const normalized = role.toLowerCase();
 
         if (normalized.includes('admin')) {
             return {
+                icon: ShieldCheck,
                 bg: 'bg-emerald-500/10 dark:bg-emerald-500/15',
                 text: 'text-emerald-700 dark:text-emerald-400',
                 border: 'border-emerald-500/30 dark:border-emerald-500/40',
@@ -54,9 +63,12 @@ export function AppSidebarHeader({
 
         if (
             normalized.includes('officer') ||
-            normalized.includes('custodian')
+            normalized.includes('custodian') ||
+            normalized.includes('supply') ||
+            normalized.includes('warehouse')
         ) {
             return {
+                icon: PackageCheck,
                 bg: 'bg-indigo-500/10 dark:bg-indigo-500/15',
                 text: 'text-indigo-700 dark:text-indigo-400',
                 border: 'border-indigo-500/30 dark:border-indigo-500/40',
@@ -65,8 +77,27 @@ export function AppSidebarHeader({
             };
         }
 
-        if (normalized.includes('auditor')) {
+        if (
+            normalized.includes('head') ||
+            normalized.includes('manager') ||
+            normalized.includes('supervisor')
+        ) {
             return {
+                icon: Building2,
+                bg: 'bg-amber-500/10 dark:bg-amber-500/15',
+                text: 'text-amber-700 dark:text-amber-400',
+                border: 'border-amber-500/30 dark:border-amber-500/40',
+                glow: 'shadow-[0_0_12px_rgba(245,158,11,0.12)] dark:shadow-[0_0_15px_rgba(251,191,36,0.08)]',
+                iconColor: 'text-amber-500',
+            };
+        }
+
+        if (
+            normalized.includes('auditor') ||
+            normalized.includes('inspector')
+        ) {
+            return {
+                icon: FileCheck,
                 bg: 'bg-rose-500/10 dark:bg-rose-500/15',
                 text: 'text-rose-700 dark:text-rose-400',
                 border: 'border-rose-500/30 dark:border-rose-500/40',
@@ -76,6 +107,7 @@ export function AppSidebarHeader({
         }
 
         return {
+            icon: User,
             bg: 'bg-sky-500/10 dark:bg-sky-500/15',
             text: 'text-sky-700 dark:text-sky-400',
             border: 'border-sky-500/30 dark:border-sky-500/40',
@@ -128,20 +160,18 @@ export function AppSidebarHeader({
                     </div>
                 )}
 
-                {/* Security Clearance Badge */}
+                {/* Role Badge with Icon */}
                 {(() => {
                     const config = getRoleConfig(primaryRole);
+                    const RoleIcon = config.icon;
 
                     return (
                         <div
-                            className={`flex h-8 items-center gap-2 rounded-full border px-3 text-[11px] font-bold tracking-wide transition-all hover:scale-[1.02] ${config.bg} ${config.text} ${config.border} ${config.glow}`}
+                            className={`flex h-8 items-center gap-2 rounded-full border px-3 text-xs font-bold tracking-tight transition-all hover:scale-[1.02] ${config.bg} ${config.text} ${config.border} ${config.glow}`}
                         >
-                            <Shield
+                            <RoleIcon
                                 className={`h-3.5 w-3.5 shrink-0 ${config.iconColor}`}
                             />
-                            <span className="text-[9px] font-extrabold uppercase opacity-60">
-                                Clearance:
-                            </span>
                             <span>{primaryRole}</span>
                         </div>
                     );
