@@ -79,6 +79,10 @@ class ItemController extends Controller
                 'reorder_level' => $item->reorder_level,
                 'status' => $item->status,
                 'location' => $item->location ? $item->location->warehouse->name.' - '.$item->location->code : 'None',
+                'location_id' => $item->location_id,
+                'maximum_stock' => $item->maximum_stock,
+                'barcode' => $item->barcode,
+                'expiration_date' => $item->expiration_date?->format('Y-m-d'),
                 'fund_cluster' => $item->fund_cluster,
             ];
         });

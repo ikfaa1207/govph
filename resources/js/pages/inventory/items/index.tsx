@@ -68,8 +68,12 @@ interface Item {
     unit_cost: number;
     current_stock: number;
     reorder_level: number;
+    maximum_stock?: number;
     status: string;
     location: string;
+    location_id?: number | string | null;
+    barcode?: string | null;
+    expiration_date?: string | null;
     fund_cluster: string;
 }
 
@@ -305,11 +309,11 @@ export default function ItemsIndex({
             category_id: String(item.category?.id || ''),
             unit_id: String(item.unit?.id || ''),
             reorder_level: item.reorder_level,
-            maximum_stock: 100, // Or extract if available
-            location_id: String((item as any).location_id || ''),
+            maximum_stock: item.maximum_stock ?? 100,
+            location_id: item.location_id ? String(item.location_id) : '',
             stock_number: item.stock_number || '',
-            barcode: '', // Or extract if available
-            expiration_date: '', // Or extract if available
+            barcode: item.barcode || '',
+            expiration_date: item.expiration_date || '',
             fund_cluster: item.fund_cluster || '01',
         });
         setIsEditOpen(true);
