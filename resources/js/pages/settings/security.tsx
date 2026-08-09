@@ -1,7 +1,8 @@
-import { Form, Head } from '@inertiajs/react';
+import { Form, Head, router } from '@inertiajs/react';
 import { useRef } from 'react';
 import { toast } from 'sonner';
 import SecurityController from '@/actions/App/Http/Controllers/Settings/SecurityController';
+import TourController from '@/actions/App/Http/Controllers/Settings/TourController';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
 import type { Props as ManagePasskeysProps } from '@/components/manage-passkeys';
@@ -149,21 +150,24 @@ export default function Security(props: Props) {
                         type="button"
                         variant="outline"
                         onClick={() => {
-                            let resetCount = 0;
-                            Object.keys(localStorage).forEach((key) => {
-                                if (
-                                    key.startsWith('gims_tour_completed_') ||
-                                    key.startsWith('gims_coachmark_')
-                                ) {
-                                    localStorage.removeItem(key);
-                                    resetCount++;
-                                }
+                            router.delete(TourController.destroy().url, {
+                                preserveScroll: true,
+                                onSuccess: () => {
+                                    Object.keys(localStorage).forEach((key) => {
+                                        if (
+                                            key.startsWith(
+                                                'gims_tour_completed_',
+                                            ) ||
+                                            key.startsWith('gims_coachmark_')
+                                        ) {
+                                            localStorage.removeItem(key);
+                                        }
+                                    });
+                                    toast.success(
+                                        'System guides reset successfully! They will show up on your next page visits.',
+                                    );
+                                },
                             });
-                            toast.success(
-                                resetCount > 0
-                                    ? 'System guides reset successfully! They will show up on your next page visits.'
-                                    : 'All system guides are already active.',
-                            );
                         }}
                     >
                         Reset System Guides

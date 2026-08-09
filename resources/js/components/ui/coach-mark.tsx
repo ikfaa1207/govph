@@ -1,9 +1,12 @@
 import * as React from 'react';
 import { useState, useEffect } from 'react';
+import { usePage, router } from '@inertiajs/react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { Lightbulb, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import TourController from '@/actions/App/Http/Controllers/Settings/TourController';
+import { User } from '@/types/auth';
 
 interface CoachMarkProps {
     id: string;
@@ -18,12 +21,34 @@ export function CoachMark({ id, title, description, children, position = 'top-ri
     const [isOpen, setIsOpen] = useState(defaultOpen);
     const [isDismissed, setIsDismissed] = useState(true); // Start hidden until client mounts to prevent hydration mismatch
 
+    const { auth } = usePage().props as { auth?: { user?: User } };
+    const userCompletedTours = auth?.user?.completed_tours || [];
+
     useEffect(() => {
-        const dismissed = localStorage.getItem(`gims_coachmark_${id}`);
-        if (!dismissed) {
+        const dismissedInLocal = localStorage.getItem(`gims_coachmark_${id}`);
+        const dismissedInDb = userCompletedTours.includes(`coachmark_${id}`);
+        if (!dismissedInLocal && !dismissedInDb) {
             setIsDismissed(false);
         }
-    }, [id]);
+    }, [id, userCompletedTours]);
+
+    const handleDismiss = () => {
+        setIsOpen(false);
+        setIsDismissed(true);
+        localStorage.setItem(`gims_coachmark_${id}`, 'dismissed');
+
+        if (auth?.user) {
+            router.post(
+                TourController.store().url,
+                { tour_id: `coachmark_${id}` },
+                {
+                    preserveScroll: true,
+                    preserveState: true,
+                    only: ['auth'],
+                }
+            );
+        }
+    };
 
     if (isDismissed) {
         return <>{children}</>;
@@ -68,11 +93,7 @@ export function CoachMark({ id, title, description, children, position = 'top-ri
                 <div className="bg-indigo-50 dark:bg-indigo-950/30 p-4 pb-3 border-b border-indigo-100 dark:border-indigo-900/50 flex justify-between items-start gap-4">
                     <h4 className="font-semibold text-indigo-900 dark:text-indigo-300 leading-none">{title}</h4>
                     <button 
-                        onClick={() => { 
-                            setIsOpen(false); 
-                            setIsDismissed(true); 
-                            localStorage.setItem(`gims_coachmark_${id}`, 'dismissed');
-                        }}
+                        onClick={handleDismiss}
                         className="text-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-200"
                     >
                         <X className="h-4 w-4" />
@@ -87,11 +108,7 @@ export function CoachMark({ id, title, description, children, position = 'top-ri
                             size="sm" 
                             variant="default"
                             className="bg-indigo-600 hover:bg-indigo-700 text-white"
-                            onClick={() => {
-                                setIsOpen(false);
-                                setIsDismissed(true);
-                                localStorage.setItem(`gims_coachmark_${id}`, 'dismissed');
-                            }}
+                            onClick={handleDismiss}
                         >
                             Got it
                         </Button>

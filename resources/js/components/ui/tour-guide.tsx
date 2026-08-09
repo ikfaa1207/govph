@@ -1,8 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { usePage, router } from '@inertiajs/react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Lightbulb, ChevronRight, ChevronLeft, X } from 'lucide-react';
+import TourController from '@/actions/App/Http/Controllers/Settings/TourController';
+import { User } from '@/types/auth';
 
 export interface TourStep {
     target: string;
@@ -22,17 +25,22 @@ export function TourGuide({ tourId, steps }: TourGuideProps) {
     const [cardStyle, setCardStyle] = useState<React.CSSProperties>({});
     const cardRef = useRef<HTMLDivElement>(null);
 
+    const { auth } = usePage().props as { auth?: { user?: User } };
+    const userCompletedTours = auth?.user?.completed_tours || [];
+
     // Initialize tour: check if already completed
     useEffect(() => {
-        const completed = localStorage.getItem(`gims_tour_completed_${tourId}`);
-        if (!completed && steps.length > 0) {
+        const completedInLocal = localStorage.getItem(`gims_tour_completed_${tourId}`);
+        const completedInDb = userCompletedTours.includes(tourId);
+
+        if (!completedInLocal && !completedInDb && steps.length > 0) {
             // Delay slightly to allow layout calculations
             const timer = setTimeout(() => {
                 setIsActive(true);
             }, 800);
             return () => clearTimeout(timer);
         }
-    }, [tourId, steps]);
+    }, [tourId, steps, userCompletedTours]);
 
     // Scroll the highlighted element into view only when the step changes
     useEffect(() => {
@@ -156,6 +164,18 @@ export function TourGuide({ tourId, steps }: TourGuideProps) {
     const handleComplete = () => {
         setIsActive(false);
         localStorage.setItem(`gims_tour_completed_${tourId}`, 'completed');
+
+        if (auth?.user) {
+            router.post(
+                TourController.store().url,
+                { tour_id: tourId },
+                {
+                    preserveScroll: true,
+                    preserveState: true,
+                    only: ['auth'],
+                }
+            );
+        }
     };
 
     if (!isActive) return null;
