@@ -5,20 +5,17 @@ import {
     Eye,
     Plus,
     ShieldAlert,
-    FileText,
     ClipboardCheck,
-    CheckCircle2,
-    ShoppingCart,
     Printer,
     Package2,
 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { EmptyState } from '@/components/empty-state';
+import { ProportionalWorkflowMetrics } from '@/components/inventory/proportional-workflow-metrics';
 import { SimplePagination } from '@/components/simple-pagination';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import {
     Dialog,
     DialogContent,
@@ -723,104 +720,8 @@ export default function PurchaseRequestsIndex({
                     )}
                 </div>
 
-                {/* Stats Dashboard Grid */}
-                <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
-                    <Card className="flex flex-col justify-between rounded-xl border border-border bg-card p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
-                        <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium text-muted-foreground">
-                                Total Requests
-                            </span>
-                            <FileText
-                                className="h-4 w-4 text-blue-500"
-                                strokeWidth={2}
-                            />
-                        </div>
-                        <div className="mt-2 space-y-1">
-                            <p className="truncate text-2xl font-bold tracking-tight text-foreground">
-                                {stats.total}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                                All draft and submitted PRs
-                            </p>
-                        </div>
-                    </Card>
-                    <Card className="flex flex-col justify-between rounded-xl border border-border bg-card p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
-                        <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium text-muted-foreground">
-                                Pending Approval
-                            </span>
-                            <ClipboardCheck
-                                className="h-4 w-4 text-amber-500"
-                                strokeWidth={2}
-                            />
-                        </div>
-                        <div className="mt-2 space-y-1">
-                            <p className="truncate text-2xl font-bold tracking-tight text-foreground">
-                                {stats.pending}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                                Awaiting division head signature
-                            </p>
-                        </div>
-                    </Card>
-                    <Card className="flex flex-col justify-between rounded-xl border border-border bg-card p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
-                        <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium text-muted-foreground">
-                                Approved PRs
-                            </span>
-                            <CheckCircle2
-                                className="h-4 w-4 text-emerald-500"
-                                strokeWidth={2}
-                            />
-                        </div>
-                        <div className="mt-2 space-y-1">
-                            <p className="truncate text-2xl font-bold tracking-tight text-foreground">
-                                {stats.approved}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                                Approved and ready for ordering
-                            </p>
-                        </div>
-                    </Card>
-                    <Card className="flex flex-col justify-between rounded-xl border border-border bg-card p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
-                        <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium text-muted-foreground">
-                                PO Created
-                            </span>
-                            <ShoppingCart
-                                className="h-4 w-4 text-violet-500"
-                                strokeWidth={2}
-                            />
-                        </div>
-                        <div className="mt-2 space-y-1">
-                            <p className="truncate text-2xl font-bold tracking-tight text-foreground">
-                                {stats.ordered}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                                Purchase orders generated
-                            </p>
-                        </div>
-                    </Card>
-                    <Card className="flex flex-col justify-between rounded-xl border border-border bg-card p-5 shadow-sm transition-all duration-300 hover:-translate-y-[2px] hover:shadow-md">
-                        <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium text-muted-foreground">
-                                Rejected
-                            </span>
-                            <X
-                                className="h-4 w-4 text-rose-500"
-                                strokeWidth={2}
-                            />
-                        </div>
-                        <div className="mt-2 space-y-1">
-                            <p className="truncate text-2xl font-bold tracking-tight text-foreground">
-                                {stats.rejected}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                                Returned or disapproved requests
-                            </p>
-                        </div>
-                    </Card>
-                </div>
+                {/* Proportional Workflow Metrics */}
+                <ProportionalWorkflowMetrics stats={stats} />
 
                 {/* Filter Bar */}
                 <form
